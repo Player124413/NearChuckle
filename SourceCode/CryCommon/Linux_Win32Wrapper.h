@@ -8,7 +8,11 @@
 #include <SDL2/SDL.h>
 
 #define _fstat64 fstat64
+#if defined(__x86_64) || defined(__i386__)
 #define DebugBreak() do { __asm__ volatile ("int $3"); } while(0)
+#else
+#define DebugBreak()
+#endif
 #define Int32x32To64(a, b) ((uint64)((uint64)(a)) * (uint64)((uint64)(b)))
 
 #define CONST const
