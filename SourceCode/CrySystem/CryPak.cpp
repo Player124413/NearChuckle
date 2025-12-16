@@ -299,7 +299,7 @@ const char* CCryPak::AdjustFileName(const char *src, char *dst, unsigned nFlags,
 		}
 	}
 
-	corrected = alloca(strlen(dst) + 3);
+	corrected = (char*)alloca(strlen(dst) + 3);
 	if (casepath(dst, corrected))
 	{
 		strcpy(dst, corrected);
