@@ -258,7 +258,7 @@ public:
   {
     if ( Count )
     {
-      memcpy(m_pElements+Index, m_pElements+(Index+Count), sizeof(T)*(m_nCount-Index-Count));
+      memmove(m_pElements+Index, m_pElements+(Index+Count), sizeof(T)*(m_nCount-Index-Count));
       m_nCount -= Count;
     }
   }

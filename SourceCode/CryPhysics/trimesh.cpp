@@ -260,14 +260,14 @@ CTriMesh* CTriMesh::CreateTriMesh(strided_pointer<const vectorf> pVertices,index
 			matrix3x3f Basis; Basis.SetIdentity();
 			CAABBTree *pTree = new CAABBTree;
 			pTree->SetParams(nMinTrisPerNode,nMaxTrisPerNode,skipdim,Basis);
-			volumes[nTrees++] = (pTrees[nTrees]=pTree)->Build(this);
+			volumes[nTrees] = (pTrees[nTrees++]=pTree)->Build(this);
 
 			memcpy(pTreeIndices[nTrees-1] = new index_t[m_nTris*3], m_pIndices, sizeof(m_pIndices[0])*m_nTris*3);
 			if (m_pIds) memcpy(pTreeIds[nTrees-1] = new short[m_nTris], m_pIds, sizeof(m_pIds[0])*m_nTris);
 			pTree = new CAABBTree;
 			Basis = (matrix3x3RM&)axes[0];
 			pTree->SetParams(nMinTrisPerNode,nMaxTrisPerNode,skipdim,Basis);
-			volumes[nTrees++] = (pTrees[nTrees]=pTree)->Build(this)*1.01f; // favor non-oriented AABBs slightly
+			volumes[nTrees] = (pTrees[nTrees++]=pTree)->Build(this)*1.01f; // favor non-oriented AABBs slightly
 		} 
 		if (flags & mesh_OBB) {
 			if (nTrees>0) {
@@ -276,7 +276,7 @@ CTriMesh* CTriMesh::CreateTriMesh(strided_pointer<const vectorf> pVertices,index
 			}
 			COBBTree *pTree = new COBBTree;
 			pTree->SetParams(nMinTrisPerNode,nMaxTrisPerNode,skipdim);
-			volumes[nTrees++] = (pTrees[nTrees]=pTree)->Build(this)*favorAABB;
+			volumes[nTrees] = (pTrees[nTrees++]=pTree)->Build(this)*favorAABB;
 		}
 		for(iTreeBest=0,i=1;i<nTrees;i++) if (volumes[i]<volumes[iTreeBest])
 			iTreeBest = i;

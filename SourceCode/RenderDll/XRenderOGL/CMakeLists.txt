@@ -5,7 +5,7 @@ if (${ARCH_TYPE} STREQUAL "x86")
     add_definitions(-DDO_ASM)
 endif()
 
-set (DISABLE_CG OFF)
+option(DISABLE_CG "DISABLE CG Compiler shaders" OFF)
 
 if (NOT MSVC AND NOT DISABLE_CG)
 #set(CG_LIB_PATH "/path/to/cg/lib")
