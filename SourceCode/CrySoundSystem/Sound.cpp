@@ -539,7 +539,7 @@ void CSound::Play(float fRatio, bool bForceActiveState, bool bSetRatio)
 //////////////////////////////////////////////////////////////////////////
 void CSound::FreeChannel()
 {
-	if (!m_bPlaying || m_nChannel <= 0)
+	if (!m_bPlaying || m_nChannel < 0)
 		return;
 	m_nPlayingVolume = -1;
 	if (m_pSound->Loaded())
