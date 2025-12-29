@@ -1147,7 +1147,7 @@ DLL_API int             F_API CS_PlaySoundEx(int channel, CS_SAMPLE *sptr, CS_DS
 	alSourcei(src, AL_SOURCE_RELATIVE, AL_TRUE);
 	alSource3f(src, AL_POSITION, 0.0f, 0.0f, 0.0f);
 	alSource3f(src, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
-	//alSourcei(src, AL_LOOPING, samp->flags & CS_LOOP_NORMAL ? AL_TRUE : AL_FALSE);
+	alSourcei(src, AL_LOOPING, samp->flags & CS_LOOP_NORMAL ? AL_TRUE : AL_FALSE);
 	alSourcePlay(src);
 	if (startpaused)
 	{
