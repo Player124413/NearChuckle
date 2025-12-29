@@ -689,7 +689,7 @@ DLL_API int             F_API CS_Stream_PlayEx(int channel, CS_STREAM* stream, C
 	else
 	{
 		__builtin_trap();
-		return 0;
+		return -1;
 	}
 
 	if (i >= 0)
