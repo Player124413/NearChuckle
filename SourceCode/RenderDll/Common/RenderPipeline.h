@@ -309,7 +309,11 @@ struct STWarpZone
 //==================================================================
 
 #ifdef DIRECT3D9
+#define UINT64 uint64_t
+#define LONGLONG int64_t
 #include <d3d9.h>
+#undef UINT64
+#undef LONGLONG
 #endif
 
 #if defined (DIRECT3D8) || defined (DIRECT3D9)
