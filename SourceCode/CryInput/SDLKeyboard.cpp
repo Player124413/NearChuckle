@@ -479,6 +479,18 @@ void CSDLKeyboard::Update()
 	events.clear();
 	memcpy(m_cOldKeysState, m_cKeysState, sizeof(m_cOldKeysState));
 	memcpy(m_cKeysState, m_cTempKeys, sizeof(m_cKeysState));
+
+	if (KeyDown(XKEY_LCONTROL) && KeyReleased(XKEY_G))
+	  {
+		if (SDL_GetRelativeMouseMode())
+		{
+			SDL_SetRelativeMouseMode(SDL_FALSE);
+		}
+		else
+		{
+			SDL_SetRelativeMouseMode(SDL_TRUE);
+		}
+	  }
 }
 
 void CSDLKeyboard::ShutDown()
