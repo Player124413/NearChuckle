@@ -32,6 +32,12 @@ typedef struct
 
 typedef struct
 {
+	stb_vorbis* ogg;
+	unsigned char* filebuf;
+} AL_OGG_Userdata_t;
+
+typedef struct
+{
 	CS_STREAMCALLBACK callback;
 	char* buffer;
 	int len;
@@ -56,6 +62,24 @@ CS_SEEKCALLBACK my_fseek;
 CS_TELLCALLBACK my_ftell;
 
 #define SOURCE_OUT_OF_BOUNDS 0
+
+ALuint GetSourceOfChannel(int channel)
+{
+	if (channel < 0 || channel >= (MAX_SOURCES + streams.size()))
+	{
+		__builtin_trap();
+		return SOURCE_OUT_OF_BOUNDS;
+	}
+
+	if (channel >= MAX_SOURCES)
+	{
+		return streams[channel - MAX_SOURCES]->source;
+	}
+	else
+	{
+		return sources[channel];
+	}
+}
 
 ALSample_t* GetSampleFromName(const char* filename)
 {
@@ -165,22 +189,8 @@ DLL_API signed char     F_API CS_SetFrequency(int channel, int freq)
 }
 DLL_API signed char     F_API CS_SetVolume(int channel, int vol)
 {
-	size_t i;
-	if (channel < 0 || channel >= MAX_SOURCES)
-	{
-		if (channel == MAX_SOURCES)
-		{
-			for (i = 0; i < streams.size(); i++)
-			{
-				alSourcef(streams[i]->source, AL_GAIN, (float)vol / 255.0f);
-			}
-			return 1;
-		}
-		__builtin_trap();
-		return SOURCE_OUT_OF_BOUNDS;
-	}
-
-	alSourcef(sources[channel], AL_GAIN, (float)vol / 255.0f);
+	ALuint source = GetSourceOfChannel(channel);
+	alSourcef(source, AL_GAIN, (float)vol / 255.0f);
 	return 1;
 }
 
@@ -200,19 +210,15 @@ DLL_API signed char     F_API CS_SetPriority(int channel, int priority)
 
 DLL_API signed char     F_API CS_SetPaused(int channel, signed char paused)
 {
-	if (channel < 0 || channel >= MAX_SOURCES)
-	{
-		__builtin_trap();
-		return SOURCE_OUT_OF_BOUNDS;
-	}
+	ALuint source = GetSourceOfChannel(channel);
 
 	if (paused)
 	{
-		alSourcePause(sources[channel]);
+		alSourcePause(source);
 	}
 	else
 	{
-		alSourcePlay(sources[channel]);
+		alSourcePlay(source);
 	}
 
 	return 1;
@@ -539,6 +545,14 @@ static int audio_ogg_from_data(unsigned char* p, int bufsize, ALuint* buf)
 	return 0;
 }
 
+signed char StreamOGGCallback(CS_STREAM* pStream, void *pBuffer, int nLength, void* nParam)
+{
+	AL_OGG_Userdata_t* userdata = (AL_OGG_Userdata_t*)nParam;
+	int read_samples = stb_vorbis_get_samples_short_interleaved(userdata->ogg,
+		userdata->ogg->channels, (short*)pBuffer, nLength / sizeof(short));
+	return 0;
+}
+
 DLL_API CS_STREAM*    F_API CS_Stream_Open(const char *name_or_data, unsigned int mode, int offset, int length)
 {
 #ifndef LINUX64
@@ -546,23 +560,19 @@ DLL_API CS_STREAM*    F_API CS_Stream_Open(const char *name_or_data, unsigned in
 #else
 	FILE *file = (FILE*)my_fopen(name_or_data);
 #endif
-	int len;
+	int len, ret, vorbis_error;
 	unsigned char* buf;
-	int ret;
 	ALuint thebuf = 0;
-	ALSample_t* samp = nullptr;
+	stb_vorbis* ogg;
+	stb_vorbis_info info;
+	
+	ALStream_t* stream = nullptr;
+	AL_OGG_Userdata_t* userdata = nullptr;
 	const char* ext = strrchr(name_or_data, '.');
 
 	if (strlen(name_or_data) >= MAX_SOUND_FILENAME)
 	{
 		__builtin_trap();
-	}
-
-	samp = GetSampleFromName(name_or_data);
-
-	if (samp)
-	{
-		return (CS_STREAM*)samp;
 	}
 
 	if (!strcmp(ext, ".ogg"))
@@ -575,28 +585,32 @@ DLL_API CS_STREAM*    F_API CS_Stream_Open(const char *name_or_data, unsigned in
 			buf = new unsigned char [len];
 			my_fseek(file, 0, SEEK_SET);
 			my_fread(buf, len, file);
-			ret = audio_ogg_from_data(buf, len, &thebuf);
 			my_fclose(file);
-			delete [] buf;
-			if (ret == 0)
-			{
-				samp = new ALSample_t;
-				if (thebuf == 0)
-				{
-					__builtin_trap();
-				}
-				samp->buf = thebuf;
-				samp->flags = mode;
-				strcpy(samp->filename, name_or_data);
-				
-				buffers.push_back(samp);
-				AL_LOG("OpenAL: There are now %lu buffers.\n", buffers.size());
-			}
-			else
+
+			ogg = stb_vorbis_open_memory(buf, len, &vorbis_error, NULL);
+
+			if (!ogg)
 			{
 				__builtin_trap();
+				return NULL;
 			}
-			
+
+			info = stb_vorbis_get_info(ogg);
+			stream = new ALStream_t;
+
+			userdata = new AL_OGG_Userdata_t;
+			userdata->ogg = ogg;
+			userdata->filebuf = buf;
+
+			alGenSources(1, &stream->source);
+			stream->buffer = new char[4096];
+			stream->len = 4096;
+			stream->callback = StreamOGGCallback;
+			stream->userdata = userdata;
+
+			streams.push_back(stream);
+
+			AL_LOG("OpenAL: There are now %lu streams.\n", streams.size());
 		}
 		else
 		{
@@ -606,6 +620,10 @@ DLL_API CS_STREAM*    F_API CS_Stream_Open(const char *name_or_data, unsigned in
 	}
 	else if (!strcmp(ext, ".wav"))
 	{
+		AL_LOG("Error, WAV stream not handled\n");
+		return NULL;
+		//__builtin_trap();
+#if 0
 		if (file)
 		{
 			my_fseek(file, 0, SEEK_END);
@@ -636,14 +654,14 @@ DLL_API CS_STREAM*    F_API CS_Stream_Open(const char *name_or_data, unsigned in
 		{
 			__builtin_trap();
 		}
+#endif
 	}
 	else
 	{
 		__builtin_trap();
 	}
 
-	
-	return (CS_STREAM*)samp;
+	return (CS_STREAM*)stream;
 }
 
 #ifndef LINUX64
@@ -667,7 +685,13 @@ DLL_API CS_STREAM* F_API CS_Stream_Create(CS_STREAMCALLBACK callback, int length
 DLL_API signed char     F_API CS_Stream_Close(CS_STREAM* stream)
 {
 	ALStream_t* strm = (ALStream_t*)stream;
+	AL_OGG_Userdata_t* ogg_userdata;
 	std::vector<ALStream_t*>::iterator it;
+
+	if (!stream)
+	{
+		return 0;
+	}
 
 	for (it = streams.begin(); it != streams.end(); it++)
 	{
@@ -676,6 +700,13 @@ DLL_API signed char     F_API CS_Stream_Close(CS_STREAM* stream)
 			streams.erase(it);
 			break;
 		}
+	}
+
+	if (strm->callback == &StreamOGGCallback)
+	{
+		ogg_userdata = (AL_OGG_Userdata_t*)strm->userdata;
+		stb_vorbis_close(ogg_userdata->ogg);
+		delete [] ogg_userdata->filebuf;
 	}
 
 	alDeleteSources(1, &strm->source);
@@ -688,6 +719,7 @@ DLL_API signed char     F_API CS_Stream_Close(CS_STREAM* stream)
 DLL_API int             F_API CS_Stream_Play(int channel, CS_STREAM* stream)
 {
 	ALStream_t* strm = (ALStream_t*)stream;
+	int i;
 	if (channel != CS_FREE)
 	{
 		__builtin_trap();
@@ -699,87 +731,79 @@ DLL_API int             F_API CS_Stream_Play(int channel, CS_STREAM* stream)
 	alSource3f(strm->source, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
 	alSourcePlay(strm->source);
 
-	return MAX_SOURCES;
+	for (i = 0; i < streams.size(); i++)
+	{
+		if (strm == streams[i])
+		{
+			break;
+		}
+	}
+
+	return MAX_SOURCES + i;
 }
 
 DLL_API int             F_API CS_Stream_PlayEx(int channel, CS_STREAM* stream, CS_DSPUNIT* dsp, signed char startpaused)
 {
-	ALSample_t* samp = (ALSample_t*)stream;
+	ALStream_t* strm = (ALStream_t*)stream;
 	int i;
-	ALuint src;
-	if (channel == CS_FREE)
-	{
-		i = audio_next_available_source();
-	}
-	else
+	ALuint stream_buf;
+	if (channel != CS_FREE)
 	{
 		__builtin_trap();
 		return -1;
 	}
 
-	if (i >= 0)
-	{
-		src = sources[i];
-	}
-	else
-	{
-		return -1;
-	}
-	
-	alSourcei(src, AL_BUFFER, samp->buf);
-	alSourcei(src, AL_SOURCE_RELATIVE, AL_TRUE);
-	alSource3f(src, AL_POSITION, 0.0f, 0.0f, 0.0f);
-	alSource3f(src, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
-	//alSourcei(src, AL_LOOPING, samp->flags & CS_LOOP_NORMAL ? AL_TRUE : AL_FALSE);
-	alSourcePlay(src);
+	alSourcei(strm->source, AL_SOURCE_RELATIVE, AL_TRUE);
+	alSource3f(strm->source, AL_POSITION, 0.0f, 0.0f, 0.0f);
+	alSource3f(strm->source, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
+
+	strm->callback((CS_STREAM*)stream, strm->buffer,
+				strm->len, strm->userdata);
+
+	alGenBuffers(1, &stream_buf);
+	alBufferData(stream_buf, AL_FORMAT_STEREO16,
+		(ALvoid *)strm->buffer, strm->len, 44100);
+	alSourceQueueBuffers(strm->source, 1, &stream_buf);
+
+	alSourcePlay(strm->source);
 	if (startpaused)
 	{
-		alSourcePause(src);
+		alSourcePause(strm->source);
 	}
-	
-	return i;
+
+	for (i = 0; i < streams.size(); i++)
+	{
+		if (strm == streams[i])
+		{
+			break;
+		}
+	}
+
+	return MAX_SOURCES + i;
 }
 
 DLL_API signed char     F_API CS_Stream_Stop(CS_STREAM* stream)
 {
-	size_t i;
-	ALint buffer;
-	ALSample_t* samp;
 	ALStream_t* strm;
-	int num_buffers;
+	int i, num_buffers;
+	ALuint buffer;
 
-	for (i = 0; i < streams.size(); i++)
+	if (!stream)
 	{
-		strm = streams[i];
-		if (strm == (ALStream_t*)stream)
-		{
-			alSourceStop(strm->source);
-			alGetSourcei(strm->source, AL_BUFFERS_QUEUED, &num_buffers);
-
-			for (i = 0; i < num_buffers; i++)
-			{
-				alSourceUnqueueBuffers(strm->source, 1, (ALuint*)&buffer);
-				alDeleteBuffers(1, (ALuint*)&buffer);
-			}
-
-			return 1;
-		}
+		return 0;
 	}
 
-	samp = (ALSample_t*)stream;
+	strm = (ALStream_t*)stream;
+	alSourceStop(strm->source);
+	alGetSourcei(strm->source, AL_BUFFERS_QUEUED, &num_buffers);
 
-	for (i = 0; i < MAX_SOURCES; i++)
+	for (i = 0; i < num_buffers; i++)
 	{
-		alGetSourcei(sources[i], AL_BUFFER, &buffer);
-		if (buffer == samp->buf)
-		{
-			alSourceStop(sources[i]);
-			alSourcei(sources[i], AL_BUFFER, 0);
-			return 1;
-		}
+		alSourceUnqueueBuffers(strm->source, 1, &buffer);
+		alDeleteBuffers(1, &buffer);
 	}
-	//__builtin_trap();
-	return 0;
+
+	return 1;
 }
 #if 0
 DLL_API int             F_API CS_Stream_GetOpenState(CS_STREAM* stream)
@@ -809,22 +833,7 @@ DLL_API int             F_API CS_Stream_GetTime(CS_STREAM* stream)
 
 DLL_API int             F_API CS_Stream_GetLength(CS_STREAM* stream)
 {
-	ALSample_t* samp = (ALSample_t*)stream;
-	ALint sizeInBytes;
-	ALint channels;
-	ALint bits;
-	int lengthInSamples;
-	if (samp->buf == 0)
-	{
-		__builtin_trap();
-	}
-
-	alGetBufferi(samp->buf, AL_SIZE, &sizeInBytes);
-	alGetBufferi(samp->buf, AL_CHANNELS, &channels);
-	alGetBufferi(samp->buf, AL_BITS, &bits);
-	lengthInSamples = sizeInBytes * 8 / (channels * bits);
-
-	return lengthInSamples;
+	return 0;
 }
 
 DLL_API int             F_API CS_Stream_GetLengthMs(CS_STREAM* stream)
@@ -894,7 +903,7 @@ static void UpdateStream(ALStream_t* stream)
 			alSourceQueueBuffers(stream->source, 1, &stream_buf);
 			alGetSourcei(stream->source, AL_BUFFERS_QUEUED, &num_queued_buffers);
 
-			if (state != AL_PLAYING)
+			if (state != AL_PLAYING && stream->callback != &StreamOGGCallback)
 			{
 				alSourcePlay(stream->source);
 			}
@@ -1027,12 +1036,8 @@ DLL_API void            F_API CS_3D_Listener_GetAttributes(float *pos, float *ve
 DLL_API signed char     F_API CS_IsPlaying(int channel)
 {
 	int status;
-	if (channel < 0 || channel >= MAX_SOURCES)
-	{
-		__builtin_trap();
-		return 0;
-	}
-	alGetSourcei(sources[channel], AL_SOURCE_STATE, &status);
+	ALuint source = GetSourceOfChannel(channel);
+	alGetSourcei(source, AL_SOURCE_STATE, &status);
 	if (status == AL_PLAYING)
 	{
 		return 1;
