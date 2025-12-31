@@ -1240,7 +1240,7 @@ uint64 shGetHex64(const char *buf)
     return 0;
   uint64 i;
 
-  sscanf(buf, "%I64x", &i);
+  sscanf(buf, "%llx", &i);
 
   return i;
 }

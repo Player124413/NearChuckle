@@ -1272,7 +1272,7 @@ void CCGPShader_D3D::mfGetDstFileName(char *dstname, int nSize, bool bUseASCIICa
   if (m_nMaskGen)
   {
     char str[32];
-    sprintf(str, "(%I64x)", m_nMaskGen);
+    sprintf(str, "(%llx)", m_nMaskGen);
     strncat(dstname, str, nSize);
   }
 

@@ -124,7 +124,7 @@ void CPShader::mfReloadScript(const char *szPath, const char *szName, int nFlags
             continue;
           ps->m_WriteTime = writetime;
         }
-        iLog->Log("Reload pixel shader '%s' (%I64x)", name, ps->m_nMaskGen);
+        iLog->Log("Reload pixel shader '%s' (%llx)", name, ps->m_nMaskGen);
         ps->mfReset();
         FILE *fp = iSystem->GetIPak()->FOpen(resName, "rb");
         if (!fp)
@@ -213,7 +213,7 @@ void CVProgram::mfReloadScript(const char *szPath, const char *szName, int nFlag
             continue;
           vp->m_WriteTime = writetime;
         }
-        iLog->Log("Reload vertex shader '%s' (%I64x)", name, vp->m_nMaskGen);
+        iLog->Log("Reload vertex shader '%s' (%llx)", name, vp->m_nMaskGen);
         vp->mfReset();
         FILE *fp = iSystem->GetIPak()->FOpen(resName, "rb");
         if (!fp)
@@ -350,7 +350,7 @@ bool CShader::mfReloadShaderScript(const char *szShaderName, int nFlags, SShader
       m_CurEfsNum = 0;
       m_bReload = true;
       if (nDCount)
-        iLog->Log("Reload shader '%s(%I64x)'", szShaderName, pSH->m_nMaskGen);
+        iLog->Log("Reload shader '%s(%llx)'", szShaderName, pSH->m_nMaskGen);
       else
         iLog->Log("Reload shader '%s'", szShaderName);
       SShader *ef = gRenDev->m_cEF.mfForName(szShaderName, eSH_Misc, SF_RELOAD, NULL, pSH ? pSH->m_nMaskGen : 0);
@@ -1758,14 +1758,14 @@ uint64 CShader::mfScriptPreprocessorMask(SShader *pSH, int nOffset)
       int len = strlen(val);
       uint64 n;
       if (len > 2 && val[0] == '0' && val[1] == 'x')
-        sscanf(&val[2], "%I64x", &n);
+        sscanf(&val[2], "%llx", &n);
       else
         n = atoi(val);
       if (!n)
         iLog->Log("Warning: zero mask for parameter macro '%s' in shader '%s'", itor->first.c_str(), pSH->GetName());
       if (n & nMask)
       {
-        iLog->Log("Warning: mask 0x%I64x already exist for parameter macro in shader '%s'", n, itor->first.c_str(), pSH->GetName());
+        iLog->Log("Warning: mask 0x%llx already exist for parameter macro in shader '%s'", n, itor->first.c_str(), pSH->GetName());
 	      ShaderMacroItor itor=m_LocalMacros[i].m_Macros->begin();
         while(itor!=m_LocalMacros[i].m_Macros->end())
         {
@@ -1775,7 +1775,7 @@ uint64 CShader::mfScriptPreprocessorMask(SShader *pSH, int nOffset)
             int len = strlen(val);
             uint64 nn;
             if (len > 2 && val[0] == '0' && val[1] == 'x')
-              sscanf(&val[2], "%I64x", &nn);
+              sscanf(&val[2], "%llx", &nn);
             else
               nn = atoi(val);
             if (nn & n)
@@ -1848,7 +1848,7 @@ char *CShader::mfScriptForFileName(const char *name, SShader *shGen, uint64 nMas
       if (shG->m_BitMask[i]->m_Mask & nMaskGen)
       {
         char macro[256];
-        sprintf(macro, "#define %s 0x%I64x\n", shG->m_BitMask[i]->m_ParamName.c_str(), shG->m_BitMask[i]->m_Mask);
+        sprintf(macro, "#define %s 0x%llx\n", shG->m_BitMask[i]->m_ParamName.c_str(), shG->m_BitMask[i]->m_Mask);
         int size = strlen(macro);
         int nOffs = custMacros.Num();
         custMacros.Grow(size);
@@ -2609,7 +2609,7 @@ SShader *CShader::mfForName (const char *nameSh, EShClass Class, int flags, cons
     efGen = fe->m_Ef;
     ef = efGen;
     feGen = fe;
-    sprintf(nameNew, "%s(%I64x)", name, nMaskGen);
+    sprintf(nameNew, "%s(%llx)", name, nMaskGen);
     it = m_RefEfsLoaded.find(nameNew);
     if (it == m_RefEfsLoaded.end())
       fe = NULL;
@@ -2674,7 +2674,7 @@ SShader *CShader::mfForName (const char *nameSh, EShClass Class, int flags, cons
   {
     if (efGen)
     {
-      sprintf(nameNew, "%s(%I64x)", name, nMaskGen);
+      sprintf(nameNew, "%s(%llx)", name, nMaskGen);
       ef = mfNewShader(Class, -1);
       if (!ef)
         return m_DefaultShader;
@@ -2714,7 +2714,7 @@ SShader *CShader::mfForName (const char *nameSh, EShClass Class, int flags, cons
         if (shG->m_BitMask[i]->m_Mask & nMaskGen)
         {
           char macro[256];
-          sprintf(macro, "#define %s 0x%I64x\n", shG->m_BitMask[i]->m_ParamName.c_str(), shG->m_BitMask[i]->m_Mask);
+          sprintf(macro, "#define %s 0x%llx\n", shG->m_BitMask[i]->m_ParamName.c_str(), shG->m_BitMask[i]->m_Mask);
           int size = strlen(macro);
           int nOffs = custMacros.Num();
           custMacros.Grow(size);
