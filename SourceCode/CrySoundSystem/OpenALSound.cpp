@@ -545,7 +545,11 @@ static int audio_ogg_from_data(unsigned char* p, int bufsize, ALuint* buf)
 	return 0;
 }
 
+#ifdef LINUX64
 signed char StreamOGGCallback(CS_STREAM* pStream, void *pBuffer, int nLength, void* nParam)
+#else
+signed char StreamOGGCallback(CS_STREAM* pStream, void* pBuffer, int nLength, int nParam)
+#endif
 {
 	AL_OGG_Userdata_t* userdata = (AL_OGG_Userdata_t*)nParam;
 	int read_samples = stb_vorbis_get_samples_short_interleaved(userdata->ogg,
@@ -606,8 +610,11 @@ DLL_API CS_STREAM*    F_API CS_Stream_Open(const char *name_or_data, unsigned in
 			stream->buffer = new char[4096];
 			stream->len = 4096;
 			stream->callback = StreamOGGCallback;
+#ifdef LINUX64
 			stream->userdata = userdata;
-
+#else
+			stream->userdata = (int)userdata;
+#endif
 			streams.push_back(stream);
 
 			AL_LOG("OpenAL: There are now %lu streams.\n", streams.size());
