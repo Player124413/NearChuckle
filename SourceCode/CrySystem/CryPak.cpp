@@ -1478,7 +1478,7 @@ size_t CZipPseudoFile::FRead (void* pDest, size_t nSize, size_t nCount, FILE* hF
 			unsigned char *itSrc = pSrc, *itSrcEnd = pSrc + nTotal;
 			for (; itSrc != itSrcEnd; ++itSrc)
 			{
-				if (*pSrc != 0xd)
+				if (*itSrc != 0xd)
 					*(itDest++) = *itSrc;
 			}
 			m_nCurSeek += nTotal;
