@@ -899,7 +899,7 @@ public:
 
   bool mfIsValid(int Num) const { return (m_Insts[m_CurInst].m_pHandle != NULL); }
   void mfGetSrcFileName(char *srcname, int nSize);
-  void mfGetDstFileName(char *dstname, int nSize, bool bUseASCIICache);
+  void mfGetDstFileName(char *dstname, int nSize, bool bUseASCIICache, const char* ext);
   void mfPrecacheLights(int nMask);
 
 public:

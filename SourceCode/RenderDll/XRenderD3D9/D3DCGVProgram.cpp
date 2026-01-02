@@ -1948,7 +1948,7 @@ void CCGVProgram_D3D::mfGetSrcFileName(char *srcname, int nSize)
   strncat(srcname, ".crycg", nSize);
 }
 
-void CCGVProgram_D3D::mfGetDstFileName(char *dstname, int nSize, bool bUseASCIICache)
+void CCGVProgram_D3D::mfGetDstFileName(char *dstname, int nSize, bool bUseASCIICache, const char* ext)
 {
   char *type;
 
@@ -2057,7 +2057,7 @@ void CCGVProgram_D3D::mfGetDstFileName(char *dstname, int nSize, bool bUseASCIIC
     strncat(dstname, str, nSize);
   }
 
-  strncat(dstname, ".cgvp", nSize);
+  strncat(dstname, ext, nSize);
 }
 
 static char *sGetText(char **buf)
@@ -2394,7 +2394,7 @@ bool CCGVProgram_D3D::mfActivate(CVProgram *pPosVP)
     bool bUseACIICache = true;
     if (CRenderer::CV_r_shadersprecache < 2 && (m_Flags & VPFI_SUPPORTS_MULTILIGHTS))
       bUseACIICache = false;
-    mfGetDstFileName(namedst, 256, bUseACIICache);
+    mfGetDstFileName(namedst, 256, bUseACIICache, ".cgvp");
     StripExtension(namedst, namedst1);
 
     // Use binary cache files for PS30 shaders

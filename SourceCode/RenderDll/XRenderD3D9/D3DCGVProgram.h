@@ -196,7 +196,7 @@ public:
   void mfFree();
 
   void mfGetSrcFileName(char *srcname, int nSize);
-  void mfGetDstFileName(char *dstname, int nSize, bool bUseASCIICache);
+  void mfGetDstFileName(char *dstname, int nSize, bool bUseASCIICache, const char* ext);
 
   TArray<SCGParam4f> *mfGetParams(int Type)
   {

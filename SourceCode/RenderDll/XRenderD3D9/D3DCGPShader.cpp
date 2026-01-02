@@ -1151,7 +1151,7 @@ void CCGPShader_D3D::mfGetSrcFileName(char *srcname, int nSize)
   strncat(srcname, ".crycg", nSize);
 }
 
-void CCGPShader_D3D::mfGetDstFileName(char *dstname, int nSize, bool bUseASCIICache)
+void CCGPShader_D3D::mfGetDstFileName(char *dstname, int nSize, bool bUseASCIICache, const char* ext)
 {
   char *type;
   bool bFog = false;
@@ -1276,7 +1276,7 @@ void CCGPShader_D3D::mfGetDstFileName(char *dstname, int nSize, bool bUseASCIICa
     strncat(dstname, str, nSize);
   }
 
-  strncat(dstname, ".cgps", nSize);
+  strncat(dstname, ext, nSize);
 }
 
 static char *sGetText(char **buf)
@@ -1435,7 +1435,7 @@ bool CCGPShader_D3D::mfActivate()
     bool bUseACIICache = true;
     if (CRenderer::CV_r_shadersprecache < 2 && (m_Flags & PSFI_SUPPORTS_MULTILIGHTS))
       bUseACIICache = false;
-    mfGetDstFileName(namedst, 256, bUseACIICache);
+    mfGetDstFileName(namedst, 256, bUseACIICache, ".cgps");
     StripExtension(namedst, namedst1);
     // Use binary cache files for PS30 and PS20b shaders
     if (!bUseACIICache)
