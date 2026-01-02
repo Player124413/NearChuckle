@@ -677,6 +677,7 @@ void CMusicSystem::Silence()
 void CMusicSystem::Update()
 {
 	FlushLog();
+	CS_Update();
 	if (!m_bDataLoaded)
 		return;	// no data loaded
 

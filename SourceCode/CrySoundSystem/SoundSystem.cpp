@@ -1023,8 +1023,8 @@ void CSoundSystem::Update()
 	m_stoppedSoundToBeDeleted.resize(0);
 
 	{
-		FRAME_PROFILER( "CSoundSystem::CS_Update",GetSystem(),PROFILE_SOUND );
-		CS_Update();
+		//FRAME_PROFILER( "CSoundSystem::CS_Update",GetSystem(),PROFILE_SOUND );
+		//CS_Update();
 	}
 }
 
