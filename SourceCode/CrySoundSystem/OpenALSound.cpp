@@ -51,7 +51,7 @@ typedef struct
 
 ALCdevice* aldevice;
 ALCcontext* alcontext;
-#define MAX_SOURCES 10
+#define MAX_SOURCES 30
 ALuint sources[MAX_SOURCES];
 std::vector<ALSample_t*> buffers;
 std::vector<ALStream_t*> streams;
