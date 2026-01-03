@@ -15,18 +15,29 @@
 #include "D3DCGVProgram.h"
 #include "D3DCGPShader.h"
 
+#ifndef __linux
 #include <SDL_syswm.h>
+#else
+#define lstrcat strcat
+#define lstrcpy strcpy
+#define lstrlen strlen
+#endif
+
 
 #undef THIS_FILE
 static char THIS_FILE[] = __FILE__;
 
 HWND Cry_GetHWND(SDL_Window* window)
 {
+#ifndef __linux
     SDL_SysWMinfo wmInfo;
     SDL_VERSION(&wmInfo.version);
     SDL_GetWindowWMInfo(window, &wmInfo);
     HWND hwnd = wmInfo.info.win.window;
     return hwnd;
+#else
+  return window;
+#endif
 }
 
 void CD3D9Renderer::DisplaySplash()
@@ -99,6 +110,7 @@ void CD3D9Renderer::DestroyWindow(void)
 
 void CD3D9Renderer::RestoreGamma(void)
 {
+#ifndef __linux
   if (!(GetFeatures() & RFT_HWGAMMA))
     return;
 
@@ -130,10 +142,12 @@ void CD3D9Renderer::RestoreGamma(void)
   dc = GetDC(m_hWndDesktop);
   SetDeviceGammaRamp(dc, &Ramp);
   ReleaseDC(m_hWndDesktop, dc);
+#endif
 }
 
 void CD3D9Renderer::SetDeviceGamma(ushort *r, ushort *g, ushort *b)
 {
+#ifndef __linux
   ushort gamma[3][256];
   int i;
 
@@ -159,6 +173,7 @@ void CD3D9Renderer::SetDeviceGamma(ushort *r, ushort *g, ushort *b)
   //iLog->Log("...SetDeviceGamma");
   SetDeviceGammaRamp(dc, gamma);
   ReleaseDC(m_hWndDesktop, dc);
+#endif
 }
 
 void CD3D9Renderer::SetGamma(float fGamma, float fBrightness, float fContrast, bool bForce)
@@ -615,13 +630,13 @@ void CD3D9Renderer::ShutDown(bool bReInit)
 #endif
   FinalCleanup();
   CName::mfExitSubsystem();
-
+#ifndef __linux
   if (m_hLibHandle3DC)
   {
     ::FreeLibrary((HINSTANCE)m_hLibHandle3DC);
     m_hLibHandle3DC = NULL;
   }
-
+#endif
 	//////////////////////////////////////////////////////////////////////////
 	// Clear globals.
 	//////////////////////////////////////////////////////////////////////////
@@ -718,6 +733,9 @@ bool CD3D9Renderer::SetWindow(int width, int height, bool fullscreen, WIN_HWND h
 //  return true;
 
     Uint32 windowFlags = SDL_WINDOW_SHOWN;
+#ifdef __linux
+    windowFlags |= SDL_WINDOW_VULKAN;
+#endif
     if (fullscreen)
         windowFlags |= SDL_WINDOW_FULLSCREEN;
 
@@ -1454,7 +1472,7 @@ HRESULT CD3D9Renderer::Initialize3DEnvironment()
       if(hr == D3DERR_NOTAVAILABLE)
       {
         SAFE_RELEASE(m_pd3dDevice);
-        Sleep(1000);
+        SDL_Delay(1000);
         m_d3dpp.Flags |= D3DPRESENTFLAG_LOCKABLE_BACKBUFFER;
 
         // Create the device
@@ -1462,7 +1480,7 @@ HRESULT CD3D9Renderer::Initialize3DEnvironment()
         if (FAILED(hr))
         {
           SAFE_RELEASE(m_pd3dDevice);
-          Sleep(1000);
+          SDL_Delay(1000);
           m_d3dpp.Flags &= ~D3DPRESENTFLAG_LOCKABLE_BACKBUFFER;
           hr = m_pD3D->CreateDevice(m_D3DSettings.AdapterOrdinal(), pDeviceInfo->DevType, hWnd, behaviorFlags, &m_d3dpp, &m_pd3dDevice);
         }
@@ -2091,8 +2109,10 @@ HRESULT CD3D9Renderer::InitDeviceObjects()
   D3DADAPTER_IDENTIFIER9 *ai = &pAI->AdapterIdentifier;
   iLog->Log ( "D3D Adapter: Driver name: %s\n", ai->Driver);
   iLog->Log ( "D3D Adapter: Driver description: %s\n", ai->Description);
+  #ifndef __linux
   iLog->Log ( "D3D Adapter: Driver version: %d.%02d.%02d.%04d\n", HIWORD( ai->DriverVersion.u.HighPart ), LOWORD( ai->DriverVersion.u.HighPart ), HIWORD(ai->DriverVersion.u.LowPart), LOWORD(ai->DriverVersion.u.LowPart));
   // Unique driver/device identifier:
+  #endif
   GUID *pGUID = &ai->DeviceIdentifier;
   iLog->Log ( "D3D Adapter: Driver GUID: %08X-%04X-%04X-%02X%02X%02X%02X%02X%02X%02X%02X\n", pGUID->Data1, pGUID->Data2, pGUID->Data3, pGUID->Data4[0], pGUID->Data4[1], pGUID->Data4[2], pGUID->Data4[3], pGUID->Data4[4], pGUID->Data4[5], pGUID->Data4[6], pGUID->Data4[7] );
   iLog->Log ( "D3D Adapter: VendorId = %i\n", ai->VendorId);

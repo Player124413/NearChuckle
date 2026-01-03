@@ -980,7 +980,7 @@ void CD3D9Renderer::SetupShadowOnlyPass(int Num, ShadowMapFrustum * pFrustum, Ve
     //float fDiam = (pFrustum->max_dist - pFrustum->min_dist);//*fShadowScale;
     //D3DXMatrixPerspectiveFovRH(&lightFrustumMatrix, pFrustum->FOV*fShadowScale*(gf_PI/180.0f), 1, pFrustum->min_dist, pFrustum->max_dist+10);
     if (m_Features & RFT_DEPTHMAPS)
-      makeProjectionMatrix(pFrustum->FOV*fShadowScale, pFrustum->ProjRatio, pFrustum->min_dist, pFrustum->max_dist+50, lightFrustumMatrix);
+      makeProjectionMatrix(pFrustum->FOV*fShadowScale, pFrustum->ProjRatio, pFrustum->min_dist, pFrustum->max_dist+50, &lightFrustumMatrix._11);
     else
       D3DXMatrixPerspectiveFovRH(&lightFrustumMatrix, pFrustum->FOV*fShadowScale*(gf_PI/180.0f), pFrustum->ProjRatio, pFrustum->min_dist, pFrustum->max_dist);
 
@@ -1001,20 +1001,20 @@ void CD3D9Renderer::SetupShadowOnlyPass(int Num, ShadowMapFrustum * pFrustum, Ve
     D3DXMatrixLookAtRH(&mat, &Eye, &At, &Up);
 
     if(pObjMat)
-      mathMatrixMultiply(lightViewMatrix, mat, pObjMat->GetData(), g_CpuFlags);
+      mathMatrixMultiply(&lightViewMatrix._11, &mat._11, pObjMat->GetData(), g_CpuFlags);
     else
     {
-      mathRotateZ(mat, vObjAngles.z, g_CpuFlags);
-      mathRotateY(mat, vObjAngles.y, g_CpuFlags);
-      mathRotateX(mat, vObjAngles.x, g_CpuFlags);
-      mathScale(mat, Vec3d(fObjScale,fObjScale,fObjScale), g_CpuFlags);
-      memcpy(lightViewMatrix, mat, sizeof(float)*16);
+      mathRotateZ(&mat._11, vObjAngles.z, g_CpuFlags);
+      mathRotateY(&mat._11, vObjAngles.y, g_CpuFlags);
+      mathRotateX(&mat._11, vObjAngles.x, g_CpuFlags);
+      mathScale(&mat._11, Vec3d(fObjScale,fObjScale,fObjScale), g_CpuFlags);
+      memcpy(&lightViewMatrix._11, &mat._11, sizeof(float)*16);
     }
   }
 
   CD3D9TexMan::BindNULL(1);
 
-  ConfigShadowTexgen(Num, 0, pFrustum, lightFrustumMatrix, lightViewMatrix, pFrustum->debugLightViewMatrix);
+  ConfigShadowTexgen(Num, 0, pFrustum, &lightFrustumMatrix._11, &lightViewMatrix._11, pFrustum->debugLightViewMatrix);
 }
 
 // setup projection texgen

@@ -550,7 +550,8 @@ int SShaderTexUnit::mfSetTexture(int nt)
         case TO_ENVIRONMENT_CUBE_MAP:
           {
             SEnvTexture *cm = NULL;
-            cm = rd->m_cEF.mfFindSuitableEnvCMap(rd->m_RP.m_pCurObject->GetTranslation(), true, 0, 0);
+            Vec3 trans = rd->m_RP.m_pCurObject->GetTranslation();
+            cm = rd->m_cEF.mfFindSuitableEnvCMap(trans, true, 0, 0);
             if (cm && cm->m_Tex)
               cm->m_Tex->Set();
             else
@@ -561,7 +562,8 @@ int SShaderTexUnit::mfSetTexture(int nt)
         case TO_ENVIRONMENT_LIGHTCUBE_MAP:
           {
             SEnvTexture *cm = NULL;
-            cm = rd->m_cEF.mfFindSuitableEnvLCMap(rd->m_RP.m_pCurObject->GetTranslation(), true, 0, 0);
+            Vec3 trans = rd->m_RP.m_pCurObject->GetTranslation();
+            cm = rd->m_cEF.mfFindSuitableEnvLCMap(trans, true, 0, 0);
             if (cm && cm->m_Tex)
               cm->m_Tex->Set();
             else
@@ -5046,7 +5048,10 @@ VOID CFnMap9::Fill2DWrapper(D3DXVECTOR4* pOut, const D3DXVECTOR2* pTexCoord, con
 {
   CFnMap9* map = (CFnMap9*)pData;
   const D3DXCOLOR& c = map->Function( pTexCoord, pTexelSize );
-  *pOut = D3DXVECTOR4((const float*)c);
+  pOut->x = c.r;
+	pOut->y = c.g;
+	pOut->z = c.b;
+	pOut->w = c.a;
 }
 
 HRESULT CFnMap9::Initialize()
@@ -5343,11 +5348,12 @@ void CFurNormalMap::Update(EShaderPassType eShPass, float dt, SShaderPassHW *slw
     return;
 
   static bool bUseGravity = true;
+#ifndef __linux
   if ((GetAsyncKeyState('G') & 0x8000))
     bUseGravity = true;
   if ((GetAsyncKeyState('N') & 0x8000))
     bUseGravity = false;
-
+#endif
   // gravity in model space
   Vec3 gravity;
   if (!bUseGravity)
@@ -5699,7 +5705,7 @@ void CD3D9TexMan::GenerateNoiseVolumeMap()
 
 VOID WINAPI FillAttenuationTexture(D3DXVECTOR4* pOut, const D3DXVECTOR2* pTexCoord, const D3DXVECTOR2* pTexelSize,	LPVOID pData)
 {
-	const unsigned int index = unsigned int(pTexCoord->y * float(NUM_ATTENUATION_FUNCTIONS) * float(BILERP_PROTECTION));
+	const unsigned int index = (unsigned int)(pTexCoord->y * float(NUM_ATTENUATION_FUNCTIONS) * float(BILERP_PROTECTION));
 	const unsigned int matNum = index / BILERP_PROTECTION;
 
   if ( matNum <= AF_LINEAR )

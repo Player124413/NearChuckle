@@ -1017,8 +1017,11 @@ void CD3D9Renderer::EF_SetCameraInfo()
   m_RP.m_PersFlags &= ~RBPF_WASWORLDSPACE;
   m_RP.m_ObjFlags = FOB_TRANS_MASK;
 }
-
-_declspec(align(16)) static Matrix44 sIdentityMatrix(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1); 
+#if defined(__GNUC__) || defined(__clang__)
+static Matrix44 sIdentityMatrix(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1) __attribute__((aligned(16)));
+#else
+_declspec(align(16)) static Matrix44 sIdentityMatrix(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
+#endif
 
 // Get inverted matrix of the object matrix
 // All matrices are 16 bytes alligned to speedup matrix calculations using SSE instructions

@@ -245,6 +245,7 @@ void CD3D9Renderer::UnRegisterVariables()
 
 void CD3D9Renderer::WaitForDevice()
 {
+#ifndef __linux
   if (m_bEditor)
     return;
 
@@ -268,6 +269,7 @@ void CD3D9Renderer::WaitForDevice()
         break;
     }
   }
+#endif
 }
 
 void CD3D9Renderer::Reset (void)
@@ -1035,7 +1037,8 @@ void CD3D9Renderer::Update()
     if (fg)
     {
       fg[nC] = (byte)f;
-      Graph(fg, 0, hgt-280, wdt, 256, nC, type, "Frame Time", Col_Green, fScale);
+      CFColor col = Col_Green;
+      Graph(fg, 0, hgt-280, wdt, 256, nC, type, "Frame Time", col, fScale);
     }
     nC++;
     if (nC == wdt)
@@ -1069,6 +1072,7 @@ void CD3D9Renderer::Update()
     static CFColor ColCurMem = Col_Yellow;
 
     static int sMask = -1;
+#ifndef __linux
     if (GetAsyncKeyState('1') & 0x1)
       sMask ^= 1;
     if (GetAsyncKeyState('2') & 0x1)
@@ -1083,7 +1087,7 @@ void CD3D9Renderer::Update()
       sMask ^= 32;
     if (GetAsyncKeyState('7') & 0x1)
       sMask ^= 64;
-
+#endif
     if (!fScaleTotalMem)
       fScaleTotalMem = (float)CRenderer::CV_r_texturesstreampoolsize;
 
@@ -2727,7 +2731,7 @@ void CD3D9Renderer::SetCamera(const CCamera &cam)
 
   float fov=cam.GetFov()*cam.GetProjRatio();
   D3DXMatrixPerspectiveFovRH(m, fov, 1.0f/cam.GetProjRatio(), cam.GetZMin(), cam.GetZMax());
-
+#ifndef __linux
   //IVO: code to check, if off-center projection works
   if (0) 
   {
@@ -2756,7 +2760,7 @@ void CD3D9Renderer::SetCamera(const CCamera &cam)
     //if values in win are bigger/equal to max, then functions returns no part-screen mat 
     *m=OffCenterProjection(cam, edge_nlt, 0x02, win_width, win_height ); 
   }
-
+#endif
   m_pd3dDevice->SetTransform(D3DTS_PROJECTION, m);
   m_bInvertedMatrix = false;
 
