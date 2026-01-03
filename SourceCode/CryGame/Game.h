@@ -497,6 +497,7 @@ public:
 	void	MenuOn();																	//!< enables menu instantly (no message)
 	void	MenuOff();																//!< disables menu instantly (no message)
 	void	DeleteMessage(const char *szMessage);			//!< deletes all occurrences of a specified message from the message queue
+	void DeleteStartLevelMessages(void);
 
 	const char *GetLevelName() { return m_currentLevel.c_str(); }
 

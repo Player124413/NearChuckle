@@ -1534,13 +1534,6 @@ void CXGame::LoadLevelCS(bool keepclient, const char *szMapName, const char *szM
 		m_pSystem->GetILog()->Log("UISystem: Enabled 3D Engine!");
 	}
 
-#ifdef __linux
-	//Hack to stop first level from loading twice when starting a new game.
-	//This is possibly due to the fact that the game normally plays a Bink
-	//video when starting a new game (see Campaign.lua). Since Bink is disabled
-	//on Linux, the scripting might break and cause a duplicate load.
-	DeleteMessage("StartLevel Training Training");
-#endif
 
 	if (m_pSystem->GetIMovieSystem())
 		m_pSystem->GetIMovieSystem()->StopAllCutScenes();
@@ -1599,6 +1592,10 @@ void CXGame::LoadLevelCS(bool keepclient, const char *szMapName, const char *szM
 	{
 		ShutdownClient();
 	}
+
+	//ShutdownClient() can sometimes add "StartLevel" messages to the queue,
+	//causing levels to be loaded multiple times.
+	DeleteStartLevelMessages();
 
 	// start server
 	if((!m_pServer || !keepclient) && !StartupServer(listen))
@@ -1930,6 +1927,25 @@ void CXGame::DeleteMessage(const char *szMessage)
 		m_qMessages.pop();
 
 		if (qMessage != szMessage)
+		{
+			NewQueue.push(qMessage);
+		}
+	}
+
+	m_qMessages = NewQueue;
+}
+
+void CXGame::DeleteStartLevelMessages(void)
+{
+	StringQueue NewQueue;
+
+	while(!m_qMessages.empty())
+	{
+		string qMessage = m_qMessages.front();
+
+		m_qMessages.pop();
+
+		if (strnicmp(qMessage.c_str(), "StartLevel", 10))
 		{
 			NewQueue.push(qMessage);
 		}
