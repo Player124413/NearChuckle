@@ -357,8 +357,21 @@ inline char* strlwr (char* str)
 }
 extern "C" char* strupr(char* str);
 
-extern char* _strtime(char* date);
-extern char* _strdate(char* date);
+inline char* _strtime(char* date)
+{
+    time_t the_time = time(NULL);
+    struct tm* tm_struct = localtime(&the_time);
+    sprintf(date, "%02i:%02i:%02i", tm_struct->tm_hour, tm_struct->tm_min, tm_struct->tm_sec);
+    return date;
+}
+
+inline char* _strdate(char* date)
+{
+    time_t the_time = time(NULL);
+    struct tm* tm_struct = localtime(&the_time);
+    sprintf(date, "%02i/%02i/%i", tm_struct->tm_mon + 1, tm_struct->tm_mday, tm_struct->tm_year + 1900);
+    return date;
+}
 
 #ifdef DIRECT3D9
 #undef HANDLE
