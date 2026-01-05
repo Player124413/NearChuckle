@@ -3619,11 +3619,24 @@ int CD3D9Renderer::LoadAnimatedTexture(const char * szFileNameFormat,const int n
 	{
 		char szFileName[_MAX_PATH];
 		char szFileFormat[_MAX_PATH];
-		char drive[_MAX_DRIVE];
-		char dir[_MAX_DIR];
 		char fname[_MAX_FNAME];
 		char ext[_MAX_EXT];
-		_splitpath( szFileNameFormat,drive,dir,fname,ext );
+		char* last_slash, *ext2;
+		strcpy(szFileName, szFileNameFormat);
+		last_slash = strrchr(szFileName, '\\');
+		if (!last_slash)
+		{
+			return 0;
+		}
+		*last_slash = '\0';
+		strcpy(fname, last_slash + 1);
+		ext2 = strrchr(fname, '.');
+		if (!ext2)
+		{
+			return 0;
+		}
+		strcpy(ext, ext2);
+		*ext2 = '\0';
 
 		int numDigits = 0;
 		int namelen = strlen(fname);
@@ -3645,7 +3658,12 @@ int CD3D9Renderer::LoadAnimatedTexture(const char * szFileNameFormat,const int n
 			// Make format string.
 			sprintf( fname+strlen(fname),"%%.%dd",numDigits );
 		}
-		_makepath( szFileFormat,drive,dir,fname,ext );
+  
+		strcpy(szFileFormat, szFileName);
+		strcat(szFileFormat, "/");
+		strcat(szFileFormat, fname);
+		strcat(szFileFormat, ext);
+  
 		for (int i=0; i<nCount; i++) 
 		{
 			sprintf( szFileName,szFileFormat,firstFrame + i );
