@@ -84,6 +84,7 @@ set(SRC_FILES
     "D3DTexturesStreaming.cpp"
     "D3DVertBuffer.cpp"
     "DriverD3D9.cpp"
+    "d3dx9.cpp"
 )
 
 if (${ARCH_TYPE} STREQUAL "x86")
