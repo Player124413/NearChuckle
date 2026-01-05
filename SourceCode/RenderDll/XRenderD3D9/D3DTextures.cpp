@@ -2888,7 +2888,7 @@ void CD3D9TexMan::UpdateTextureData(STexPic *pic, byte *data, int USize, int VSi
       wdt >>= 1;
       hgt >>= 1;
 
-      Exchange(out, (byte *)data);
+      Exchange(out, data);
       
       i++;
     }
@@ -2942,7 +2942,7 @@ void CD3D9TexMan::UpdateTextureData(STexPic *pic, byte *data, int USize, int VSi
       hgt >>= 1;
       MipMap32Bit (ti, (byte *)data, out, wdt, hgt);
 
-      Exchange(out, (byte *)data);
+      Exchange(out, data);
       
       i++;
     }
@@ -5119,7 +5119,7 @@ void CFurMap::Update(int nNumLayers)
   SFurLayers *fl = new SFurLayers;
   m_nCurInst = nInst;
   m_Inst.AddElem(fl);
-  Initialize(timeGetTime(), 128, nNumLayers, fl);
+  Initialize(SDL_GetTicks(), 128, nNumLayers, fl);
 }
 
 HRESULT CFurMap::Initialize(int seed, int size, int num, SFurLayers *fl)

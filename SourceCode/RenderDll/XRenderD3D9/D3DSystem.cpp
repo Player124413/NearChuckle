@@ -814,6 +814,7 @@ WIN_HWND CD3D9Renderer::Init(int x,int y,int width,int height,unsigned int cbpp,
     m_bEditor = true;
 
 #ifdef USE_3DC
+#ifndef __linux
   m_hLibHandle3DC = ::LoadLibrary("CompressATI.dll");
   if (!m_hLibHandle3DC)
     m_hLibHandle3DC = ::LoadLibrary("CompressATI2.dll");
@@ -822,6 +823,10 @@ WIN_HWND CD3D9Renderer::Init(int x,int y,int width,int height,unsigned int cbpp,
     CompressTextureATI = (FnCompressTextureATI)GetProcAddress((HINSTANCE)m_hLibHandle3DC, "CompressTextureATI");
     DeleteDataATI = (FnDeleteDataATI)GetProcAddress((HINSTANCE)m_hLibHandle3DC, "DeleteDataATI");
   }
+#else
+  CompressTextureATI = 0;
+  DeleteDataATI = 0;
+#endif //__linux
 #endif
 
   // Save the new dimensions

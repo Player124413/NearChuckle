@@ -361,6 +361,7 @@ bool CD3D9Renderer::ChangeResolution(int nNewWidth, int nNewHeight, int nNewColD
   }
   if (!bFullScreen)
   {
+#ifndef __linux
     int x = (m_deskwidth-CRenderer::m_width)/2;
     int y = (m_deskheight-CRenderer::m_height)/2;
     int wdt = GetSystemMetrics(SM_CXDLGFRAME)*2 + CRenderer::m_width;
@@ -368,6 +369,7 @@ bool CD3D9Renderer::ChangeResolution(int nNewWidth, int nNewHeight, int nNewColD
     //SetWindowPos(m_hWnd, HWND_NOTOPMOST, x, y, wdt, hgt, SWP_SHOWWINDOW);
     SDL_SetWindowPosition(m_hWnd, x, y);
     SDL_SetWindowSize(m_hWnd, wdt, hgt);
+  #endif
   }
   // Save window properties
   Cry_GetWindowRect( m_hWnd, &m_rcWindowBounds );
