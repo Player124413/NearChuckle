@@ -1419,6 +1419,29 @@ bool CCGPShader_D3D::mfActivate()
         m_CGProfileType = CG_PROFILE_PS_2_0;
     }
 
+    const char* force_2_0_list[] = {"CGRCBump_Diff_SingleLight_Atten_Plants_Bump",
+    "CGRCBump_DiffSpec_SingleLight_HP_ProjNoAtten",
+    "CGRCBump_DiffSpec_SingleLight_HP_ProjNoAtten_EnvLight",
+    "CGRCBump_DiffSpec_SingleLight_HP_ProjNoAtten_GlossAlpha_EnvLight",
+    "CGRCBump_DiffSpec_SingleLight_HP_ProjNoAtten_GlossAlpha",
+    "CGRCBump_Diff_SingleLight_Atten_Plants_Bump",
+    "CGRCBump_DiffSpec_MultipleLights_HP_ProjNoAtten",
+    "CGRCPlants_Bump",
+    "CGRCTerrain_2Layers",
+    "CGRCTerrain_3Layers",
+    "CGRCTerrain_3Layers_Only",
+    "CGRCTerrain_4Layers_Only",
+    "CGRCBump_DiffSpec_MultipleLights_HP_ProjNoAtten_GlossAlpha"};
+    size_t list_len = sizeof(force_2_0_list) / sizeof(force_2_0_list[0]);
+    for (size_t i = 0; i < list_len; i++)
+    {
+        if (m_CGProfileType == CG_PROFILE_PS_1_1 && !m_Name.compare(force_2_0_list[i]))
+        {
+            m_CGProfileType = CG_PROFILE_PS_2_0;
+            break;
+        }
+    }
+
     char strVer[128];
     char strVer0[128];
     sprintf(strVer, "//CGVER%.1f\n", CG_FP_CACHE_VER);
