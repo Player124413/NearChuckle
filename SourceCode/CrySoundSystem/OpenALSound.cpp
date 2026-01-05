@@ -47,6 +47,7 @@ typedef struct
 	int userdata;
 #endif
 	ALuint source;
+	int channel;
 } ALStream_t;
 
 ALCdevice* aldevice;
@@ -65,7 +66,8 @@ CS_TELLCALLBACK my_ftell;
 
 ALuint GetSourceOfChannel(int channel)
 {
-	if (channel < 0 || channel >= (MAX_SOURCES + streams.size()))
+	size_t i;
+	if (channel < 0)
 	{
 		__builtin_trap();
 		return SOURCE_OUT_OF_BOUNDS;
@@ -73,7 +75,15 @@ ALuint GetSourceOfChannel(int channel)
 
 	if (channel >= MAX_SOURCES)
 	{
-		return streams[channel - MAX_SOURCES]->source;
+		for (i = 0; i < streams.size(); i++)
+		{
+			if (streams[i]->channel == channel)
+			{
+				return streams[i]->source;
+			}
+		}
+		__builtin_trap();
+		return SOURCE_OUT_OF_BOUNDS;
 	}
 	else
 	{
@@ -615,9 +625,10 @@ DLL_API CS_STREAM*    F_API CS_Stream_Open(const char *name_or_data, unsigned in
 #else
 			stream->userdata = (int)userdata;
 #endif
+			stream->channel = CS_FREE;
 			streams.push_back(stream);
 
-			AL_LOG("OpenAL: There are now %lu streams.\n", streams.size());
+			AL_LOG("OpenAL %s: There are now %lu streams.\n", __func__, streams.size());
 		}
 		else
 		{
@@ -683,8 +694,10 @@ DLL_API CS_STREAM* F_API CS_Stream_Create(CS_STREAMCALLBACK callback, int length
 	stream->len = length;
 	stream->callback = callback;
 	stream->userdata = userdata;
+	stream->channel = CS_FREE;
 
 	streams.push_back(stream);
+	AL_LOG("OpenAL %s: There are now %lu streams.\n", __func__, streams.size());
 
 	return (CS_STREAM*)stream;
 }
@@ -705,6 +718,7 @@ DLL_API signed char     F_API CS_Stream_Close(CS_STREAM* stream)
 		if (*it == strm)
 		{
 			streams.erase(it);
+			AL_LOG("OpenAL %s: There are now %lu streams.\n", __func__, streams.size());
 			break;
 		}
 	}
@@ -746,6 +760,7 @@ DLL_API int             F_API CS_Stream_Play(int channel, CS_STREAM* stream)
 		}
 	}
 
+	strm->channel = MAX_SOURCES + i;
 	return MAX_SOURCES + i;
 }
 
@@ -786,6 +801,7 @@ DLL_API int             F_API CS_Stream_PlayEx(int channel, CS_STREAM* stream, C
 		}
 	}
 
+	strm->channel = MAX_SOURCES + i;
 	return MAX_SOURCES + i;
 }
 
@@ -801,6 +817,7 @@ DLL_API signed char     F_API CS_Stream_Stop(CS_STREAM* stream)
 	}
 
 	strm = (ALStream_t*)stream;
+	strm->channel = CS_FREE;
 	alSourceStop(strm->source);
 	alGetSourcei(strm->source, AL_BUFFERS_QUEUED, &num_buffers);
 
