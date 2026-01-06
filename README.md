@@ -17,11 +17,11 @@ Modify the `CMakeLists.txt` file in `RenderDll/XRenderOGL` and set `CG_LIB_PATH`
 the path containing `libCgGL.so` and `libCg.so`.
 
 After building, place all of the .so files and the `FarCry` binary in a folder in Far Cry's installation folder (containing `FCData`, `Levels`, `Profiles`, `Shaders`). If you built with the supplied CMake Preset, they should be in `bin/x64-Debug`.
-You can simply movie `x64-Debug` to the installation folder. Launch `FarCry` from inside the folder it is in.
+You can simply move `x64-Debug` to the installation folder. Launch `FarCry` from inside the folder it is in.
 
 ## Known issues
 
-### Broken decals
+### Broken decals on OpenGL
 
 On my Linux machine, decal texture coordinates will frequently change every frame and look almost like
 Z-fighting. They look fine on Windows when forcing the OpenGL renderer, so I am
@@ -47,25 +47,4 @@ index 5771c16..b019635 100644
    for (i=nStart; i<=nEnd; i++, slw++)
    {
      SArrayPointer::m_CurEnabledPass = 0;
-```
-
-### Crash when firing a weapon
-
-For some reason, stack smashing occurs in the `CScriptObjectGame::SoundEvent` function. A current workaround
-is to disable the function call in ScriptObjectGame.cpp.
-
-```
-diff --git a/SourceCode/CryGame/ScriptObjectGame.cpp b/SourceCode/CryGame/ScriptObjectGame.cpp
-index 64fb351..d79388e 100644
---- a/SourceCode/CryGame/ScriptObjectGame.cpp
-+++ b/SourceCode/CryGame/ScriptObjectGame.cpp
-@@ -3571,7 +3571,7 @@ int CScriptObjectGame::SoundEvent(IFunctionHandler *pH)
- 	CXClient *pCli=m_pGame->GetClient();
- 	if(pCli)
- 	{
--		pCli->SoundEvent((EntityId)nID,pos,fRadius,fThreat);
-+		//pCli->SoundEvent((EntityId)nID,pos,fRadius,fThreat);
- 	}
- 	
- 	return pH->EndFunction();
 ```

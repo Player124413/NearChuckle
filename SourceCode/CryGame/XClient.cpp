@@ -3268,7 +3268,7 @@ void CXClient::SoundEvent(EntityId idSrc,Vec3 &pos,float fRadius,float fThreat)
 		float fSoundEventRadius=cl_sound_event_radius->GetFVal();
 		if (fDistance2<(fSoundEventRadius*fSoundEventRadius))
 		{
-			SSoundInfo SoundInfo;
+			SSoundInfo SoundInfo = {};
 			SoundInfo.nEntityId=idSrc;
 			SoundInfo.Pos=pos;
 			SoundInfo.fRadius=fRadius;
