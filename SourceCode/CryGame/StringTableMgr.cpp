@@ -213,6 +213,7 @@ bool CStringTableMgr::LoadExcelXmlSpreadsheet( const string &sFileName )
 		int nUTF_8_Len = strlen(sUTF_8_Str);
 		int nUnicodeLen = nUTF_8_Len + 16; // + 16 just for safety.
 		wchar_t *sUnicodeStr = new wchar_t[ nUnicodeLen*sizeof(wchar_t) + 16 ];
+		memset(sUnicodeStr, 0, nUnicodeLen*sizeof(wchar_t) + 16);
 		// Use UTF-8 multibyte unicode decoding to convert to wide string.
 		// This is potentially not porrtable, for different platforms, alternative function must be used.
 #if defined(LINUX)

@@ -630,6 +630,7 @@ public:
     m_bActive = false;
     m_Flags = 0;
     m_nMaskGen = 0;
+    m_Frame = 0;
   }
   virtual ~CPShader() {}
 

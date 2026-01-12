@@ -20,6 +20,7 @@
 
 // can not be changed by user
 #define INIT_CVAR_CHEAT(_var,_def_val,_comment)\
+	(_var) = _def_val;\
 	(_var) = GetConsole()->Register((#_var), &(_var), (_def_val), VF_CHEAT, _comment);
 
 // can be changed in options menu, will be saved into ini file
@@ -35,6 +36,7 @@
 
 // can be changed by game or user
 #define INIT_CVAR_PUBL_(_var,_def_val,_comment)\
+	(_var) = _def_val;\
 	(_var) = GetConsole()->Register((#_var), &(_var), (_def_val), 0, _comment);
 
 void CVars::Init()

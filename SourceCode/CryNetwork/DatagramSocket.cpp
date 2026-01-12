@@ -56,6 +56,9 @@ NRESULT CDatagramSocket::Create(SocketType st)
 			return MAKE_NRESULT(NET_FAIL, NET_FACILITY_SOCKET, nErr);
 		}
 	}
+#if defined(LINUX)
+	memset(&m_imMulticastReq, 0, sizeof(m_imMulticastReq));
+#endif
 	return NET_OK;
 }
 

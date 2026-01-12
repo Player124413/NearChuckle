@@ -236,7 +236,10 @@ void CXConsoleVariable::Set(const char* s)
 		*m_fValue=(float)(atof(s));
 	if (m_sValue)
 	{
-		strcpy(m_sValue,s);
+		if (m_sValue != s)
+		{
+			strcpy(m_sValue,s);
+		}
 	}
 }
 

@@ -66,7 +66,7 @@ CTriMesh::~CTriMesh()
 	}
 	if (m_flags & 1)
 	{
-#ifndef __e2k__
+#if 0
 		if (m_pVertices) delete[] m_pVertices;
 #else
 		if (m_pVertices.data) delete[] m_pVertices.data;

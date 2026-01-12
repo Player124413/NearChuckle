@@ -373,7 +373,7 @@ CXGame::~CXGame()
 	SAFE_DELETE(m_pTimeDemoRecorder);
 	SAFE_DELETE(m_pGameMods);
 
-	delete m_pTagPointManager;
+	::operator delete(m_pTagPointManager);
 }
 
 //////////////////////////////////////////////////////////////////////////

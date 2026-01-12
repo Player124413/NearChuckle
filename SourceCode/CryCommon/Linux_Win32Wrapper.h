@@ -161,22 +161,16 @@ typedef pthread_mutex_t CRITICAL_SECTION;
 #ifdef __cplusplus
 inline void InitializeCriticalSection(CRITICAL_SECTION *lpCriticalSection)
 {
-    pthread_mutexattr_t pthread_mutexattr_def;
-    pthread_mutexattr_settype(&pthread_mutexattr_def, PTHREAD_MUTEX_RECURSIVE_NP);
-    pthread_mutex_init(lpCriticalSection, &pthread_mutexattr_def);
 }
-inline void EnterCriticalSection(CRITICAL_SECTION *lpCriticalSection){pthread_mutex_lock(lpCriticalSection);}
-inline void LeaveCriticalSection(CRITICAL_SECTION *lpCriticalSection){pthread_mutex_unlock(lpCriticalSection);}
+inline void EnterCriticalSection(CRITICAL_SECTION *lpCriticalSection){}
+inline void LeaveCriticalSection(CRITICAL_SECTION *lpCriticalSection){}
 inline void DeleteCriticalSection(CRITICAL_SECTION *lpCriticalSection){}
 #else
 static void InitializeCriticalSection(CRITICAL_SECTION *lpCriticalSection)
 {
-    pthread_mutexattr_t pthread_mutexattr_def;
-    pthread_mutexattr_settype(&pthread_mutexattr_def, PTHREAD_MUTEX_RECURSIVE_NP);
-    pthread_mutex_init(lpCriticalSection, &pthread_mutexattr_def);
 }
-static void EnterCriticalSection(CRITICAL_SECTION *lpCriticalSection){pthread_mutex_lock(lpCriticalSection);}
-static void LeaveCriticalSection(CRITICAL_SECTION *lpCriticalSection){pthread_mutex_unlock(lpCriticalSection);}
+static void EnterCriticalSection(CRITICAL_SECTION *lpCriticalSection){}
+static void LeaveCriticalSection(CRITICAL_SECTION *lpCriticalSection){}
 static void DeleteCriticalSection(CRITICAL_SECTION *lpCriticalSection){}
 #endif
 
