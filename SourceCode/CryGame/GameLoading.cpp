@@ -1554,7 +1554,7 @@ public:
 			string szValue = pCVar->GetString();
 			int pos;
 
-			// replace \ with \\ 
+			// replace \ with \\.
 			pos = 1;
 			for(;;)
 			{
