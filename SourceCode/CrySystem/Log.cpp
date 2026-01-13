@@ -69,10 +69,10 @@ void CLog::EnableVerbosity( bool bEnable )
 		{
 			if (m_pSystem->GetIConsole())
 			{
-#if defined(DEBUG) || (defined(LINUX) && !defined(NDEBUG))
+#ifdef DEBUG
 				m_pLogVerbosity = m_pSystem->GetIConsole()->CreateVariable("log_Verbosity","5",VF_DUMPTODISK);
 #else
-				m_pLogVerbosity = m_pSystem->GetIConsole()->CreateVariable("log_Verbosity","3",VF_DUMPTODISK);
+				m_pLogVerbosity = m_pSystem->GetIConsole()->CreateVariable("log_Verbosity","0",VF_DUMPTODISK);
 #endif
 				m_pLogFileVerbosity = m_pSystem->GetIConsole()->CreateVariable("log_FileVerbosity","3",VF_DUMPTODISK);
 			}

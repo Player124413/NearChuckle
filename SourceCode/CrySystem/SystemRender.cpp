@@ -803,25 +803,21 @@ void CSystem::CreateRendererVars()
 	m_rDriver= GetIConsole()->CreateVariable("r_Driver", "Direct3D9", VF_DUMPTODISK,
 		"Sets the renderer driver. Default is 'Direct3D9'.\n"
 		"Usage: r_Driver Direct3D9");
+  m_rFullscreen = GetIConsole()->CreateVariable("r_Fullscreen", "0", VF_DUMPTODISK,
+		"Toggles fullscreen mode. Default is 0 (windowed).\n"
+		"Usage: r_Fullscreen [0/1]\n"
+		"In debug mode, the display is automatically set to windowed mode.");
+
+	m_rDisplayInfo = GetIConsole()->CreateVariable("r_DisplayInfo",
 #ifdef _DEBUG
-	m_rFullscreen = GetIConsole()->CreateVariable("r_Fullscreen", "0", VF_DUMPTODISK,
-		"Toggles fullscreen mode. Default is 1 (fullscreen).\n"
-		"Usage: r_Fullscreen [0/1]\n"
-		"In debug mode, the display is automatically set to windowed mode.");
-	m_rDisplayInfo = GetIConsole()->CreateVariable("r_DisplayInfo", "1", VF_DUMPTODISK,
-		"Toggles debugging information display. Default is 0 (off)."
-		"Usage: r_DisplayInfo [0/1]\n"
-		"In debug mode, the information is automatically displayed.");
+    "1",
 #else
-	m_rFullscreen = GetIConsole()->CreateVariable("r_Fullscreen", "1", VF_DUMPTODISK,
-		"Toggles fullscreen mode. Default is 1 (fullscreen).\n"
-		"Usage: r_Fullscreen [0/1]\n"
-		"In debug mode, the display is automatically set to windowed mode.");
-	m_rDisplayInfo = GetIConsole()->CreateVariable("r_DisplayInfo", "0", VF_DUMPTODISK,
+    "0",
+#endif
+    VF_DUMPTODISK,
 		"Toggles debugging information display. Default is 0 (off)."
 		"Usage: r_DisplayInfo [0/1]\n"
 		"In debug mode, the information is automatically displayed.");
-#endif
 }
 
 //////////////////////////////////////////////////////////////////////
