@@ -63,7 +63,7 @@ void CryStaticModel::LoadMaterials(CXFile*f, int pos)
     me.opacity = 1.0f;
     me.alpharef = 0;
     me.m_New = 2;
-    strcpy(me.name, chunk.name);
+    strncpy(me.name, chunk.name, sizeof(me.name));
     switch (chunk.MtlType)
     {
       case MTL_STANDARD:
