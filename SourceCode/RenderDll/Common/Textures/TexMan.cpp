@@ -34,6 +34,7 @@ char *texdir = "Textures";
 
 CTexMan::CTexMan()
 {
+  int i, j;
   m_bRGBA = true;
   m_MinFilter = 0;
   m_MagFilter = 0;
@@ -41,6 +42,7 @@ CTexMan::CTexMan()
   m_CurStage = 0;
   m_Streamed = CRenderer::CV_r_texturesstreaming;
   m_CurTexMaxSize = CRenderer::CV_r_texmaxsize;
+  m_CurTexMinSize = CRenderer::CV_r_texminsize;
   m_CurTexSkyResolution = CRenderer::CV_r_texskyresolution;
   m_CurTexSkyQuality = CRenderer::CV_r_texskyquality;
   m_CurTexResolution = CRenderer::CV_r_texresolution;
@@ -62,6 +64,100 @@ CTexMan::CTexMan()
   m_pProcessedTexture2 = NULL;
   m_nPhaseProcessingTextures = 0;
   m_nCustomMip = 0;
+  
+  m_LoadBytes = 0;
+  m_Text_White = NULL;
+  m_Text_WhiteShadow = NULL;
+  m_Text_WhiteBump = NULL;
+  m_Text_Gradient = NULL;
+  m_Text_Depth = NULL;
+  m_Text_Atten2D = NULL;
+  m_Text_Atten1D = NULL;
+  m_Text_Edge = NULL;
+  m_Text_NoTexture = NULL;
+  m_Text_NoiseVolumeMap = NULL;
+  m_Text_NormalizeCMap = NULL;
+  m_Text_EnvLCMap = NULL;
+  m_Text_EnvCMap = NULL;
+  m_Text_EnvTex = NULL;
+  m_Text_EnvScr = NULL;
+  m_Text_Glare = NULL;
+  m_Text_HeatMap = NULL;
+  m_Text_FurNormalMap = NULL;
+  m_Text_FurLightMap = NULL;
+  m_Text_Fur = NULL;
+  m_Text_RefractMap = NULL;
+  m_Text_WaterMap = NULL;
+  m_Text_MotionBlurMap = NULL;
+  m_Text_NightVisMap = NULL;
+  m_Text_FlashBangMap = NULL;
+  m_Text_RainMap = NULL;
+  m_Text_LightCMap = NULL;
+  for (i = 0; i < 8; i++)
+  {
+    m_Text_FromRE[i] = NULL;
+  }
+  
+  m_Text_FromObj = NULL;
+  m_Text_FromLight = NULL;
+  m_Text_Fog = NULL;
+  m_Text_Fog_Enter = NULL;
+  m_Text_VFog = NULL;
+  m_Text_Flare = NULL;
+  m_Text_Ghost = NULL;
+  m_Text_DepthLookup = NULL;
+  m_Text_FlashBangFlash = NULL;
+  m_Text_ScreenNoise = NULL;
+  m_Text_HeatPalete = NULL;
+  m_Text_ScreenMap = NULL;
+  m_Text_ScreenMap_HDR = NULL;
+  m_Text_PrevScreenMap = NULL;
+  m_Text_ScreenLuminosityMap = NULL;
+  m_Text_ScreenCurrLuminosityMap = NULL;
+  m_Text_ScreenLowMap = NULL;
+  m_Text_ScreenAvg1x1 = NULL;
+  m_Text_DofMap = NULL;
+
+  m_Text_Gray = NULL;
+
+  m_Text_HDRTarget = NULL;
+  m_Text_HDRTarget_Temp = NULL;
+  m_Text_HDRTargetScaled[0] = NULL;
+  m_Text_HDRTargetScaled[1] = NULL;
+  m_Text_HDRBrightPass = NULL;
+  m_Text_HDRStarSource = NULL;
+  m_Text_HDRBloomSource = NULL;
+  m_Text_HDRAdaptedLuminanceCur = NULL;
+  m_Text_HDRAdaptedLuminanceLast = NULL;
+  m_TexCache = NULL;
+  for (i = 0; i < NUM_HDR_TONEMAP_TEXTURES; i++)
+  {
+     m_Text_HDRToneMaps[i] = NULL;
+  }
+  for (i = 0; i < NUM_HDR_BLOOM_TEXTURES; i++)
+  {
+     m_Text_HDRBloomMaps[i] = NULL;
+  }
+  for (i = 0; i < NUM_HDR_STAR_TEXTURES; i++)
+  {
+     m_Text_HDRStarMaps[i][0] = NULL;
+     m_Text_HDRStarMaps[i][1] = NULL;
+  }
+  for (i=0; i<16; i++)
+  {
+    m_CustomCMaps[i] = {};
+  }
+  for (i=0; i<EFTT_MAX; i++)
+  {
+    m_Templates[i].m_eTT = 0;
+  }
+  for (i = 0; i < MAX_ENVLIGHTCUBEMAPS; i++)
+  {
+    for (j = 0; j < 6; j++)
+    {
+      m_EnvLCMaps[i].m_RenderTargets[j] = NULL;
+    }
+  }
 }
 
 void CTexMan::Shutdown()
@@ -447,7 +543,7 @@ void sLogTexture (const char *name, int Size)
 STexPic *CTexMan::TextureInfoForName(const char *nameTex, int numT, byte eTT, uint flags, uint flags2, int bind)
 {
   char fullnm[256];
-  int i;
+  int i, j;
 
 	STexPic *ti = NULL; 
 	STexPic *tiFound = NULL;
@@ -536,6 +632,31 @@ create:
   if (i>=m_Textures.Num() || !m_Textures[i])
   {
     ti = CreateTexture();
+    ti->m_pPalette = NULL;
+    ti->m_pData = NULL;
+    ti->m_p8to24table = NULL;
+    ti->m_pData32 = NULL;
+    ti->m_Matrix = NULL;
+    ti->m_p8to24table = NULL;
+    ti->m_p15to8table = NULL;
+    ti->m_pFuncMap = NULL;
+    ti->m_pFileTexMips = NULL;
+    ti->m_pSH = NULL;
+    ti->m_Next = NULL;
+    ti->m_Prev = NULL;
+    ti->m_TL = NULL;
+    ti->m_pSH = NULL;
+    ti->m_NextTxt = NULL;
+    ti->m_NextCMSide = NULL;
+    ti->m_eTT = 0;
+    ti->m_pPoolItem = NULL;
+    ti->m_CubeSide = 0;
+    ti->m_AccessFrame = 0;
+    ti->m_LoadedSize = 0;
+    for (j = 0; j < 6; j++)
+    {
+      ti->m_Mips[j] = NULL;
+    }
     if (i < m_Textures.Num())
       m_Textures[i] = ti;
     else
@@ -545,7 +666,6 @@ create:
   ti = m_Textures[i];
   if (tl)
   {
-    int j;
     for (j=0; j<tl->m_NumTextures; j++)
     {
       if (ti == tl->m_Textures[j])

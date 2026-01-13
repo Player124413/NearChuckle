@@ -90,6 +90,8 @@ CTimeDemoRecorder::CTimeDemoRecorder( ISystem *pSystem )
 	m_maxLoops = 1000;
 	m_demo_scroll_pause = 1;
 	m_demo_noinfo = 1;
+	m_demo_quit = 0;
+	m_demo_screenshot_frame = 0;
 
 	m_bPaused = false;
 
