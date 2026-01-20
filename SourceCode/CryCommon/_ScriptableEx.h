@@ -27,7 +27,7 @@ public:
 		//m_nFuncNum=0;
 		m_pScriptThis=NULL;
 		m_pScriptSystem=NULL;
-		m_nBase=NULL;
+		m_nBase=0;
 
 	}
 	virtual ~_ScriptableEx()

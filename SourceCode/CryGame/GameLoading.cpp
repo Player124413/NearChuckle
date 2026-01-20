@@ -148,7 +148,7 @@ struct PropertyWriter : IScriptObjectDumpSink
 };
 
 //////////////////////////////////////////////////////////////////////////
-void LoadProperties(IScriptObject *table, CStream &stm, IScriptSystem *ss, char *parent)
+void LoadProperties(IScriptObject *table, CStream &stm, IScriptSystem *ss, const char *parent)
 {
 	ASSERT(table);
 	ASSERT(ss);  // martin made me do it
@@ -561,7 +561,7 @@ bool CXGame::SaveToStream(CStream &stm, Vec3d *pos, Vec3d *angles,string sFilena
 			pAIObject->Save(stm);
 
 			IScriptSystem *pScriptSystem = GetSystem()->GetIScriptSystem();
-			HSCRIPTFUNCTION	saveOverallFunction=NULL;
+			HSCRIPTFUNCTION	saveOverallFunction=0;
 			if( pEnt->GetScriptObject() && pEnt->GetScriptObject()->GetValue("OnSaveOverall", saveOverallFunction) )
 			{
 				pScriptSystem->BeginCall(saveOverallFunction);
@@ -1330,7 +1330,7 @@ bool CXGame::LoadFromStream(CStream &stm, bool isdemo)
 					{
 						pEntity->GetAI()->Load(stm);
 						IScriptSystem *pScriptSystem = GetSystem()->GetIScriptSystem();
-						HSCRIPTFUNCTION	loadOverallFunction=NULL;
+						HSCRIPTFUNCTION	loadOverallFunction=0;
 						if( pEntity->GetScriptObject() && pEntity->GetScriptObject()->GetValue("OnLoadOverall", loadOverallFunction) )
 						{
 							pScriptSystem->BeginCall(loadOverallFunction);
@@ -2971,7 +2971,7 @@ bool CXGame::LoadFromStream_PATCH_1(CStream &stm, bool isdemo, CScriptObjectStre
 					{
 						pEntity->GetAI()->Load(stm);
 						IScriptSystem *pScriptSystem = GetSystem()->GetIScriptSystem();
-						HSCRIPTFUNCTION	loadOverallFunction=NULL;
+						HSCRIPTFUNCTION	loadOverallFunction=0;
 //						if( pEntity->GetScriptObject() && pEntity->GetScriptObject()->GetValue("OnLoadOverall", loadOverallFunction) )
 //						{
 //							pScriptSystem->BeginCall(loadOverallFunction);

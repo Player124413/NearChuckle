@@ -473,6 +473,7 @@ void CBoidBird::OnFlockMove( SBoidContext &bc )
 //////////////////////////////////////////////////////////////////////////
 void CBoidBird::Update( float dt,SBoidContext &bc )
 {
+	pe_status_awake awake;
 	if (m_physicsControlled)
 	{
 		if (m_pPhysics)
@@ -489,7 +490,7 @@ void CBoidBird::Update( float dt,SBoidContext &bc )
 				sym.density = BIRDS_PHYSICS_INWATER_DENSITY;
 				m_pPhysics->SetParams( &sym );
 			}
-			bool bAwake = m_pPhysics->GetStatus(&pe_status_awake()) != 0;
+			bool bAwake = m_pPhysics->GetStatus(&awake) != 0;
 			if (bAwake && m_pPhysics->GetType() == PE_ARTICULATED)
 			{
 				m_object->SynchronizeWithPhysicalEntity(m_pPhysics);
@@ -853,7 +854,7 @@ CBoidFish::CBoidFish( SBoidContext &bc )
 {
 	m_dead = 0;
 	m_dying = 0;
-	m_pOnSpawnBubbleFunc = NULL;
+	m_pOnSpawnBubbleFunc = 0;
 }
 
 CBoidFish::~CBoidFish()

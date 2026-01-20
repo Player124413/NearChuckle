@@ -291,7 +291,7 @@ int CUISystem::ResetKeyRepeat()
 {
 	m_fRepeatTimer = 0;
 	m_iLastKey = XKEY_NULL;
-	m_szLastKeyName = "";
+	m_szLastKeyName = NULL;
 
 	return 1;
 }

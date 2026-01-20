@@ -128,6 +128,7 @@ void CVehicle::Update()
 {
 	// [marco] remove the vehicle after 30 seconds it 
 	// exploded - not in multiplayer
+	pe_status_awake awake;
 	float fTimeStep = m_pGame->GetSystem()->GetITimer()->GetFrameTime();
 	if (m_fEngineHealth<=0)
 		m_bHeadLightsOn=false;
@@ -161,7 +162,7 @@ void CVehicle::Update()
 	UpdateWeaponPosAngl();
 
 	if(GetEntity()->GetPhysics())
-	if(!GetEntity()->GetPhysics()->GetStatus(&pe_status_awake()))
+	if(!GetEntity()->GetPhysics()->GetStatus(&awake))
 		UpdateCamera(fTimeStep, m_pGame->IsSynchronizing());
 
 	if ((m_Type == VHT_BOAT) )
@@ -1491,7 +1492,7 @@ UsersList::iterator	itr = std::find(m_UsersList.begin(), m_UsersList.end(), entI
 
 void CVehicle::PreloadInstanceResources(Vec3d vPrevPortalPos, float fPrevPortalDistance, float fTime)
 {
-#pragma message( "Warning: Preloading of render resources is not implemented in " __FUNCTION__ )
+#pragma message( "Warning: Preloading of render resources is not implemented in CVehicle::PreloadInstanceResources "  )
 	// for all objects what will be used for rendering call 
 	// ICryCharInstance::PreloadResources or
 	// IStatObj::PreloadResources
@@ -1919,7 +1920,7 @@ void CVehicle::SaveAIState(CStream & stm, CScriptObjectStream & scriptStream)
 		pObject->Save(stm);
 
 	IScriptSystem *pScriptSystem = m_pGame->GetSystem()->GetIScriptSystem();
-	HSCRIPTFUNCTION	saveOverallFunction=NULL;
+	HSCRIPTFUNCTION	saveOverallFunction=0;
 	if( m_pEntity->GetScriptObject() && m_pEntity->GetScriptObject()->GetValue("OnSaveOverall", saveOverallFunction) )
 	{
 		pScriptSystem->BeginCall(saveOverallFunction);
@@ -1938,7 +1939,7 @@ void CVehicle::LoadAIState(CStream & stm, CScriptObjectStream & scriptStream)
 		pObject->Load(stm);
 
 	IScriptSystem *pScriptSystem = m_pGame->GetSystem()->GetIScriptSystem();
-	HSCRIPTFUNCTION	saveOverallFunction=NULL;
+	HSCRIPTFUNCTION	saveOverallFunction=0;
 	if( m_pEntity->GetScriptObject() && m_pEntity->GetScriptObject()->GetValue("OnLoadOverall", saveOverallFunction) )
 	{
 		pScriptSystem->BeginCall(saveOverallFunction);

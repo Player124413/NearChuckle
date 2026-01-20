@@ -282,8 +282,8 @@ void	CAIHandler::AIMind( SOBJECTSTATE *state )
 int	expression=1;
 
 	FUNCTION_PROFILER( m_pGame->GetSystem(),PROFILE_AI );
-HSCRIPTFUNCTION	handlerFunc=NULL;
-string event_string;
+	HSCRIPTFUNCTION	handlerFunc=0;
+	string event_string;
 	if( state->bHaveTarget )
 	{
 		if( state->bSound )
@@ -397,7 +397,7 @@ void	CAIHandler::AISignal( int signalID, const char * signalText, IEntity *pSend
 	if( !signalText )
 		return;
 
-	HSCRIPTFUNCTION	singnalHandler=NULL;
+	HSCRIPTFUNCTION	singnalHandler=0;
 
 //m_pLog->Log("\002 >> %s", signalText);
 
@@ -565,7 +565,7 @@ IScriptObject *pNextBehavior=NULL;
 		if (pNextBehavior && !pNextBehavior->GetValue("JOB",job))
 		{
 			// stop any ongoing conversations
-			HSCRIPTFUNCTION	stopConvFunction=NULL;
+			HSCRIPTFUNCTION	stopConvFunction=0;
 			if( m_pScriptObject->GetValue("StopConversation", stopConvFunction) )
 			{
 				m_pScriptSystem->BeginCall(stopConvFunction);
@@ -612,7 +612,7 @@ IScriptObject *pNextBehavior=NULL;
 
 		if(m_pScriptObject->GetValue("EventToCall", eventToCallName))
 		{
-		HSCRIPTFUNCTION	functionToCall=NULL;
+		HSCRIPTFUNCTION	functionToCall=0;
 
 			CallScript( m_pBehavior, eventToCallName);
 			m_pScriptObject->SetValue("EventToCall", "");
@@ -624,7 +624,7 @@ IScriptObject *pNextBehavior=NULL;
 //------------------------------------------------------------------------------
 void	CAIHandler::CallBehaviorOrDefault( const char* signalText, float *value, bool bJob )
 {
-HSCRIPTFUNCTION	handlerFunc=NULL;
+HSCRIPTFUNCTION	handlerFunc=0;
 int		job;
 
 		if( m_pBehavior )
@@ -648,7 +648,7 @@ bool	CAIHandler::CallScript( IScriptObject *scriptTable, const char* funcName, f
 {
 FUNCTION_PROFILER( m_pGame->GetSystem(),PROFILE_AI );
 
-HSCRIPTFUNCTION	functionToCall=NULL;
+HSCRIPTFUNCTION	functionToCall=0;
 	if( scriptTable )
 		if( scriptTable->GetValue(funcName, functionToCall) )
 		{

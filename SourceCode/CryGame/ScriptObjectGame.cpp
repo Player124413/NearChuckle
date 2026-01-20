@@ -1127,7 +1127,7 @@ int CScriptObjectGame::GetLevelList (IFunctionHandler* pH)
 
 			for(int i = 0; i < (int)arrMissions.size(); i++)
 			{
-				static char szIndex[4];
+				static char szIndex[11];
 				sprintf(szIndex, "%d", i+1);
 				pMissionObj->SetValue(szIndex, arrMissions[i].c_str());
 			}
@@ -1386,7 +1386,7 @@ int CScriptObjectGame::GetVersionString(IFunctionHandler *pH)
 	sprintf(szVersionString, "FC%s%d%s%s%d", szDay, dwMonth, szYear, GAME_VERSION_SUFIX, iBuild);
 #else
 	char szVersionString[ 128 ];
-	sprintf( szVersionString, "FC %s %d (LINUX)", __DATE__, GAME_VERSION_SUFIX);
+	sprintf( szVersionString, "FC %s %s (LINUX)", __DATE__, GAME_VERSION_SUFIX);
 #endif
 	return pH->EndFunction(szVersionString);
 }
@@ -1717,12 +1717,13 @@ int CScriptObjectGame::IsPointInWater(IFunctionHandler *pH)
 int CScriptObjectGame::GetWaterHeight(IFunctionHandler *pH)
 {
 	//CHECK_PARAMETERS(0);
-
+	Vec3 vec;
 	if (pH->GetParamCount()>0) 
 	{
 		CScriptObjectVector vPosition(m_pScriptSystem,true);
 		pH->GetParam(1, *vPosition);		
-		return pH->EndFunction(m_pSystem->GetI3DEngine()->GetWaterLevel(&vPosition.Get()));
+		vec = vPosition.Get();
+		return pH->EndFunction(m_pSystem->GetI3DEngine()->GetWaterLevel(&vec));
 	}
 
 	return pH->EndFunction(m_pSystem->GetI3DEngine()->GetWaterLevel());

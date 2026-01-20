@@ -4890,7 +4890,7 @@ bool CPlayer::LoadGame(CStream &stm)
 void CPlayer::SetScriptObject(IScriptObject *pObject)
 {
 	m_pScriptObject=pObject;
-	m_pUpdateAnimation=NULL;
+	m_pUpdateAnimation=0;
 }
 /*! Retrieves the ScriptObject of this container
 		@return pointer to the ScriptObject
@@ -7071,7 +7071,7 @@ void CPlayer::DampInputVector(vectorf &vec ,float speed ,float stopspeed ,bool o
 void CPlayer::SaveAIState(CStream & stm, CScriptObjectStream & scriptStream)
 {
 	IScriptSystem *pScriptSystem = m_pGame->GetSystem()->GetIScriptSystem();
-	HSCRIPTFUNCTION	saveOverallFunction=NULL;
+	HSCRIPTFUNCTION	saveOverallFunction=0;
 	if( m_pEntity->GetScriptObject() && m_pEntity->GetScriptObject()->GetValue("OnSaveOverall", saveOverallFunction) )
 	{
 		pScriptSystem->BeginCall(saveOverallFunction);
@@ -7150,7 +7150,7 @@ void CPlayer::SaveAIState(CStream & stm, CScriptObjectStream & scriptStream)
 void CPlayer::LoadAIState(CStream & stm, CScriptObjectStream & scriptStream)
 {
 	IScriptSystem *pScriptSystem = m_pGame->GetSystem()->GetIScriptSystem();
-	HSCRIPTFUNCTION	loadOverallFunction=NULL;
+	HSCRIPTFUNCTION	loadOverallFunction=0;
 	if( m_pEntity->GetScriptObject() && m_pEntity->GetScriptObject()->GetValue("OnLoadOverall", loadOverallFunction) )
 	{
 		pScriptSystem->BeginCall(loadOverallFunction);

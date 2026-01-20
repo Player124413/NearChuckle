@@ -205,8 +205,8 @@ m_pObjectCollide(pSS),m_vObjPosCollide(pSS),m_vObjVelCollide(pSS),m_pSplashList(
 	m_pDynLight = NULL;
 	m_pEntityRenderState = 0;//m_pISystem->GetI3DEngine()->MakeEntityRenderState();
 	m_nSteeringWheelSlot=-1; // not found yet
-	m_pOnCollide=NULL;
-	m_pOnStopRollSlideContact=NULL;
+	m_pOnCollide=0;
+	m_pOnStopRollSlideContact=0;
 	m_pParticleEmitters = NULL;
 	m_dwRndFlags=0;
 
