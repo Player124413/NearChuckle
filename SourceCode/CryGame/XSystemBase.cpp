@@ -556,7 +556,7 @@ void CXSystemBase::LoadXMLNode(XDOM::IXMLDOMNode *pInputNode, bool bSpawn)
 						}
 
 						m_pGame->CreateArea(borderPoints, sz, entitiesName, areaID, groupID, areaWidth, areaHeight);
-						delete borderPoints;
+						delete [] borderPoints;
 					}
 				}
 				else if (!stricmp(pType->getText(),"AreaBox"))

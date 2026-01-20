@@ -696,6 +696,8 @@ DLL_API CS_STREAM* F_API CS_Stream_Create(CS_STREAMCALLBACK callback, int length
 	stream->userdata = userdata;
 	stream->channel = CS_FREE;
 
+	memset(stream->buffer, 0, length);
+
 	streams.push_back(stream);
 	AL_LOG("OpenAL %s: There are now %lu streams.\n", __func__, streams.size());
 

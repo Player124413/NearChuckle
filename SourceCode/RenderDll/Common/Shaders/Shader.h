@@ -533,6 +533,8 @@ public:
     m_Id = 0;
     m_Flags = 0;
     m_nMaskGen = 0;
+    m_Frame = 0;
+    m_bCGType = false;
   }
   _inline const char * mfGetName()
   {
@@ -631,6 +633,7 @@ public:
     m_Flags = 0;
     m_nMaskGen = 0;
     m_Frame = 0;
+    m_bCGType = false;
   }
   virtual ~CPShader() {}
 
@@ -1373,6 +1376,7 @@ struct SParamComp_Const : public SParamComp
   SParamComp_Const()
   {
     m_eType = EParamComp_Const;
+    m_Val = 0.0f;
   }
   virtual bool mfIsEqual(SParamComp *p)
   {

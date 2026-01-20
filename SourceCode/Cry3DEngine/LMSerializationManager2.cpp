@@ -701,8 +701,9 @@ string CLMSerializationManager2::GetLMPakFilename(const char *pszFileName)
 	{
 		if (!strcasecmp(d->d_name, LEVELLM_PAK_NAME))
 		{
+			strDirName = strDirName + "/" + d->d_name;
 			closedir(fdir);
-			return strDirName + "/" + d->d_name;
+			return strDirName;
 		}
 	}
 
