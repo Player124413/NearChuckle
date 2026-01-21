@@ -357,9 +357,10 @@ void CryModelSubmesh::AddCurrentRenderData(CCObject *obj, CCObject *obj1, const 
 		//obj->m_ObjFlags |= FOB_REFRACTED; // moved from Game01
 	}
 	CLeafBuffer* pLeafBuffer = m_pLeafBuffers[nLod];
+#if ( defined(_CPU_X86) || defined (_AMD64_) ) && !defined(LINUX)
 	pLeafBuffer->m_vBoxMin = m_SubBBox.vMin;
 	pLeafBuffer->m_vBoxMax = m_SubBBox.vMax;
-
+#endif
 	//  m_pLeafBuffers[nLod]->SetRECustomData(&(m_arrHeatSourcePos[0].x));
 
 	int nTempl1;
