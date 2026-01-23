@@ -451,6 +451,23 @@ int CScriptObjectEntity::SetPos(IFunctionHandler *pH)
 	CScriptObjectVector oVec(m_pScriptSystem,true);
 	pH->GetParam(1,*oVec);
 	vec=oVec.Get();
+#ifdef __linux
+	//For some reason, the player's bounding box gets stuck on the ceiling
+	//when starting the bunker level, forcing you to crouch or go prone to
+	//drop down. This mostly happens on the Linux release build, though it
+	//sometimes happens on debug as well. This is an ugly hack to set the
+	//player's z coordinate a little lower to compensate.
+	const char* level = m_pISystem->GetI3DEngine()->GetLevelFilePath("");
+	ICVar* p_name = m_pISystem->GetIConsole()->GetCVar("p_name");
+	if (p_name)
+	{
+		if (!stricmp(level, "Levels/Bunker/")
+		&& !strcmp(m_pEntity->GetName(), p_name->GetString()))
+		{
+			vec.z -= 0.196198f;
+		}
+	}
+#endif
 	m_pEntity->SetPos(vec, false);
 	return pH->EndFunction();
 }
@@ -5066,6 +5083,7 @@ int CScriptObjectEntity::Hide(IFunctionHandler *pH)
 //////////////////////////////////////////////////////////////////////////
 int CScriptObjectEntity::CheckCollisions(IFunctionHandler *pH)
 {
+	pe_status_nparts _nparts;
 	assert(pH->GetParamCount()<=2);
 	int iEntTypes = ent_sleeping_rigid|ent_rigid|ent_living, iCollTypes = -1;
 	pH->GetParam(1,iEntTypes);
@@ -5088,7 +5106,7 @@ int CScriptObjectEntity::CheckCollisions(IFunctionHandler *pH)
 
 		pEnt->GetParams(&pbb);
 		pEnt->GetParams(&pfd);
-		nParts = pEnt->GetStatus(&pe_status_nparts());
+		nParts = pEnt->GetStatus(&_nparts);
 		pEnt->GetStatus(sp+0);
 		ip.bNoAreaContacts = true;
 		ip.vrel_min = 1E10f;
@@ -5102,7 +5120,7 @@ int CScriptObjectEntity::CheckCollisions(IFunctionHandler *pH)
 				psoEnt = (pIEnt = (IEntity*)ppEnts[i]->GetForeignData()) ? pIEnt->GetScriptObject() : 0;
 				nEntCont = 0;
 
-				for(pp[1].ipart=ppEnts[i]->GetStatus(&pe_status_nparts())-1; pp[1].ipart>=0; pp[1].ipart--)
+				for(pp[1].ipart=ppEnts[i]->GetStatus(&_nparts)-1; pp[1].ipart>=0; pp[1].ipart--)
 				{
 					MARK_UNUSED(pp[1].partid); ppEnts[i]->GetParams(pp+1);
 					gwd[1].offset = sp[1].pos + sp[1].q*pp[1].pos;
