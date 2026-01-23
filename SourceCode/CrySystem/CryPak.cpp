@@ -1732,7 +1732,9 @@ void CCryPakFindData::ScanFS(CCryPak*pPak, const char *szDirIn)
 	fdir = opendir(buf);
 	if (fdir == NULL)
 	{
+#ifdef _DEBUG
 		fprintf(stderr, "Failed to open %s\n", buf);
+#endif
 		return;
 	}
 
