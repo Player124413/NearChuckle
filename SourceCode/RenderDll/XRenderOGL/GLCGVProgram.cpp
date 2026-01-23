@@ -1554,6 +1554,9 @@ create:
     {
 #ifdef DISABLE_CG
       iLog->LogError("Failed to load cached vertex shader %s!\n", namedst);
+      LogMissingShader(namedst, "vertex",
+        iSystem->GetI3DEngine()->GetLevelFilePath(""),
+        iSystem->GetViewCamera().GetPos());
 #endif
       return false;
     }

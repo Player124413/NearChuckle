@@ -581,6 +581,20 @@ _inline char *sGetFuncName(const char *pFunc)
   return func;
 }
 
+_inline void LogMissingShader(char* namedst, const char* type, const char* level, Vec3d vPos)
+{
+  FILE* fp = fopen("MissingShaders.txt", "a");
+  if (!fp)
+  {
+    return;
+  }
+
+  fprintf(fp, "Failed to load cached %s shader %s!\n", type, namedst);
+  fprintf(fp, "Level: %s\n", level);
+  fprintf(fp, "Location: %f %f %f\n\n", vPos.x, vPos.y, vPos.z);
+  fclose(fp);
+}
+
 //=============================================================================
 // Pixel shaders (PS)
 

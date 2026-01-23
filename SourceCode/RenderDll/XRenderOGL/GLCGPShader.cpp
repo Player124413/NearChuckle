@@ -810,6 +810,9 @@ create:
     {
 #ifdef DISABLE_CG
       iLog->LogError("Failed to load cached fragment shader %s!\n", namedst);
+      LogMissingShader(namedst, "pixel",
+        iSystem->GetI3DEngine()->GetLevelFilePath(""),
+        iSystem->GetViewCamera().GetPos());
 #endif
       return false;
     }
