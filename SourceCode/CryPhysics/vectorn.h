@@ -147,6 +147,8 @@ vectorn_tpl<ftype1>& operator-=(vectorn_tpl<ftype1> &op1, const vectorn_tpl<ftyp
 	return op1;
 }
 
+template <class ftype> class matrix_tpl;
+
 template<class ftype1,class ftype2>
 vectorn_tpl<ftype1> operator*(const vectorn_tpl<ftype1> &vec, const matrix_tpl<ftype2> &mtx) {
 	int i,j; vectorn_tpl<ftype1> res(mtx.nCols);

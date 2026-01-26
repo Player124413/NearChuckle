@@ -22,6 +22,8 @@ enum 	mtxflags {
 	mtx_allocate=32768 // prohibts using matrix pool for data
 };
 
+#include "vectorn.h"
+
 template<class ftype> class matrix_product_tpl {
 public:
 	matrix_product_tpl(int nrows1,int ncols1,ftype *pdata1,int flags1, int ncols2,ftype *pdata2,int flags2) {
@@ -51,6 +53,11 @@ public:
 	ftype *data1,*data2;
 	int flags;
 };
+
+inline float getlothresh(float) { return 1E-10f; }
+inline float gethithresh(float) { return 1E10f; }
+inline double getlothresh(double) { return 1E-20; }
+inline double gethithresh(double) { return 1E20; }
 
 template <class ftype> class matrix_tpl { 
 public:
@@ -132,7 +139,62 @@ public:
 		return *this;
 	}
 	
-	matrix_tpl& invert(); // in-place inversion
+	matrix_tpl& invert() // in-place inversion
+	{
+		if (flags & mtx_orthogonal)
+			return transpose();
+		if (nRows!=nCols)
+			return *this;
+		
+		int i,j; ftype det=0;
+		if (nRows==1)
+			data[0]=(ftype)1.0/data[0];
+		else if (nRows==2) {
+			det = data[0]*data[3]-data[1]*data[2];
+			if (det==0) return *this;	det = (ftype)1.0/det;
+			ftype oldata[4]; for(i=0;i<4;i++) oldata[i]=data[i];
+			data[0]=oldata[3]*det; data[1]=-oldata[1]*det;
+			data[2]=-oldata[2]*det; data[3]=oldata[0]*det;
+		} else if (nRows==3) {
+			for(i=0;i<3;i++) det+=data[i]*data[inc_mod3[i]+3]*data[dec_mod3[i]+6];
+			for(i=0;i<3;i++) det-=data[dec_mod3[i]]*data[inc_mod3[i]+3]*data[i+6];
+			if (det==0) return *this;	det = (ftype)1.0/det;
+			ftype oldata[9]; for(i=0;i<9;i++) oldata[i]=data[i];
+			for(i=0;i<3;i++) for(j=0;j<3;j++)
+				data[i+j*3] = (oldata[dec_mod3[i]*3+dec_mod3[j]]*oldata[inc_mod3[i]*3+inc_mod3[j]]-
+											oldata[dec_mod3[i]*3+inc_mod3[j]]*oldata[inc_mod3[i]*3+dec_mod3[j]])*det;
+		} else {
+			ftype *LUdata=0,*colmark; int *LUidx=0,LUidx_buf[32], alloc=0;
+			if (nRows*nRows*2<mtx_pool_size) {
+				if (mtx_pool_pos+nRows*nRows > mtx_pool_size)
+					mtx_pool_pos = 0;
+				LUdata = mtx_pool+mtx_pool_pos; mtx_pool_pos += nRows*nRows;
+			} else alloc = 1;
+			if (nRows<=sizeof(LUidx_buf)/sizeof(LUidx_buf[0])) LUidx = LUidx_buf;
+			else alloc |= 2;
+			if (!LUdecomposition(LUdata,LUidx)) return *this;
+
+			if (nRows*2<mtx_pool_size) {
+				if (mtx_pool_pos+nRows > mtx_pool_size)
+					mtx_pool_pos=0;
+				colmark=mtx_pool+mtx_pool_pos; mtx_pool_pos+=nRows;
+			} else {
+				colmark = new ftype[nRows]; alloc |= 4;
+			}
+
+			for(i=0;i<nRows;i++) colmark[i]=0;
+			for(i=0;i<nRows;i++) {
+				colmark[i]=1;	solveAx_b(data+i*nRows,colmark, LUdata,LUidx); colmark[i]=0;
+			}
+			transpose();
+
+			if (alloc & 1) delete[] LUdata;
+			if (alloc & 2) delete[] LUidx;
+			if (alloc & 4) delete[] colmark;
+		}
+		flags = flags & (mtx_normal | mtx_orthogonal | mtx_symmetric | mtx_PD | mtx_PSD | mtx_diagonal | mtx_identity | mtx_foreign_data);
+		return *this;
+	}
 	matrix_tpl operator!() const { // returns inverted matrix
 		if (flags & mtx_orthogonal)
 			return T();
@@ -160,11 +222,116 @@ public:
 	}
 
 	int LUdecomposition(ftype *&LUdata,int *&LUidx) const;
-	int solveAx_b(ftype *x,ftype *b, ftype *LUdata=0,int *LUidx=0) const; // finds x that satisfies Ax=b
+	int solveAx_b(ftype *x,ftype *b, ftype *LUdata=0,int *LUidx=0) const // finds x that satisfies Ax=b
+	{
+	int LUidx_buf[16],alloc=0;
+	if (!LUdata) {
+		if (nRows*nRows*2<mtx_pool_size) {
+			if (mtx_pool_pos+nRows*nRows > mtx_pool_size)
+				mtx_pool_pos = 0;
+			LUdata = mtx_pool+mtx_pool_pos; mtx_pool_pos += nRows*nRows;
+		}
+		if (nRows<=sizeof(LUidx_buf)/sizeof(LUidx_buf[0])) LUidx = LUidx_buf;
+		alloc = LUdata==0 | (LUidx==0)<<1;
+		if (!LUdecomposition(LUdata,LUidx)) return 0;
+	}
+
+	int i,j; ftype xi;
+	matrix_tpl<ftype> LU(nRows,nRows,0,LUdata);
+	for(i=0;i<nRows;i++) x[i]=b[i];
+	for(i=0;i<nRows;i++) {
+		xi=x[i]; x[i]=x[LUidx[i]]; x[LUidx[i]]=xi;
+		for(j=0;j<i;j++) x[i]-=LU[i][j]*x[j];
+	}
+	for(i=nRows-1;i>=0;i--) {
+		for(j=i+1;j<nRows;j++) x[i]-=LU[i][j]*x[j];
+		x[i] /= LU[i][i];
+	}
+
+	if (alloc & 1) delete[] LUdata;
+	if (alloc & 2) delete[] LUidx;
+	return 1;
+}
 	ftype determinant(ftype *LUdata=0,int *LUidx=0) const;
 
-	int jacobi_transformation(matrix_tpl &evec, ftype* eval, ftype prec=0) const;
-	int conjugate_gradient(ftype *startx,ftype *rightside, ftype minlen=0,ftype minel=0) const;
+	int jacobi_transformation(matrix_tpl &evec, ftype* eval, ftype prec=0) const
+	{
+		if (!(flags & mtx_symmetric) || nCols!=nRows) return 0;
+
+	matrix_tpl a(*this);
+	int n = nRows, p,q,r,iter,pmax,qmax,sz=nRows*nCols;
+	ftype theta,t,s,c,apr,aqr,arp,arq,thresh=prec,amax;
+	evec.identity();
+	evec.flags = (evec.flags & mtx_foreign_data) | mtx_orthogonal | mtx_normal;
+	
+	for(iter=0; iter<nRows*nCols*10; iter++) {
+		for(p=0,amax=thresh,pmax=-1;p<n-1;p++) for(q=p+1;q<n;q++)	if (sqr(a[p][q])>amax) 
+		{	amax=sqr(a[p][q]); pmax=p; qmax=q; }
+		if (pmax==-1) 
+			goto exitjacobi;
+		p=pmax; q=qmax;
+		theta = (ftype)0.5*(a[q][q]-a[p][p])/a[p][q];
+		if (fabs_tpl(theta)<gethithresh(theta)) {
+			t = sqrt_tpl(theta*theta+1);
+			if (theta>0) t = -theta-t;
+			else t -= theta;
+			c = 1/sqrt_tpl(1+t*t); s = t*c;
+			for(r=0;r<n;r++) { arp=a[r][p];arq=a[r][q]; a[r][p]=c*arp-s*arq; a[r][q]=c*arq+s*arp; }
+			for(r=0;r<n;r++) { apr=a[p][r];aqr=a[q][r]; a[p][r]=c*apr-s*aqr; a[q][r]=c*aqr+s*apr; }
+			for(r=0;r<n;r++) { apr=evec[p][r];aqr=evec[q][r]; evec[p][r]=c*apr-s*aqr; evec[q][r]=c*aqr+s*apr; }
+		}
+		a[p][q] = 0;
+		if (iter==sz+1) thresh += getlothresh(thresh);
+	}
+	iter=0;
+	exitjacobi:
+	for(p=0;p<n*n;p++) {
+		t = fabs_tpl(evec.data[p]);
+		if (t<(ftype)1E-6) evec.data[p]=0;
+		else if (fabs_tpl(t-1)<getlothresh(t)) 
+			evec.data[p]=sgnnz(evec.data[p]);
+	}
+	for(p=0;p<n;p++) eval[p] = a[p][p];
+	return iter; // not converged during iterations limit
+	}
+	int conjugate_gradient(ftype *startx,ftype *rightside, ftype minlen=0,ftype minel=0) const
+	{
+		ftype a,b,r2,r2new,denom,maxel;
+		int i,iter=nRows*3;
+		minlen*=minlen; 
+
+		ftype buf[24],*pbuf = nRows>8 ? new ftype[nRows*3]:buf;
+		vectorn_tpl<ftype> x(nRows,startx),rh(nRows,rightside),r(nRows,pbuf),p(nRows,pbuf+nRows),Ap(nRows,pbuf+nRows*2);
+		(r=rh)-=*this*x; p=r;
+		r2=r.len2();
+
+		do {
+			Ap = *this*p; denom = p*Ap;
+			if (sqr(denom)<1E-30) break;
+			a = r2/denom;	
+	#ifdef __GNUC__
+			vectorn_tpl<ftype> ApXa(nRows, Ap * a);
+			r -= ApXa;
+	#else
+			r -= Ap*a;
+	#endif
+			r2new=r.len2();
+			if (r2new>r2*500)
+				break;
+	#ifdef __GNUC__
+			vectorn_tpl<ftype> pXa(nRows, p * a);
+			x += pXa;
+	#else
+			x += p*a;
+	#endif
+			b = r2new/r2; r2=r2new;
+			(p*=b)+=r;
+			for(i=0,maxel=0;i<nRows;i++) maxel = max(maxel,fabs_tpl(r[i]));
+		} while (--iter && (r2new>minlen || maxel>minel));
+
+		if (pbuf!=buf) delete pbuf;
+		return nRows-iter;
+	}
 	int biconjugate_gradient(ftype *startx,ftype *rightside, ftype minlen=0,ftype minel=0) const;
 	int minimum_residual(ftype *startx,ftype *rightside, ftype minlen=0,ftype minel=0) const;
 	int LPsimplex(int m1,int m2, ftype &objfunout,ftype *xout=0, int nvars=-1, ftype e=-1) const;
