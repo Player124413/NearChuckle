@@ -16,11 +16,7 @@
 
 #include "UIWidget.h"
 #include "UISystem.h"
-
-#if !defined(WIN64) && !defined(LINUX) && !defined(NOT_USE_BINK_SDK)
-#	include "../binksdk/bink.h"
-#endif
-
+#include "UIVideoFFmpeg.h"
 
 class CUISystem;
 
@@ -87,19 +83,16 @@ public:
 	int EnableVideo(IFunctionHandler *pH);
 	int EnableAudio(IFunctionHandler *pH);
 
-	bool					m_DivX_Active;
-
-	string				m_szVideoFile;
-#if !defined(WIN64) && !defined(LINUX) && !defined(NOT_USE_BINK_SDK)
-	HBINK					m_hBink;
+	string					m_szVideoFile;
+#ifndef CRY_NO_FFMPEG
+	CUIVideoFFmpeg			m_videoPlayer;
 #endif
-	bool					m_bPaused;
-	bool					m_bPlaying;
-	bool					m_bLooping;
 	bool					m_bKeepAspect;
-	int						m_iTextureID;
-	UISkinTexture m_pOverlay;
-	int						*m_pSwapBuffer;
+	bool					m_bLooping;
+	bool					m_bPaused;
+	bool					m_bFinished;
+	UISkinTexture			m_pOverlay;
+	int*					m_pSwapBuffer;
 };
 
 #endif

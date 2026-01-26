@@ -2,6 +2,12 @@ project(CryGame)
 
 add_definitions(-D_USRDLL -DCRYGAME_EXPORTS)
 
+option(DISABLE_FFMPEG "Disable Bink video support" OFF)
+
+if (DISABLE_FFMPEG)
+add_definitions(-DCRY_NO_FFMPEG)
+endif()
+
 set(SRC_FILES
     "AdvCamSystem.cpp"
     "AIHandler.cpp"
@@ -96,6 +102,10 @@ set(SRC_FILES
     "XVehicleSystem.cpp"
 )
 
+if (NOT DISABLE_FFMPEG)
+set(SRC_FILES ${SRC_FILES} "UIVideoFFmpeg.cpp")
+endif()
+
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -111,4 +121,8 @@ if (MSVC)
 target_link_libraries(${PROJECT_NAME} PRIVATE
     Wsock32.lib
 )
+else()
+if (NOT DISABLE_FFMPEG)
+target_link_libraries(${PROJECT_NAME} PRIVATE avutil avformat swscale)
+endif()
 endif()
