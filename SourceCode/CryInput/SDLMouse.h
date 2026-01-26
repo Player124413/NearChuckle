@@ -25,7 +25,7 @@ public:
 
 	class CInput* m_pInput;
 
-	bool	Init(ISystem* pSystem);
+	bool	Init(ISystem* pSystem, SDL_Window* window);
 	void	Shutdown();
 	void	Update(bool bPrevFocus);
 	void	ClearKeyState();

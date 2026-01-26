@@ -43,8 +43,6 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 #ifdef USE_SDL_INPUT
 #ifndef __linux
 #include <SDL_syswm.h>
-#else
-#include <SDL2/SDL_syswm.h>
 #endif
 #endif
 
@@ -62,7 +60,7 @@ IInput *CreateInput( ISystem *pSystem,void* hinst, void* hwnd, bool usedinput)
 
 	if (!pInput->Init(pSystem,(HINSTANCE)hinst, realhwnd,usedinput))
 #else
-	if (!pInput->Init(pSystem))
+	if (!pInput->Init(pSystem, (SDL_Window*)hwnd))
 #endif
 	{
 		delete pInput;

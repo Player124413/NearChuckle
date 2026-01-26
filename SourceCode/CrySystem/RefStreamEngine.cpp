@@ -412,7 +412,7 @@ unsigned CRefStreamEngine::FinalizeIOJobs(unsigned nFlags)
 #ifndef __linux
 		QueryPerformanceCounter ((LARGE_INTEGER*)&nStartTime);
 #else
-		nStartTime = SDL_GetTicks64();
+		nStartTime = SDL_GetTicks();
 #endif
 		// TODO: add control over the callback execution time
 		// this proxy needs to be moved out of the IO queue
@@ -421,7 +421,7 @@ unsigned CRefStreamEngine::FinalizeIOJobs(unsigned nFlags)
 #ifndef __linux
 		QueryPerformanceCounter((LARGE_INTEGER*)&nEndTime);
 #else
-		nEndTime = SDL_GetTicks64();
+		nEndTime = SDL_GetTicks();
 #endif
 
 		m_nCallbackTimeQuota -= nEndTime - nStartTime;

@@ -88,7 +88,7 @@ public:
 #ifndef USE_SDL_INPUT
 	bool	Init(ISystem *pSystem,HINSTANCE hinst, HWND hwnd, bool usedinput);
 #else
-	bool	Init(ISystem *pSystem);
+	bool	Init(ISystem *pSystem, SDL_Window* window);
 	
 #endif
 

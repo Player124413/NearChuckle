@@ -20,7 +20,6 @@ static char THIS_FILE[] = __FILE__;
 #ifdef _WIN32
 #include <SDL_syswm.h>
 #else
-#include <SDL2/SDL_syswm.h>
 #endif
 #endif
 
@@ -1334,7 +1333,8 @@ int CGLRenderer::EnumDisplayFormats(TArray<SDispFormat>& Formats, bool bReset)
 
 static void GetSDLModes(SDL_DisplayMode* modes, int* num_modes)
 {
-  int numModes = SDL_GetNumDisplayModes(0);
+  int numModes = 0;
+  SDL_DisplayMode** disp_modes = SDL_GetFullscreenDisplayModes(SDL_GetPrimaryDisplay(), &numModes);
 	SDL_DisplayMode mode;
 	int i;
 	int w = 0;
@@ -1349,27 +1349,27 @@ static void GetSDLModes(SDL_DisplayMode* modes, int* num_modes)
 
 	for (i = 0; i < numModes; i++)
 	{
-		if (!SDL_GetDisplayMode(0, i, &mode))
-		{
-			if (mode.w < 640 || mode.h < 480 || mode.h == 486 || mode.h == 696
-			|| mode.h == 525 || mode.w == 864)
-			{
-				//disallow low or weird resolutions
-				continue;
-			}
-			if (w != mode.w || h != mode.h)
-			{
-				w = mode.w;
-				h = mode.h;
-				if (modes != NULL)
-				{
-					modes[num_unique].w = w;
-          modes[num_unique].h = h;
-				}
-				num_unique++;
-			}
-		}
+    mode = *disp_modes[i];
+    if (mode.w < 640 || mode.h < 480 || mode.h == 486 || mode.h == 696
+    || mode.h == 525 || mode.w == 864)
+    {
+      //disallow low or weird resolutions
+      continue;
+    }
+    if (w != mode.w || h != mode.h)
+    {
+      w = mode.w;
+      h = mode.h;
+      if (modes != NULL)
+      {
+        modes[num_unique].w = w;
+        modes[num_unique].h = h;
+      }
+      num_unique++;
+    }
 	}
+
+  SDL_free(disp_modes);
 
 	*num_modes = num_unique;
 }
@@ -1530,19 +1530,19 @@ HWND CGLRenderer::SetMode(int x,int y,int width,int height,unsigned int cbpp, in
   }
 #else
     Uint32 windowFlags = SDL_WINDOW_OPENGL;
-    if (fullscreen)
-    {
-        windowFlags |= SDL_WINDOW_FULLSCREEN;
-    }
     m_width = width;
     m_height = height;
 
     SDL_Window* win = SDL_CreateWindow(szWinTitle,
-        SDL_WINDOWPOS_CENTERED,
-        SDL_WINDOWPOS_CENTERED,
         width,
         height,
         windowFlags);
+
+    if (fullscreen)
+    {
+        SDL_SetWindowFullscreen(win, true);
+    }
+    SDL_SyncWindow(win);
 #endif
   m_VX = m_VY = 0;
   m_VWidth = m_width;
@@ -1899,7 +1899,7 @@ exr:
   rc->m_Context = SDL_GL_CreateContext(win);
   if (rc->m_Context)
   {
-    if (SDL_GL_MakeCurrent(win, rc->m_Context) != 0)
+    if (!SDL_GL_MakeCurrent(win, rc->m_Context))
     {
       iLog->Log("%s\n", SDL_GetError());
       return NULL;
@@ -2540,7 +2540,7 @@ bool CGLRenderer::DeleteContext(WIN_HWND hWnd)
   delete rc;
   m_RContexts.Remove(i, 1);
 #else
-  SDL_GL_DeleteContext(m_RContexts[0]->m_Context);
+  SDL_GL_DestroyContext(m_RContexts[0]->m_Context);
 #endif
   return true;
 }
@@ -2642,7 +2642,7 @@ void CGLRenderer::ShutDown(bool bReInit)
     DestroyWindow(hWnd);
   }
 #else
-  SDL_GL_DeleteContext(m_RContexts[0]->m_Context);
+  SDL_GL_DestroyContext(m_RContexts[0]->m_Context);
   SDL_DestroyWindow(m_RContexts[0]->m_Window);
 #endif
   //ChangeDisplay(m_deskwidth,m_deskheight,m_deskbpp);

@@ -16,7 +16,7 @@
 #ifndef __linux
 #include <SDL.h>
 #else
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 #endif
 
 #ifdef WIN32
@@ -694,7 +694,7 @@ bool RunGame(void)
 #ifdef __linux
 	char* sCmdLine = NULL;
 #endif
-	SDL_Init(SDL_INIT_EVERYTHING);
+	SDL_Init(SDL_INIT_VIDEO);
 
 //	InvokeExternalConfigTool();
 

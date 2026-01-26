@@ -272,6 +272,8 @@ int g_nKeys[]={
 bool CInput::Init(ISystem *pSystem
 #ifndef USE_SDL_INPUT
 	,HINSTANCE hinst,HWND hwnd,bool dinput
+#else
+	,SDL_Window* window
 #endif
 )
 {
@@ -305,7 +307,7 @@ bool CInput::Init(ISystem *pSystem
 	//else
 	//	return (true);
 	
-	m_pLog->Log("Direct Input initialized (CryInputDLL)\n");	
+	m_pLog->Log("Direct Input initialized (CryInputDLL)\n");
 #endif
 
 #ifndef _XBOX
@@ -313,7 +315,7 @@ bool CInput::Init(ISystem *pSystem
 #ifndef USE_SDL_INPUT
 	if (!m_Keyboard.Init(this,m_pSystem,m_g_pdi,hinst,hwnd) && dinput)
 #else
-	if (!m_Keyboard.Init(this, m_pSystem))
+	if (!m_Keyboard.Init(this, m_pSystem, window))
 #endif
 		return (false);
 	m_pLog->LogToFile("Keyboard initialized\n");			
@@ -322,7 +324,7 @@ bool CInput::Init(ISystem *pSystem
 #ifndef USE_SDL_INPUT
 	if (!m_Mouse.Init(m_pSystem,m_g_pdi,hinst,hwnd,dinput) && dinput) 
 #else
-	if (!m_Mouse.Init(m_pSystem))
+	if (!m_Mouse.Init(m_pSystem, window))
 #endif
 		return (false);
 	m_pLog->Log("Mouse initialized\n");		

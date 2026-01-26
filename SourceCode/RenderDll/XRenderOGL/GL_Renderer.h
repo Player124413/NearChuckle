@@ -215,7 +215,7 @@ The GLRenderer interface Class
 #ifdef _WIN32
 #include <SDL.h>
 #else
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 #endif
 #endif
 class PBuffer;

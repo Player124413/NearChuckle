@@ -12,10 +12,10 @@
 #ifdef WIN32
 #include <SDL.h>
 #else
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 #endif
 
-bool CSDLMouse::Init(ISystem *pSystem)
+bool CSDLMouse::Init(ISystem *pSystem, SDL_Window* window)
 {
 	m_pSystem = pSystem;
 	m_pLog = pSystem->GetILog();
@@ -66,7 +66,7 @@ bool CSDLMouse::Init(ISystem *pSystem)
 
 	m_wheelChecked = false;
 
-	SDL_SetRelativeMouseMode(SDL_TRUE);
+	SDL_SetWindowRelativeMouseMode(window, true);
 
 	return (true);
 }
@@ -85,7 +85,7 @@ void CSDLMouse::Update(bool bPrevFocus)
 
 	while (SDL_PollEvent(&event))
 	{
-		if (event.type == SDL_MOUSEBUTTONDOWN)
+		if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
 		{
 			if (event.button.button == SDL_BUTTON_LEFT)
 			{
@@ -96,7 +96,7 @@ void CSDLMouse::Update(bool bPrevFocus)
 				m_Events[1] = 128;
 			}
 		}
-		else if (event.type == SDL_MOUSEBUTTONUP)
+		else if (event.type == SDL_EVENT_MOUSE_BUTTON_UP)
 		{
 			if (event.button.button == SDL_BUTTON_LEFT)
 			{
@@ -107,16 +107,16 @@ void CSDLMouse::Update(bool bPrevFocus)
 				m_Events[1] = 0;
 			}
 		}
-		else if (event.type == SDL_MOUSEWHEEL)
+		else if (event.type == SDL_EVENT_MOUSE_WHEEL)
 		{
 			mouseDelta[2] = event.wheel.y;
 		}
-		else if (event.type == SDL_MOUSEMOTION)
+		else if (event.type == SDL_EVENT_MOUSE_MOTION)
 		{
 			mouseDelta[0] += float((int)event.motion.xrel);
 			mouseDelta[1] += float((int)event.motion.yrel);
 		}
-		else if (event.type == SDL_TEXTINPUT)
+		else if (event.type == SDL_EVENT_TEXT_INPUT)
 		{
 			//ignore
 		}

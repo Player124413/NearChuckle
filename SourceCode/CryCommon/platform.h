@@ -103,7 +103,7 @@ typedef void *EVENT_HANDLE;
 #endif
 
 #if defined(__linux) && !defined(__x86_64__)
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 #endif
 
 #define crymax(a,b)            (((a) > (b)) ? (a) : (b))

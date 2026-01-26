@@ -81,7 +81,7 @@ typedef unsigned char BYTE;
 #ifndef __linux
 #include <SDL.h>
 #else
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 #endif
 
 // enable memory pool usage

@@ -295,7 +295,7 @@ extern void Cry_GetClientRect(SDL_Window* window, RECT* rect);
 bool CD3D9Renderer::ChangeResolution(int nNewWidth, int nNewHeight, int nNewColDepth, int nNewRefreshHZ, bool bFullScreen)
 {
   HRESULT hReturn;
-  Uint32 windowFlags = SDL_WINDOW_SHOWN;
+  Uint32 windowFlags = 0;
 
   iLog->Log("Change resolution: %dx%dx%d (%s)", nNewWidth, nNewHeight, nNewColDepth, bFullScreen ? "Fullscreen" : "Windowed");
 
@@ -333,22 +333,9 @@ bool CD3D9Renderer::ChangeResolution(int nNewWidth, int nNewHeight, int nNewColD
 
   DeleteContext(m_hWnd);
 
-  SDL_DestroyWindow(m_hWnd);
-
-#ifdef __linux
-    windowFlags |= SDL_WINDOW_VULKAN;
-#endif
-    if (bFullScreen)
-    {
-      windowFlags |= SDL_WINDOW_FULLSCREEN;
-    }
-
-  m_hWnd = SDL_CreateWindow(m_WinTitle,
-        SDL_WINDOWPOS_CENTERED,
-        SDL_WINDOWPOS_CENTERED,
-        nNewWidth,
-        nNewHeight,
-        windowFlags);
+  SDL_SetWindowFullscreen(m_hWnd, bFullScreen);
+  SDL_SetWindowSize(m_hWnd, nNewWidth, nNewHeight);
+  SDL_SyncWindow(m_hWnd);
 
   ChooseDevice();
 

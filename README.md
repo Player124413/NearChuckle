@@ -2,14 +2,14 @@
 
 ![Screenshot of Far Cry on Linux](assets/fort.jpg)
 
-Far Cry's leaked source code ported to run on SDL2 and Linux. Thanks to [ugozapad](https://github.com/ugozapad)
+Far Cry's leaked source code ported to run on SDL3 and Linux. Thanks to [ugozapad](https://github.com/ugozapad)
 and [q4a](https://github.com/q4a) for their earlier work.
 
 Warning: The Linux port is still very, very early in development and will probably crash. You can,
 however, load a level, walk around, and shoot people. It is also highly recommended that
 you apply the workaround patches in the Known Issues section to have a decent playing experience.
 
-You need SDL2, OpenAL-Soft, and OpenGL to compile the port. You will also need
+You need SDL3, OpenAL-Soft, and OpenGL to compile the port. You will also need
 the Nvidia Cg toolkit, which is not included, to compile the OpenGL renderer. You can get it here:
 https://developer.nvidia.com/cg-toolkit-download
 

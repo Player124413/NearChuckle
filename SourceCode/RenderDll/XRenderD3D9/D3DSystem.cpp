@@ -732,7 +732,7 @@ bool CD3D9Renderer::SetWindow(int width, int height, bool fullscreen, WIN_HWND h
 //
 //  return true;
 
-    Uint32 windowFlags = SDL_WINDOW_SHOWN;
+    Uint32 windowFlags = 0;
 #ifdef __linux
     windowFlags |= SDL_WINDOW_VULKAN;
 #endif
@@ -742,8 +742,6 @@ bool CD3D9Renderer::SetWindow(int width, int height, bool fullscreen, WIN_HWND h
     if (!hWnd)
     {
         m_hWnd = SDL_CreateWindow(m_WinTitle,
-            SDL_WINDOWPOS_CENTERED,
-            SDL_WINDOWPOS_CENTERED,
             width,
             height,
             windowFlags);
@@ -777,6 +775,8 @@ WIN_HWND CD3D9Renderer::Init(int x,int y,int width,int height,unsigned int cbpp,
   }
   if (!iSystem || !iLog)
     return 0;
+
+  setenv("DXVK_WSI_DRIVER", "SDL3", 0);
 
   /*float *f = (float *)0x402a92c0;
   FILE *fp = fopen("fl.txt", "w");
@@ -2081,6 +2081,10 @@ HRESULT CD3D9Renderer::AdjustWindowForChange()
 {
   if (m_bEditor)
     return S_OK;
+#ifdef __linux
+    return S_OK;
+#endif
+
   if( !m_bFullScreen )
   {
     // Set windowed-mode style
@@ -2091,7 +2095,7 @@ HRESULT CD3D9Renderer::AdjustWindowForChange()
   {
     // Set fullscreen-mode style
     //SetWindowLong( m_hWnd, GWL_STYLE, WS_POPUP|WS_SYSMENU|WS_VISIBLE );
-      SDL_SetWindowFullscreen(m_hWnd, SDL_WINDOW_FULLSCREEN_DESKTOP);
+      SDL_SetWindowFullscreen(m_hWnd, SDL_WINDOW_FULLSCREEN);
   }
 
   return S_OK;

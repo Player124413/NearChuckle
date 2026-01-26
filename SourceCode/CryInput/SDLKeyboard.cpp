@@ -10,7 +10,7 @@
 #include <SDL.h>
 #define STUBMSG(X) OutputDebugString(X)
 #else
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 #define STUBMSG(X) printf("%s", X)
 #endif
 #include "Input.h"
@@ -20,6 +20,7 @@ CSDLKeyboard::CSDLKeyboard()
 	m_bExclusiveMode = false;
 	m_pSystem = NULL;
 	m_modifiers = 0;
+	m_pWindow = NULL;
 }
 
 CSDLKeyboard::~CSDLKeyboard()
@@ -27,11 +28,12 @@ CSDLKeyboard::~CSDLKeyboard()
 
 }
 
-bool CSDLKeyboard::Init(CInput* pInput, ISystem* pSystem)
+bool CSDLKeyboard::Init(CInput* pInput, ISystem* pSystem, SDL_Window* window)
 {
 	m_pSystem = pSystem;
 	m_pLog = pSystem->GetILog();
 	m_pInput = pInput;
+	m_pWindow = window;
 
 	m_pLog->LogToFile("Initializing SDL Keyboard\n");
 
@@ -78,41 +80,41 @@ unsigned short CSDLKeyboard::SDL2XKEY(SDL_Keycode kc)
 	case SDLK_EQUALS:        return XKEY_EQUALS;
 	case SDLK_BACKSPACE:          return XKEY_BACKSPACE;
 	case SDLK_TAB:           return XKEY_TAB;
-	case SDLK_q:             return XKEY_Q;
-	case SDLK_w:             return XKEY_W;
-	case SDLK_e:             return XKEY_E;
-	case SDLK_r:             return XKEY_R;
-	case SDLK_t:             return XKEY_T;
-	case SDLK_y:             return XKEY_Y;
-	case SDLK_u:             return XKEY_U;
-	case SDLK_i:             return XKEY_I;
-	case SDLK_o:             return XKEY_O;
-	case SDLK_p:             return XKEY_P;
+	case SDLK_Q:             return XKEY_Q;
+	case SDLK_W:             return XKEY_W;
+	case SDLK_E:             return XKEY_E;
+	case SDLK_R:             return XKEY_R;
+	case SDLK_T:             return XKEY_T;
+	case SDLK_Y:             return XKEY_Y;
+	case SDLK_U:             return XKEY_U;
+	case SDLK_I:             return XKEY_I;
+	case SDLK_O:             return XKEY_O;
+	case SDLK_P:             return XKEY_P;
 	case SDLK_LEFTBRACKET:      return XKEY_LBRACKET;
 	case SDLK_RIGHTBRACKET:      return XKEY_RBRACKET;
 	case SDLK_RETURN:        return XKEY_RETURN;
 	case SDLK_LCTRL:      return XKEY_LCONTROL;
-	case SDLK_a:             return XKEY_A;
-	case SDLK_s:             return XKEY_S;
-	case SDLK_d:             return XKEY_D;
-	case SDLK_f:             return XKEY_F;
-	case SDLK_g:             return XKEY_G;
-	case SDLK_h:             return XKEY_H;
-	case SDLK_j:             return XKEY_J;
-	case SDLK_k:             return XKEY_K;
-	case SDLK_l:             return XKEY_L;
+	case SDLK_A:             return XKEY_A;
+	case SDLK_S:             return XKEY_S;
+	case SDLK_D:             return XKEY_D;
+	case SDLK_F:             return XKEY_F;
+	case SDLK_G:             return XKEY_G;
+	case SDLK_H:             return XKEY_H;
+	case SDLK_J:             return XKEY_J;
+	case SDLK_K:             return XKEY_K;
+	case SDLK_L:             return XKEY_L;
 	case SDLK_SEMICOLON:     return XKEY_SEMICOLON;
-	case SDLK_QUOTE:    return XKEY_APOSTROPHE;
-	case SDLK_BACKQUOTE:         return XKEY_TILDE;
+	case SDLK_APOSTROPHE:    return XKEY_APOSTROPHE;
+	case SDLK_GRAVE:         return XKEY_TILDE;
 	case SDLK_LSHIFT:        return XKEY_LSHIFT;
 	case SDLK_BACKSLASH:     return XKEY_BACKSLASH;
-	case SDLK_z:             return XKEY_Z;
-	case SDLK_x:             return XKEY_X;
-	case SDLK_c:             return XKEY_C;
-	case SDLK_v:             return XKEY_V;
-	case SDLK_b:             return XKEY_B;
-	case SDLK_n:             return XKEY_N;
-	case SDLK_m:             return XKEY_M;
+	case SDLK_Z:             return XKEY_Z;
+	case SDLK_X:             return XKEY_X;
+	case SDLK_C:             return XKEY_C;
+	case SDLK_V:             return XKEY_V;
+	case SDLK_B:             return XKEY_B;
+	case SDLK_N:             return XKEY_N;
+	case SDLK_M:             return XKEY_M;
 	case SDLK_COMMA:         return XKEY_COMMA;
 	case SDLK_PERIOD:        return XKEY_PERIOD;
 	case SDLK_SLASH:         return XKEY_SLASH;
@@ -446,23 +448,23 @@ void CSDLKeyboard::Update()
 
 	while (SDL_PollEvent(&event))
 	{
-		if (event.type == SDL_KEYDOWN)
+		if (event.type == SDL_EVENT_KEY_DOWN)
 		{
-			xkey = SDL2XKEY(event.key.keysym.sym);
+			xkey = SDL2XKEY(event.key.key);
 			if (xkey > 0)
 			{
 				ProcessKey(xkey, true, m_cTempKeys);
 			}
 		}
-		else if (event.type == SDL_KEYUP)
+		else if (event.type == SDL_EVENT_KEY_UP)
 		{
-			xkey = SDL2XKEY(event.key.keysym.sym);
+			xkey = SDL2XKEY(event.key.key);
 			if (xkey > 0)
 			{
 				ProcessKey(xkey, false, m_cTempKeys);
 			}
 		}
-		else if (event.type == SDL_TEXTINPUT)
+		else if (event.type == SDL_EVENT_TEXT_INPUT)
 		{
 			//ignore
 		}
@@ -482,13 +484,13 @@ void CSDLKeyboard::Update()
 
 	if (KeyDown(XKEY_LCONTROL) && KeyReleased(XKEY_G))
 	  {
-		if (SDL_GetRelativeMouseMode())
+		if (SDL_GetWindowRelativeMouseMode(m_pWindow))
 		{
-			SDL_SetRelativeMouseMode(SDL_FALSE);
+			SDL_SetWindowRelativeMouseMode(m_pWindow, false);
 		}
 		else
 		{
-			SDL_SetRelativeMouseMode(SDL_TRUE);
+			SDL_SetWindowRelativeMouseMode(m_pWindow, true);
 		}
 	  }
 }

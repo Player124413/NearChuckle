@@ -9,7 +9,7 @@
 #ifdef _WIN32
 #include <SDL.h>
 #else
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 #endif
 
 struct ILog;
@@ -26,7 +26,7 @@ class CSDLKeyboard :
 public IKeyboard  
 {
 public:
-	bool Init(CInput *,ISystem *pSystem);
+	bool Init(CInput *,ISystem *pSystem, SDL_Window* window);
 	CSDLKeyboard();
 	virtual ~CSDLKeyboard();
 	void ShutDown();
@@ -66,5 +66,6 @@ protected:
 	ISystem	*m_pSystem;
 	ILog		*m_pLog;
 	int m_modifiers;
+	SDL_Window* m_pWindow;
 };
 #endif

@@ -521,7 +521,7 @@ void CGLRenderer::BeginFrame()
 
   //  EF_ClearBuffers(true);
 }
-
+#if 0
 bool CGLRenderer::ChangeResolution(int nNewWidth, int nNewHeight, int nNewColDepth, int nNewRefreshHZ, bool bFullScreen)
 {
 #ifdef USE_SDL
@@ -549,6 +549,18 @@ bool CGLRenderer::ChangeResolution(int nNewWidth, int nNewHeight, int nNewColDep
 #endif
   return false;
 }
+#else
+bool CGLRenderer::ChangeResolution(int nNewWidth, int nNewHeight, int nNewColDepth, int nNewRefreshHZ, bool bFullScreen)
+{
+  m_FullScreen = bFullScreen;
+  SDL_SetWindowFullscreen(m_RContexts[0]->m_Window, bFullScreen);
+  SDL_SetWindowSize(m_RContexts[0]->m_Window, nNewWidth, nNewHeight);
+
+  SDL_SyncWindow(m_RContexts[0]->m_Window);
+  ChangeViewport(0, 0, nNewWidth, nNewHeight);
+  return false;
+}
+#endif
 
 //////////////////////////////////////////////////////////////////////
 bool CGLRenderer::ChangeDisplay(unsigned int width,unsigned int height,unsigned int bpp)

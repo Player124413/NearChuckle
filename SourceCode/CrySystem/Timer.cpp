@@ -37,7 +37,7 @@ static int64 g_lCurrentTime = 0;
 #endif
 
 #ifdef __linux
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 #endif
 /////////////////////////////////////////////////////
 CTimer::CTimer() 
@@ -229,7 +229,7 @@ int64 CTimer::GetMMTime()
 #ifndef __linux
 	int64 lNow=timeGetTime();
 #else
-	int64 lNow=SDL_GetTicks64();
+	int64 lNow=SDL_GetTicks();
 #endif
 	return lNow;
 }

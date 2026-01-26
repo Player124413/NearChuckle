@@ -5,7 +5,7 @@
 
 #define RemoveCRLF(...) //TODO: Add real function or delete RemoveCRLF from code
 
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 
 #define _fstat64 fstat64
 #if defined(__x86_64) || defined(__i386__)

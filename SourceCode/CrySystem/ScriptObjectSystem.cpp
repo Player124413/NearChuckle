@@ -25,7 +25,7 @@
 #include "ddraw.h"
 #include <SDL_cpuinfo.h>
 #else
-#include <SDL2/SDL_cpuinfo.h>
+#include <SDL3/SDL_cpuinfo.h>
 #endif
 #include "HTTPDownloader.h"
 #include <time.h>

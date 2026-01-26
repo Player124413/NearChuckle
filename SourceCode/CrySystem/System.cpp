@@ -20,7 +20,7 @@
 #ifdef _WIN32
 #include <SDL.h>
 #else
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 #endif
 
 #ifndef _XBOX
@@ -880,28 +880,21 @@ bool CSystem::Update( int updateFlags, int nPauseMode )
 		{
 			switch (event.type)
 			{
-			case SDL_QUIT: Quit(); break;
-			case SDL_TEXTINPUT: break; //ignore
-			case SDL_WINDOWEVENT:
-			{
-				switch (event.window.type)
-				{
-				case SDL_WINDOWEVENT_SHOWN:
-				case SDL_WINDOWEVENT_RESTORED:
-				case SDL_WINDOWEVENT_MAXIMIZED:
-				case SDL_WINDOWEVENT_ENTER:
-				case SDL_WINDOWEVENT_FOCUS_GAINED:
-					g_bWindowInFocus = true;
-					break;
-
-				case SDL_WINDOWEVENT_HIDDEN:
-				case SDL_WINDOWEVENT_MINIMIZED:
-				case SDL_WINDOWEVENT_LEAVE:
-				case SDL_WINDOWEVENT_FOCUS_LOST:
-					g_bWindowInFocus = false;
-					break;
-				}
-			}
+			case SDL_EVENT_QUIT: Quit(); break;
+			case SDL_EVENT_TEXT_INPUT: break; //ignore
+			case SDL_EVENT_WINDOW_SHOWN:
+			case SDL_EVENT_WINDOW_RESTORED:
+			case SDL_EVENT_WINDOW_MAXIMIZED:
+			case SDL_EVENT_WINDOW_MOUSE_ENTER:
+			case SDL_EVENT_WINDOW_FOCUS_GAINED:
+				g_bWindowInFocus = true;
+				break;
+			case SDL_EVENT_WINDOW_HIDDEN:
+			case SDL_EVENT_WINDOW_MINIMIZED:
+			case SDL_EVENT_WINDOW_MOUSE_LEAVE:
+			case SDL_EVENT_WINDOW_FOCUS_LOST:
+				g_bWindowInFocus = false;
+				break;
 			break;
 			default:
 				events.push_back(event);

@@ -209,8 +209,8 @@ protected:
 	// the id of the worker thread, if any 
 	DWORD m_dwWorkerThreadId;
 #else
-	SDL_threadID m_dwMainThreadId;
-	SDL_threadID m_dwWorkerThreadId;
+	SDL_ThreadID m_dwMainThreadId;
+	SDL_ThreadID m_dwWorkerThreadId;
 #endif
 	// This critical section protects the objects that can be written to by the main thread only
 	// It must be locked for the time of access from non-main thread and for the time of writing from the main thread
