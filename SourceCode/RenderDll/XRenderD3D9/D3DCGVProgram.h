@@ -10,9 +10,12 @@
 #ifndef __D3DCGVPROGRAM_H__
 #define __D3DCGVPROGRAM_H__
 
+#ifndef __linux
 #include "cg\cgD3D9.h"
 #include <direct.h>
-
+#else
+#include "CG/cg.h"
+#endif
 #define CG_VP_CACHE_VER    3.4
 
 #define VSCONST_0_025_05_1 28
@@ -457,7 +460,7 @@ public:
     cryMemcpy(str, code, size);
     return str;
   }
-
+#ifndef DISABLE_CG
   char *mfLoadCG(const char *prog_text)
   {
 		// NOTE: AMD64 port: find the 64-bit CG runtime
@@ -553,6 +556,23 @@ public:
     return pBuf;
   }
 
+  void WriteShaderBinary(LPD3DXBUFFER pCode)
+  {
+    char buf[256];
+    FILE* fp;
+    mfGetDstFileName(buf, 256, false, ".vbin");
+    fp = iSystem->GetIPak()->FOpen(buf, "rb");
+    if (!fp)
+    {
+        fp = fopen(buf, "wb");
+        if (fp)
+        {
+            fwrite(pCode->GetBufferPointer(), pCode->GetBufferSize(), 1, fp);
+            fclose(fp);
+        }
+    }
+  }
+
   LPD3DXBUFFER mfLoad(const char *prog_text)
   {
     // Load and create vertex shader
@@ -600,9 +620,17 @@ public:
       Warning( 0,0,"CCGVProgram_D3D::mfLoad: Could not create vertex shader '%s' (%s)\n", m_Name.c_str(), gcpRendD3D->D3DError(hr));
       return NULL;
     }
+
+    WriteShaderBinary(pCode);
+
     return pCode;
   }
-
+#else
+char *mfLoadCG(const char *prog_text)
+  {
+    return NULL;
+  }
+#endif
   SCGBind *mfGetParameterBind(const char *Name)
   {
     CName nm = CName(Name, eFN_Add);
@@ -799,7 +827,7 @@ public:
       case ECGP_Matr_World:
         {
           D3DXMatrixIdentity(&matWorldViewProj);
-          mfParameter(ParamBind, &matWorldViewProj(0, 0), 4);
+          mfParameter(ParamBind, &matWorldViewProj._11, 4);
         }
         break;
       case ECGP_Matr_View_IT:
@@ -807,7 +835,7 @@ public:
           D3DXMatrixMultiply((D3DXMATRIXA16 *)&r->m_ViewMatrix(0,0), (D3DXMATRIXA16 *)&r->m_RP.m_pCurObject->m_Matrix(0,0), (D3DXMATRIXA16 *)&r->m_CameraMatrix(0,0));
           D3DXMATRIXA16 *matView = (D3DXMATRIXA16 *)r->m_ViewMatrix.GetData();
           D3DXMatrixInverse(&matWorldViewProj, NULL, matView);
-          mfParameter(ParamBind, &matWorldViewProj(0, 0), 4);
+          mfParameter(ParamBind, &matWorldViewProj._11, 4);
         }
     	  break;
       case ECGP_Matr_View:
@@ -815,7 +843,7 @@ public:
           D3DXMatrixMultiply((D3DXMATRIXA16 *)&r->m_ViewMatrix(0,0), (D3DXMATRIXA16 *)&r->m_RP.m_pCurObject->m_Matrix(0,0), (D3DXMATRIXA16 *)&r->m_CameraMatrix(0,0));
           D3DXMATRIXA16 *matView = (D3DXMATRIXA16 *)r->m_ViewMatrix.GetData();
           D3DXMatrixTranspose(&matWorldViewProj, matView);
-          mfParameter(ParamBind, &matWorldViewProj(0, 0), 4);
+          mfParameter(ParamBind, &matWorldViewProj._11, 4);
         }
         break;
       case ECGP_Matr_View_I:
@@ -824,7 +852,7 @@ public:
           D3DXMATRIXA16 *matView = (D3DXMATRIXA16 *)r->m_ViewMatrix.GetData();
           D3DXMatrixInverse(&matWorldViewProj, NULL, matView);
           D3DXMatrixTranspose(&matWorldViewProj, &matWorldViewProj);
-          mfParameter(ParamBind, &matWorldViewProj(0, 0), 4);
+          mfParameter(ParamBind, &matWorldViewProj._11, 4);
         }
         break;
       case ECGP_Matr_View_T:

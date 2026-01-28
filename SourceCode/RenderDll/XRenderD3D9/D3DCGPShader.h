@@ -10,8 +10,12 @@
 #ifndef __D3DCGPSHADER_H__
 #define __D3DCGPSAHDER_H__
 
+#ifndef __linux
 #include "cg\cgD3D9.h"
 #include <direct.h>
+#else
+#include "CG/cg.h"
+#endif
 
 #define CG_FP_CACHE_VER    3.4
 
@@ -257,7 +261,7 @@ public:
   {
     gcpRendD3D->mfGetD3DDevice()->SetPixelShader(NULL);
   }
-
+#ifndef DISABLE_CG
   char *mfLoadCG_Int(char *prog_text)
   {
 #if !defined(WIN64) && defined(USE_CG)
@@ -570,7 +574,12 @@ public:
     }
     return pOut;
   }
-
+#else
+char *mfLoadCG(char *prog_text)
+  {
+    return NULL;
+  }
+#endif
   const char *mfSkipLine(const char *prog)
   {
     while (*prog != 0xa) {prog++;}
@@ -622,6 +631,25 @@ public:
     }
     return NULL;
   }
+#ifndef DISABLE_CG
+  void WriteShaderBinary(LPD3DXBUFFER pCode)
+  {
+    char buf[256];
+    FILE* fp;
+    mfGetDstFileName(buf, 256, false, ".pbin");
+
+    fp = iSystem->GetIPak()->FOpen(buf, "rb");
+    if (!fp)
+    {
+        fp = fopen(buf, "wb");
+        if (fp)
+        {
+            fwrite(pCode->GetBufferPointer(), pCode->GetBufferSize(), 1, fp);
+            fclose(fp);
+        }
+    }
+  }
+
   LPD3DXBUFFER mfLoad(const char *prog_text)
   {
 		// Assemble and create pixel shader
@@ -705,8 +733,12 @@ public:
       Warning( 0,0,"CCGPShader_D3D::mfLoad: Could not create pixel shader '%s'(0x%x) (%s)\n", m_Name.c_str(), m_nMaskGen, gcpRendD3D->D3DError(hr));
       return NULL;
     }
+
+    WriteShaderBinary(pCode);
+
     return pCode;
   }
+#endif
 
   void mfParameteri(SCGBind *ParamBind, const float *v)
   {

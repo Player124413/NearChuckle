@@ -10,6 +10,7 @@
 #include "RenderPCH.h"
 #include "DriverD3D9.h"
 #include "D3DCGVProgram.h"
+#include "I3DEngine.h"
 #ifndef __linux
 #ifndef PS2
 #include <direct.h>
@@ -2454,6 +2455,9 @@ bool CCGVProgram_D3D::mfActivate(CVProgram *pPosVP)
       strcpy(namedst, namedst1);
 create:
     char *pbuf = NULL;
+#ifdef DISABLE_CG
+    bCreate = false;
+#endif
     if (bCreate)
     {
       if (statusdst)
@@ -2488,12 +2492,14 @@ create:
           }
           if (!m_Functions.size())
           {
+#ifdef _WIN32
             HANDLE hdst = CreateFile(namedst,GENERIC_WRITE,FILE_SHARE_READ, NULL,OPEN_EXISTING,FILE_FLAG_SEQUENTIAL_SCAN,NULL);
             FILE *hsrc = iSystem->GetIPak()->FOpen(namesrc, "r");
             writetimesrc = iSystem->GetIPak()->GetModificationTime(hsrc);
             SetFileTime(hdst,NULL,NULL,&writetimesrc);
             iSystem->GetIPak()->FClose(hsrc);
             CloseHandle(hdst);
+#endif
           }
         }
 #if !defined(WIN64) && defined(USE_CG)
@@ -2505,7 +2511,16 @@ create:
         statusdst = iSystem->GetIPak()->FOpen(namedst, "r");
       }
     }
-    if (statusdst)
+    if (!statusdst)
+    {
+#ifdef DISABLE_CG
+      LogMissingShader(namedst, "vertex",
+        iSystem->GetI3DEngine()->GetLevelFilePath(""),
+        iSystem->GetViewCamera().GetPos());
+      return false;
+#endif
+    }
+    else
     {
       iSystem->GetIPak()->FSeek(statusdst, 0, SEEK_END);
       int len = iSystem->GetIPak()->FTell(statusdst);
@@ -2579,7 +2594,30 @@ create:
     if (pbuf)
     {
       RemoveCR(pbuf);
+#ifdef DISABLE_CG
+      char buf[256];
+      void* VertexShaderBuffer;
+      int VertexShaderSize = 0;
+      mfGetDstFileName(buf, 256, false, ".vbin");
+
+      FILE *pFile = iSystem->GetIPak()->FOpen(buf, "rb");
+      iSystem->GetIPak()->FSeek(pFile, 0, SEEK_END);
+      VertexShaderSize = iSystem->GetIPak()->FTell(pFile); 
+      iSystem->GetIPak()->FSeek(pFile, 0, SEEK_SET);
+        
+      if (VertexShaderSize > 0)
+      {
+          VertexShaderBuffer = malloc(VertexShaderSize);
+          iSystem->GetIPak()->FRead(VertexShaderBuffer, VertexShaderSize, 1, pFile);
+          gcpRendD3D->mfGetD3DDevice()->CreateVertexShader((DWORD*)VertexShaderBuffer, (IDirect3DVertexShader9**)&m_Insts[m_CurInst].m_pHandle);
+      }
+      else
+      {
+        __builtin_trap();
+      }
+#else
       LPD3DXBUFFER pCode = mfLoad(pbuf);
+#endif
 
       // parse variables and constants from CG or HLSL object code
       int nComps = 1;
@@ -2615,9 +2653,17 @@ create:
 
       assert(!m_Insts[m_CurInst].m_BindVars || m_Insts[m_CurInst].m_BindVars->Num()<=30);
       SAFE_DELETE_ARRAY(pbuf);
+#ifndef DISABLE_CG
       if (pCode && !bUseACIICache)
         CreateCacheItem(m_Insts[m_CurInst].m_LightMask, (byte *)pCode->GetBufferPointer(), pCode->GetBufferSize());
       SAFE_RELEASE(pCode);
+#else
+      if (VertexShaderSize > 0 && !bUseACIICache)
+      {
+        CreateCacheItem(m_Insts[m_CurInst].m_LightMask, (byte *)VertexShaderBuffer, VertexShaderSize);
+      }
+      free(VertexShaderBuffer);
+#endif
     }
 
     if (!(m_Flags & VPFI_PRECACHEPHASE))
