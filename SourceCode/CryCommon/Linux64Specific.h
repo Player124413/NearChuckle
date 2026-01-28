@@ -47,8 +47,9 @@ typedef uintptr_t UINT_PTR, *PUINT_PTR;
 typedef char *LPSTR, *PSTR;
 typedef unsigned long long __uint64;
 typedef signed long long __int64;
-
+#ifndef DIRECT3D9
 typedef signed long long		INT64;
+#endif
 typedef long long						UINT64;
 
 typedef long LONG_PTR, *PLONG_PTR, *PLONG;

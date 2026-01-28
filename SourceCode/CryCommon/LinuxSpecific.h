@@ -30,8 +30,8 @@ typedef unsigned int*				LPDWORD;
 typedef void*								LPVOID;
 #ifndef DIRECT3D9
 #define VOID            		void
-#endif
 #define PVOID								void*
+#endif
 
 //#define PHYSICS_EXPORTS
 
@@ -271,7 +271,7 @@ typedef struct _OVERLAPPED
             DWORD Offset;
             DWORD OffsetHigh;
         };
-        PVOID Pointer;
+        void* Pointer;
     };
 		DWORD dwNumberOfBytesTransfered;	//additional member temporary speciying the number of bytes to be read
     /*HANDLE*/void*  hEvent;
