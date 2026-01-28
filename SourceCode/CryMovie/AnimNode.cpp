@@ -166,11 +166,15 @@ bool CAnimBlock::RemoveTrack( IAnimTrack *pTrack )
 IAnimTrack* CAnimBlock::CreateTrack( int paramId,EAnimValue valueType )
 {
 	IAnimTrack *pTrack = NULL;
+	Quat q;
+	float f = 0.0f;
+	Vec3 v = Vec3(0, 0, 0);
+	q.SetIdentity();
 	switch (valueType)
 	{
-	case AVALUE_FLOAT:   pTrack=new CTcbFloatTrack; break;
-	case AVALUE_VECTOR:  pTrack=new CTcbVectorTrack; break;
-	case AVALUE_QUAT:    pTrack=new CTcbQuatTrack; break;
+	case AVALUE_FLOAT:   pTrack=new CTcbFloatTrack(f); break;
+	case AVALUE_VECTOR:  pTrack=new CTcbVectorTrack(v); break;
+	case AVALUE_QUAT:    pTrack=new CTcbQuatTrack(q); break;
 	case AVALUE_EVENT:   pTrack=new CEventTrack; break;
 	case AVALUE_BOOL:    pTrack=new CBoolTrack; break;
 	case AVALUE_SELECT:  pTrack=new CSelectTrack; break;

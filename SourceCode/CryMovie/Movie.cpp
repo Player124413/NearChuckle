@@ -124,14 +124,18 @@ IAnimNode* CMovieSystem::CreateNode( int nodeType,int nodeId )
 //////////////////////////////////////////////////////////////////////////
 IAnimTrack* CMovieSystem::CreateTrack( EAnimTrackType type )
 {
+	Quat q;
+	float f = 0.0f;
+	Vec3 v = Vec3(0, 0, 0);
+	q.SetIdentity();
 	switch (type)
 	{
 	case ATRACK_TCB_FLOAT:
-		return new CTcbFloatTrack;
+		return new CTcbFloatTrack(f);
 	case ATRACK_TCB_VECTOR:
-		return new CTcbVectorTrack;
+		return new CTcbVectorTrack(v);
 	case ATRACK_TCB_QUAT:
-		return new CTcbQuatTrack;
+		return new CTcbQuatTrack(q);
 	};
 	//ATRACK_TCB_FLOAT,
 	//ATRACK_TCB_VECTOR,

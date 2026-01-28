@@ -37,6 +37,24 @@ public:
 		AllocSpline();
 		m_flags = 0;
 	}
+	TAnimTcbTrack(float f)
+	{
+		AllocSpline();
+		m_flags = 0;
+		m_defaultValue = f;
+	}
+	TAnimTcbTrack(Vec3 v)
+	{
+		AllocSpline();
+		m_flags = 0;
+		m_defaultValue = v;
+	}
+	TAnimTcbTrack(Quat q)
+	{
+		m_spline = new TCBQuatSpline;
+		m_flags = 0;
+		m_defaultValue = q;
+	}
 	~TAnimTcbTrack()
 	{
 		delete m_spline;
