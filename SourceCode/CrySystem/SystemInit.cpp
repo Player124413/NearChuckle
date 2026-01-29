@@ -453,6 +453,43 @@ bool CSystem::InitRenderer(WIN_HINSTANCE hinst, WIN_HWND hwnd,const char *szCmdL
 		m_sSavedRDriver=m_rDriver->GetString();
 		m_rDriver->Set("NULL");
 	}
+#ifdef __linux
+	string lib_name(GetModulePath());
+	FILE* fp;
+	bool real_renderer = false;
+	if (!stricmp(m_rDriver->GetString(), "Direct3D9"))
+	{
+		real_renderer = true;
+		lib_name += DLL_D3D9RENDERER;
+	}
+	else if (!stricmp(m_rDriver->GetString(), "OpenGL"))
+	{
+		real_renderer = true;
+		lib_name += DLL_GLRENDERER;
+	}
+
+	if (real_renderer)
+	{
+		fp = fopen(lib_name.c_str(), "rb");
+		if (!fp)
+		{
+			if (!stricmp(m_rDriver->GetString(), "Direct3D9"))
+			{
+				printf("Couldn't find %s, trying OpenGL renderer...\n", DLL_D3D9RENDERER);
+				m_rDriver->Set("OpenGL");
+			}
+			else if (!stricmp(m_rDriver->GetString(), "OpenGL"))
+			{
+				printf("Couldn't find %s, trying Direct3D9 renderer...\n", DLL_GLRENDERER);
+				m_rDriver->Set("Direct3D9");
+			}
+		}
+		else
+		{
+			fclose(fp);
+		}
+	}
+#endif
 
 	if (!OpenRenderLibrary(m_rDriver->GetString()))
 		return false;
