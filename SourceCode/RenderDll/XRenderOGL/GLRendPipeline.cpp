@@ -424,8 +424,17 @@ void CGLRenderer::EF_PipelineInit()
     for (int j=0; j<VERTEX_FORMAT_NUMS; j++)
     {
       SVertBufComps Cps[2];
-      GetVertBufComps(&Cps[0], i);
-      GetVertBufComps(&Cps[1], j);
+
+      if (i >= 14 || j >= 14)
+      {
+        memset(Cps, 0, sizeof(SVertBufComps));
+      }
+      else
+      {
+        GetVertBufComps(&Cps[0], i);
+        GetVertBufComps(&Cps[1], j);
+      }
+
 
       bool bNeedTC = Cps[1].m_bHasTC | Cps[0].m_bHasTC;
       bool bNeedCol = Cps[1].m_bHasColors | Cps[0].m_bHasColors;
