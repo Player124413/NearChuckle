@@ -5614,6 +5614,14 @@ void CGLRenderer::EF_DrawGeneralPasses(SShaderTechnique *hs, SShader *ef, bool b
   int bFogOverrided = 0;
   SArrayPointer::m_LastEnabledPass = 0;
   slw = &hs->m_Passes[nStart];
+
+  if (CV_r_DisableLevelDecalsHack
+    && (slw->m_RenderState & GS_BLSRC_MASK) == GS_BLSRC_DSTCOL
+    && (slw->m_RenderState & GS_BLDST_MASK) == GS_BLDST_ZERO)
+  {
+    return;
+  }
+
   for (i=nStart; i<=nEnd; i++, slw++)
   {
     SArrayPointer::m_CurEnabledPass = 0;

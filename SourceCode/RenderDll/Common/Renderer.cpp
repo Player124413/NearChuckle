@@ -335,6 +335,8 @@ int CRenderer::CV_r_Quality_Reflection;
 
 int CRenderer::CV_r_ShowVideoMemoryStats;
 
+int CRenderer::CV_r_DisableLevelDecalsHack;
+
 //////////////////////////////////////////////////////////////////////
 bool CRenderer::m_showfps=false;  
 
@@ -1139,6 +1141,8 @@ CRenderer::CRenderer()
   iConsole->Register( "r_Quality_Reflection", &CV_r_Quality_Reflection, 0, VF_DUMPTODISK );
 
   iConsole->Register("r_ShowVideoMemoryStats", &CV_r_ShowVideoMemoryStats, 0);
+
+  iConsole->Register("r_DisableLevelDecalsHack", &CV_r_DisableLevelDecalsHack, 0, VF_DUMPTODISK);
 
   m_WorldColor = CFColor(0.5f, 0.5f, 0.5f, 1.0f);
   m_vClearColor = Vec3d(0,0,0);

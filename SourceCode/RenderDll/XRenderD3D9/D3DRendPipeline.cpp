@@ -5339,6 +5339,14 @@ void CD3D9Renderer::EF_DrawGeneralPasses(SShaderTechnique *hs, SShader *ef, bool
   CVProgram *newVP;
 
   slw = &hs->m_Passes[nStart];
+
+  if (CV_r_DisableLevelDecalsHack
+    && (slw->m_RenderState & GS_BLSRC_MASK) == GS_BLSRC_DSTCOL
+    && (slw->m_RenderState & GS_BLDST_MASK) == GS_BLDST_ZERO)
+  {
+    return;
+  }
+
   for (i=nStart; i<=nEnd; i++, slw++)
   {
     m_RP.m_StatNumPasses++;

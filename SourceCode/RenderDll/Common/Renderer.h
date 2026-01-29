@@ -1211,6 +1211,7 @@ public:
 	static int CV_r_DisplayInfo;
 
   static int CV_r_ShowVideoMemoryStats;
+  static int CV_r_DisableLevelDecalsHack;
 
   virtual void MakeMatrix(const Vec3 & pos, const Vec3 & angles,const Vec3 & scale, Matrix44 * mat){assert(0);};
 
