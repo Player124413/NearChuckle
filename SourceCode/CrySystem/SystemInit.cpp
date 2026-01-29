@@ -68,6 +68,7 @@ extern HMODULE gDLLHandle;
 #		define DLL_3DENGINE			"libCry3DEngine.so"
 #		define DLL_NULLRENDERER	"libXRenderNULL.so"
 #		define DLL_GLRENDERER "libXRenderOGL.so"
+#		define DLL_D3D9RENDERER "libXRenderD3D9.so"
 #else
 #	define DLL_SOUND				"CrySoundSystem.dll"
 #	define DLL_NETWORK			"CryNetwork.dll"
@@ -80,6 +81,7 @@ extern HMODULE gDLLHandle;
 #	define DLL_3DENGINE			"Cry3DEngine.dll"
 #	define DLL_NULLRENDERER	"XRenderNULL.dll"
 #	define DLL_GLRENDERER "XRenderOGL.dll"
+#	define DLL_D3D9RENDERER "XRenderD3D9.dll"
 #endif
 
 #define DEFAULT_LOG_FILENAME "Log.txt"
@@ -94,9 +96,8 @@ bool CSystem::OpenRenderLibrary(const char *t_rend)
 	#endif
 
   int nRenderer = R_DX9_RENDERER;
-#if defined(LINUX)
-	return OpenRenderLibrary(R_GL_RENDERER);
-#else
+
+#ifndef __linux
   if (stricmp(t_rend, "NULL") != 0)
   {
     char szVendor[256];
@@ -111,7 +112,7 @@ bool CSystem::OpenRenderLibrary(const char *t_rend)
     }
     GetILog()->LogToFile( "System: VideoCard Detected: %s (%s)", szVendor, szDevice);
   }
-
+#endif
 	if (stricmp(t_rend, "Auto") == 0)
   {
     switch(nRenderer)
@@ -148,7 +149,6 @@ bool CSystem::OpenRenderLibrary(const char *t_rend)
     return OpenRenderLibrary(R_NULL_RENDERER);
 
 	Error( "Unknown renderer type: %s", t_rend );
-#endif
 	return (false);
 }
 
@@ -180,7 +180,7 @@ bool CSystem::OpenRenderLibrary(int type)
 		strcpy(libname, "XRenderD3D8.dll");
   else
   if (type == R_DX9_RENDERER)
-    strcpy(libname, "XRenderD3D9.dll");
+    strcpy(libname, DLL_D3D9RENDERER);
   else
   if (type == R_NULL_RENDERER)
     strcpy(libname, DLL_NULLRENDERER);

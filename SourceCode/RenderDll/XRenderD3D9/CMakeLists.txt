@@ -7,6 +7,19 @@ endif()
 
 if (MSVC)
 	add_compile_options(/SAFESEH:NO)
+else()
+    if ("${DXVK_LIB_PATH}" STREQUAL "")
+            message( FATAL_ERROR "DXVK_LIB_PATH is not set.
+            You must set it to a path containing libdxvk_d3d9.so.0." )
+    endif()
+    if ("${DXVK_INC_PATH}" STREQUAL "")
+            message( FATAL_ERROR "DXVK_INC_PATH is not set. You must set it to a path containing windows_base.h. This should be <dvk_source_dir>/include/native/windows" )
+    endif()
+    set (DISABLE_CG ON)
+endif()
+
+if (DISABLE_CG)
+    add_definitions(-DDISABLE_CG)
 endif()
 
 set(SRC_FILES
@@ -127,14 +140,18 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/SourceCode/CryCommon
     ${CMAKE_SOURCE_DIR}/SourceCode/RenderDll
     ${CMAKE_SOURCE_DIR}/SourceCode/RenderDll/Dx9Sdk/Include
+    {CMAKE_SOURCE_DIR}/SourceCode/RenderDll/XRenderD3D9/CG/
     ${CMAKE_SOURCE_DIR}/Externals/SDL/include
+    ${DXVK_INC_PATH}
 )
 
 target_link_directories(${PROJECT_NAME} PRIVATE
     ${DXLIB_PATH}
+    ${DXVK_LIB_PATH}
     Libraries
 )
 
+if (MSVC)
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /NODEFAULTLIB:libcp.lib /NODEFAULTLIB:LIBC.lib")
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
@@ -148,3 +165,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 
     SDL2
 )
+else()
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    dxvk_d3d9
+    SDL3
+)
+endif()
