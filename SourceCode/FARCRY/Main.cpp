@@ -695,6 +695,7 @@ bool RunGame(void)
 	char* sCmdLine = NULL;
 #endif
 	SDL_Init(SDL_INIT_VIDEO);
+	setlocale(LC_ALL, "en_US.utf8");
 
 //	InvokeExternalConfigTool();
 
