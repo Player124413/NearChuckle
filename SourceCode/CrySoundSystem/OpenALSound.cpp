@@ -255,6 +255,7 @@ static int audio_wav_from_data_MEM(void* p, int bufsize, ALuint* buf)
 	char* temp_buffer;
 	unsigned int size, frequency, subchunk2size;
 	unsigned short num_channels, bits_per_sample, format;
+	void* start = p;
 	*buf = 0;
 
 	stream_read(&header, &p, sizeof(header));
@@ -313,19 +314,30 @@ static int audio_wav_from_data_MEM(void* p, int bufsize, ALuint* buf)
 		break;
 	}
 
-	stream_read(&subchunk2, &p, sizeof(subchunk2));
-
-	if (strncmp(subchunk2, "data", 4))
+	memset(subchunk2, 0, 4);
+	p = start;
+	while (strncmp(subchunk2, "data", 4))
 	{
-		//Some sound effects like the vehicle mounted M249 have
-		//the data header 2 bytes after the expected offset
-		p = (char*)p - 2;
+		if (((char*)p + 4 - (char*)start) >= bufsize)
+		{
+			//end of file, give up
+			break;
+		}
 		stream_read(&subchunk2, &p, sizeof(subchunk2));
 		if (strncmp(subchunk2, "data", 4))
 		{
-			AL_LOG("Subchunk 2 ID is %s, expected \"data\"\n", subchunk2);
-			return 1;
+			p = (char*)p - 3;
 		}
+		else
+		{
+			break;
+		}
+	}
+
+	if (strncmp(subchunk2, "data", 4))
+	{
+		AL_LOG("Subchunk 2 ID is %s, expected \"data\"\n", subchunk2);
+		return 1;
 	}
 
 	stream_read(&subchunk2size, &p, sizeof(subchunk2size));
@@ -351,7 +363,7 @@ DLL_API CS_SAMPLE * F_API CS_Sample_Load(int index, const char *name_or_data, un
 	ALSample_t* samp = nullptr;
 	if (mode & CS_LOADMEMORY)
 	{
-		ret = audio_wav_from_data_MEM((void*)name_or_data, 0, &thebuf);
+		ret = audio_wav_from_data_MEM((void*)name_or_data, length, &thebuf);
 		if (ret == 0)
 		{
 			samp = new ALSample_t;
