@@ -119,7 +119,7 @@ bool RunGame(HINSTANCE hInstance,const char *sCmdLine);
 #elif defined(PS2)
 bool RunGame(HINSTANCE hInstance);
 #else
-bool RunGame(void);
+bool RunGame(int argc, char** argv);
 #endif
 
 
@@ -322,7 +322,7 @@ int main(int argc, char** argv)
 #elif defined(PS2)
 	RunGame(hInstance);
 #else
-	RunGame();
+	RunGame(argc, argv);
 #endif
 	return 0;
 }
@@ -688,11 +688,11 @@ InvokeExternalConfigTool()
 #ifndef __linux
 bool RunGame(HINSTANCE hInstance,const char *sCmdLine)
 #else
-bool RunGame(void)
+bool RunGame(int argc, char** argv)
 #endif
 {
 #ifdef __linux
-	char* sCmdLine = NULL;
+	int i;
 #endif
 	SDL_Init(SDL_INIT_VIDEO);
 	setlocale(LC_ALL, "en_US.utf8");
@@ -705,8 +705,26 @@ bool RunGame(void)
 
 	char szLocalCmdLine[MAX_CMDLINE_LEN];
 	memset(szLocalCmdLine,0,MAX_CMDLINE_LEN);
+#ifndef __linux
 	if (sCmdLine)
 		strncpy(szLocalCmdLine,sCmdLine,MAX_CMDLINE_LEN);
+#else
+	for (i = 1; i < argc; i++)
+	{
+		if (strlen(szLocalCmdLine) + strlen(argv[i]) < MAX_CMDLINE_LEN)
+		{
+			if (i == 1)
+			{
+				strcpy(szLocalCmdLine, argv[i]);
+			}
+			else
+			{
+				strcat(szLocalCmdLine, argv[i]);
+			}
+			strcat(szLocalCmdLine, " ");
+		}
+	}
+#endif
 
 	do {
 		//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_DELAY_FREE_MEM_DF | _CRTDBG_LEAK_CHECK_DF | _CRTDBG_CHECK_ALWAYS_DF);
@@ -809,6 +827,8 @@ bool RunGame(void)
 	#else
 			SGameInitParams ip;
 			ip.sGameDLL = DLL_GAME;
+			if (szLocalCmdLine[0])
+				strncpy(ip.szGameCmdLine,szLocalCmdLine,sizeof(ip.szGameCmdLine));
 			if (!g_pISystem->CreateGame( ip ))
 			{
 				//Error( "CreateGame Failed" );
