@@ -255,6 +255,10 @@ IMatInfo* CMatMan::LoadMaterial( XmlNodeRef node,const char *sLibraryName,IMatIn
 
 	// Load lighting data.
 	Vec3 ambient,diffuse,specular,emissive;
+	ambient = Vec3(0, 0, 0);
+	diffuse = Vec3(0, 0, 0);
+	specular = Vec3(0, 0, 0);
+	emissive = Vec3(0, 0, 0);
 	node->getAttr( "Ambient",ambient );
 	node->getAttr( "Diffuse",diffuse );
 	node->getAttr( "Specular",specular );

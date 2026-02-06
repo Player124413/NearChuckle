@@ -1155,6 +1155,9 @@ CFlock::CFlock( int id,CFlockManager *mgr )
 	m_bc.waterLevel = m_bc.engine->GetWaterLevel();
 	m_bc.fBoidMass = 1;
 	m_bc.fBoidRadius = 1;
+
+	memset(m_name, 0, 64);
+	memset(m_model, 0, 64);
 }
 
 //////////////////////////////////////////////////////////////////////////

@@ -36,6 +36,12 @@ m_fPassRadius(0.6f)
 	m_fRadius = 0;
 	m_bCloaked = false;
 	m_bCanReceiveSignals = true;
+	m_vPosition.x = 0.0f;
+	m_vPosition.y = 0.0f;
+	m_vPosition.z = 0.0f;
+	m_vLastPosition.x = 0.0f;
+	m_vLastPosition.y = 0.0f;
+	m_vLastPosition.z = 0.0f;
 }
 
 CAIObject::~CAIObject()
