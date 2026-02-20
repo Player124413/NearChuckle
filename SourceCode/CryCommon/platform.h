@@ -260,7 +260,8 @@ static int64 GetTicks()
 	__asm__ __volatile__ ( "rdtsc" : "=a" (counter.u.LowPart), "=d" (counter.u.HighPart) );
 	return counter.QuadPart;
 #else
-	return SDL_GetTicks64();
+	//return SDL_GetTicks64();
+	return SDL_GetTicks();
 #endif
 }
 #endif

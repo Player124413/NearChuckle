@@ -11,6 +11,7 @@
 #include "GL_Renderer.h"
 #include "GLCGPShader.h"
 #include "GLCGVProgram.h"
+#include "I3DEngine.h"
 
 #undef THIS_FILE
 static char THIS_FILE[] = __FILE__;
