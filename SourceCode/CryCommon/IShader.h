@@ -274,6 +274,7 @@ struct SShaderParam
 	{
 		m_nMaterial = -1;
 		m_Value.m_Int = 0;
+		m_Type = eType_UNKNOWN;
 	}
 	size_t Size()
 	{

@@ -48,6 +48,7 @@ CXConsole::CXConsole()
 	m_nProgressRange = 0;
 	m_nLoadingBarTexID = 0;
 	m_nLoadingBackTexID = 0;
+	m_nRepeatKey = 0;
 }
 
 CXConsole::~CXConsole()

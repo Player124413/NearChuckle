@@ -375,6 +375,13 @@ CPlayer::CPlayer(CXGame *pGame) :
 	m_fLastProneTime = 0;
 
 	m_pLastAiming=NULL;
+
+	m_LegNeedsForceAngle = false;
+	m_Running = false;
+	m_bHasJumped = false;
+	m_fLastGroundHeight = 0.0f;
+	for (int i = 0; i < PLAYER_MAX_WEAPONS; i++)
+		m_vWeaponSlots[i] = 0;
 }
 
 
@@ -558,6 +565,10 @@ void CPlayer::SelectFirstWeapon()
 	while(slot<PLAYER_MAX_WEAPONS && m_vWeaponSlots[slot]==0)
 		slot++;
 
+	if (slot >= PLAYER_MAX_WEAPONS)
+	{
+		return;
+	}
 	if(m_vWeaponSlots[slot]!=0)
 		SelectWeapon(m_vWeaponSlots[slot]);
 }

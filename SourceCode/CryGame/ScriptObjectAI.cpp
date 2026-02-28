@@ -937,6 +937,7 @@ int CScriptObjectAI::RegisterWithAI(IFunctionHandler *pH)
 				float fwdspeed,bckspeed;
 				float	minAlt;
 				CXVehicleProxy *pProxy;
+				fwdspeed = bckspeed = 0.0f;
 //				pProxy = new CXPuppetProxy(m_pEntity,m_pScriptSystem,m_pGame);
 				pProxy = new CXVehicleProxy(pEntity,m_pScriptSystem,m_pGame);
 

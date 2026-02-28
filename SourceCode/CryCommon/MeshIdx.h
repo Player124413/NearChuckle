@@ -198,6 +198,9 @@ public:
 			m_pVerts[i].y = pVertices[i].y;
 			m_pVerts[i].z = pVertices[i].z;
 		}
+
+		m_vBoxMin = Vec3d(0, 0, 0);
+		m_vBoxMax = Vec3d(0, 0, 0);
 	}
 
 

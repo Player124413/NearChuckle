@@ -42,6 +42,13 @@ CRigidEntity::CRigidEntity(CPhysicalWorld *pWorld) : CPhysicalEntity(pWorld)
 	for(i=0;i<sizeof(m_vhist)/sizeof(m_vhist[0]);i++) {
 		m_vhist[i].zero(); m_whist[i].zero(); m_Lhist[i].zero();
 	}
+
+	for (i = 0; i < NCHECKSUMS; i++)
+	{
+		m_checksums[i].iPhysTime = 0;
+		m_checksums[i].checksum = 0;
+	}
+
 	m_iDynHist = 0;
 	m_timeStepPerformed = 0;
 	m_timeStepFull = 0.01f;
@@ -88,6 +95,8 @@ CRigidEntity::CRigidEntity(CPhysicalWorld *pWorld) : CPhysicalEntity(pWorld)
 	//m_flags |= ref_use_simple_solver;
 	m_E0 = m_Estep = 0;
 	m_impulseTime = 0;
+	m_submergedFraction = 0.0f;
+	m_flags = 0;
 }
 
 CRigidEntity::~CRigidEntity()
@@ -2420,6 +2429,13 @@ int CRigidEntity::ReadContacts(CStream &stm, int flags)
 	pe_status_id si;
 	int idPrevColliders[16],nPrevColliders=0;
 	masktype iPrevConstraints[16],dummy;
+
+	i = j = id = 0;
+	bnz = false;
+	dummy = 0;
+	memset(idPrevColliders, 0, sizeof(idPrevColliders));
+	memset(iPrevConstraints, 0, sizeof(iPrevConstraints));
+	memset(&si, 0, sizeof(pe_status_id));
 
 	if (!(flags & ssf_no_update)) {
 		for(i=0;i<m_nColliders;i++) {

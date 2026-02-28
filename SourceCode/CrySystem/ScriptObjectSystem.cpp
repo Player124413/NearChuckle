@@ -683,7 +683,7 @@ int CScriptObjectSystem::GetEntity(IFunctionHandler *pH)
 	CHECK_PARAMETERS(1);
 	IEntity *pEntity;
 	IScriptObject *pObject;
-	int nID;
+	int nID = 0;
 	pH->GetParam(1,nID);
 	pEntity=m_pEntitySystem->GetEntity(nID);
 	if(pEntity){

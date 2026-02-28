@@ -243,6 +243,7 @@ m_pObjectCollide(pSS),m_vObjPosCollide(pSS),m_vObjVelCollide(pSS),m_pSplashList(
 	m_fScriptUpdateTimer = 0;
 	m_fCharZOffsetCur = m_fCharZOffsetTarget = 0;
 	m_nFlyingFrames = 100;
+	m_realcenter = Vec3(0.0f, 0.0f, 0.0f);
 }
 
 //////////////////////////////////////////////////////////////////////

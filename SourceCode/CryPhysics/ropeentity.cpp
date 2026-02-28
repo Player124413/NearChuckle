@@ -430,6 +430,7 @@ __ropeframe++;
 		geom_world_data gwd;
 
 		g_Overlapper.Init();
+		memset(&boxrope, 0, sizeof(box));
 		boxrope.size = (m_BBox[1]-m_BBox[0])*0.5f;
 		center = (m_BBox[0]+m_BBox[1])*0.5f;
 		ip.bStopAtFirstTri = true;
