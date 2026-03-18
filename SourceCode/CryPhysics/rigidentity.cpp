@@ -96,7 +96,6 @@ CRigidEntity::CRigidEntity(CPhysicalWorld *pWorld) : CPhysicalEntity(pWorld)
 	m_E0 = m_Estep = 0;
 	m_impulseTime = 0;
 	m_submergedFraction = 0.0f;
-	m_flags = 0;
 }
 
 CRigidEntity::~CRigidEntity()
@@ -707,6 +706,8 @@ int CRigidEntity::CheckForNewContacts(geom_world_data *pgwd0,intersection_params
 
 	nents = GetPotentialColliders(pentlist);
 	pip->bKeepPrevContacts = false;
+	BBox[0] = Vec3(0.0f, 0.0f, 0.0f);
+	BBox[1] = Vec3(0.0f, 0.0f, 0.0f);
 
 	for(i=iStartPart; i<iStartPart+nParts; i++) if (m_parts[i].flagsCollider) {
 		pgwd0->offset = m_pos + m_qrot*m_parts[i].pos;
