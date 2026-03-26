@@ -391,12 +391,21 @@ void CLog::LogStringToFile( const char *szString,bool bAdd )
 	szTemp[sizeof(szTemp)-32] = 0;
 
 	size_t len = strlen(szTemp);
+	size_t i;
 	const char * mptr=szTemp+len-1;
 	if (*mptr!='\n') 
 		strcat(szTemp,"\n");
 
 	if (szTemp[0] == '$')
-		strcpy(szTemp, szTemp+2);
+	{
+		len = strlen(szTemp);
+		for (i = 0; i < len - 2; i++)
+		{
+			szTemp[i] = szTemp[i + 2];
+		}
+		szTemp[len - 2] = '\0';
+	}
+
 
 #ifdef _WIN32
 	if (!m_pLogIncludeTime)

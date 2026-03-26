@@ -2844,6 +2844,7 @@ byte *CTexMan::ImgConvertDXT_RGBA(byte *dst, STexPic *ti, int DXTSize)
 #if defined(WIN64) || defined(LINUX) || !defined(ENABLE_DXT)
 	// NOTE: AMD64 port: implement
 	dd = new byte [ti->m_Width*ti->m_Height*4];
+  memset(dd, 0, ti->m_Width * ti->m_Height * 4 * sizeof(byte));
 #else
   int src_format;
   byte *_data = nvDXTdecompress(width, height, planes, lTotalWidth, rowBytes, src_format);
