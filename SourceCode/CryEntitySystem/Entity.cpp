@@ -1727,8 +1727,30 @@ void CEntity::UpdatePhysics( SEntityUpdateContext &ctx )
 				link_end = q[m_objects[j].ipart1]*m_objects[j].link_end0 + m_objects[m_objects[j].ipart1].pos;
 				len0 =(m_objects[j].link_end0 - m_objects[j].link_start0).Length();
 				len =(link_end - link_start).Length();
-
+#if 0
+				//For some reason, this doesn't work in release builds on Linux. Why?
 				mtx = matrix3x3in4x4Tf(qmaster);
+#else
+				float vxvx = qmaster.v.x * qmaster.v.x;
+				float vzvz = qmaster.v.z * qmaster.v.z;
+				float vyvy = qmaster.v.y * qmaster.v.y;
+				float vxvy = qmaster.v.x * qmaster.v.y;
+				float vxvz = qmaster.v.x * qmaster.v.z;
+				float vyvz = qmaster.v.y * qmaster.v.z;
+				float svx = qmaster.w * qmaster.v.x;
+				float svy = qmaster.w * qmaster.v.y;
+				float svz = qmaster.w * qmaster.v.z;
+
+				m_objects[j].mtx.data[0] = 1 - (vyvy + vzvz) * 2;
+				m_objects[j].mtx.data[1] = (vxvy + svz) * 2;
+				m_objects[j].mtx.data[2] = (vxvz - svy) * 2;
+				m_objects[j].mtx.data[4] = (vxvy - svz) * 2;
+				m_objects[j].mtx.data[5] = 1 - (vxvx + vzvz) * 2;
+				m_objects[j].mtx.data[6] = (vyvz + svx) * 2;
+				m_objects[j].mtx.data[8] = (vxvz + svy) * 2;
+				m_objects[j].mtx.data[9] = (vyvz - svx) * 2;
+				m_objects[j].mtx.data[10] = 1 - (vxvx + vyvy) * 2;
+#endif
 				m_objects[j].mtx.SetRow(3,m_center); // initialize object matrix to entity world matrix
 				link_offset = m_objects[j].mtx.TransformPointOLD(link_start);
 
