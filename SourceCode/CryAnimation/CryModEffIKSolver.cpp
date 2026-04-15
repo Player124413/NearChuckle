@@ -32,10 +32,14 @@ void RotateMatrix(Matrix44 &mtx, vectorf axis,float cosa,float sina,vectorf pivo
 {
 	vectorf curaxis; int i;
 	Matrix44 rotmtx; rotmtx.SetIdentity();
+	vectorf temp;
 
 	for(i=0,curaxis.zero();i<3;i++) {
 		curaxis[i] = 1;
-		*(vectorf*)&rotmtx(i,0) = curaxis.rotated(axis,cosa,sina);
+		temp = curaxis.rotated(axis, cosa, sina);
+		rotmtx.data[i * 4] = temp.x;
+		rotmtx.data[(i * 4) + 1] = temp.y;
+		rotmtx.data[(i * 4) + 2] = temp.z;
 		curaxis[i] = 0;
 	}
 	rotmtx.SetTranslationOLD(pivot-pivot.rotated(axis,cosa,sina));
