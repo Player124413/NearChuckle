@@ -269,7 +269,13 @@ bool CSoundBuffer::Load(bool bLooping, CSound *pSound)
 	{
 		ASSERT(m_pSoundSystem->m_pStreamEngine);
 		//TRACE("Starting Sound-Streaming for %s.", m_Props.sName.c_str());
-		m_pReadStream=m_pSoundSystem->m_pStreamEngine->StartRead("SoundSystem", m_Props.sName.c_str(), this);
+		IReadStreamPtr ptr=m_pSoundSystem->m_pStreamEngine->StartRead("SoundSystem", m_Props.sName.c_str(), this);
+#ifndef __linux
+		//On Linux, StartRead will directly call StreamOnComplete, leading to m_pReadStream being set to NULL, then
+		//back to a valid pointer here. This leads to issues stopping certain sounds like mission dialog when skipping
+		//cutscenes, since the Loaded() function returns false in the FreeChannel() function.
+		m_pReadStream = ptr;
+#endif
 		if (pSound->m_nFlags & FLAG_SOUND_LOAD_SYNCHRONOUSLY)
 		{
 			if (m_pReadStream)
@@ -277,8 +283,10 @@ bool CSoundBuffer::Load(bool bLooping, CSound *pSound)
 		}
 		else
 		{
+#ifndef __linux
 			if (m_pReadStream->IsFinished())
 				m_pReadStream=NULL;
+#endif
 		}
 		
 		// Placeholder sound.
