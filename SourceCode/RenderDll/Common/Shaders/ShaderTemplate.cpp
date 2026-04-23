@@ -589,9 +589,12 @@ STexPic *CShader::mfLoadResourceTexture(const char *nameTex, const char *path, i
       last_slash = strrchr(nameTex, '\\');
       if (!last_slash)
       {
-        return NULL; 
+        strcpy(name, nameTex);
       }
-      strcpy(name, last_slash + 1);
+      else
+      {
+        strcpy(name, last_slash + 1);
+      }
       UsePath((char *)name, (char *)pPath, pname);
       tx = mfTryToLoadTexture(pname, Flags, Flags2, eTT, sh, fAmount1, fAmount2);
       if ((!tx || !tx->IsTextureLoaded()) && nameTex && path)
