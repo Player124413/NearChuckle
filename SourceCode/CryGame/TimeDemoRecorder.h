@@ -23,7 +23,7 @@ public:
 	CTimeDemoRecorder( ISystem *pSystem );
 	~CTimeDemoRecorder();
 
-	void Update();
+	bool Update();
 	void RenderInfo();
 
 	void Record( bool bEnable );
@@ -45,7 +45,7 @@ public:
 
 private:
 	void RecordFrame();
-	void PlayFrame();
+	bool PlayFrame();
 
 	float GetTime();
 	// Set Value of console variable.

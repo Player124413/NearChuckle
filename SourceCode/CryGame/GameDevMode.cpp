@@ -38,7 +38,7 @@ void CXGame::DevModeInit()
 		// Reset Async state of all keys.
 		GetAsyncKeyState(i);
 	}
-#endif WIN32
+#endif //WIN32
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -59,13 +59,14 @@ bool CXGame::IsDevModeEnable()
 }
 
 //////////////////////////////////////////////////////////////////////////
-void CXGame::DevModeUpdate()
+bool CXGame::DevModeUpdate()
 {
-
-	m_pTimeDemoRecorder->Update();
-#ifdef WIN32
+#ifndef WIN32
+	return m_pTimeDemoRecorder->Update();
+#else
+	bool ret = m_pTimeDemoRecorder->Update();
 	if(m_pSystem->GetIRenderer()->GetHWND() != ::GetActiveWindow())
-		return;
+		return ret;
 
 	// Check if special developmnt keys where pressed.
 	bool bCtrl = (GetAsyncKeyState(VK_CONTROL) & (1<<15)) != 0;
@@ -145,6 +146,7 @@ void CXGame::DevModeUpdate()
 			StartDemoPlay( g_timedemo_file->GetString() );
 		}
 	}
+	return ret;
 #endif
 }
 

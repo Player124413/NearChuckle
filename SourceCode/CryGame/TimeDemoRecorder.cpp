@@ -296,7 +296,7 @@ void CTimeDemoRecorder::Load(  const char *filename )
 }
 
 //////////////////////////////////////////////////////////////////////////
-void CTimeDemoRecorder::Update()
+bool CTimeDemoRecorder::Update()
 {
 	if (m_bRecording)
 	{
@@ -304,8 +304,9 @@ void CTimeDemoRecorder::Update()
 	}
 	else if (m_bPlaying)
 	{
-		PlayFrame();
+		return PlayFrame();
 	}
+	return true;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -350,10 +351,10 @@ void CTimeDemoRecorder::RecordFrame()
 }
 
 //////////////////////////////////////////////////////////////////////////
-void CTimeDemoRecorder::PlayFrame()
+bool CTimeDemoRecorder::PlayFrame()
 {
 	if (m_currFrameIter == m_records.end()) // can't playback empty records.
-		return;
+		return true;
 
 	float time = GetTime();
 	float frameTime = time - m_lastFrameTime;
@@ -361,7 +362,7 @@ void CTimeDemoRecorder::PlayFrame()
 	if (m_bPaused)
 	{
 		m_lastFrameTime = time;
-		return;
+		return true;
 	}
 
 	FrameRecord &rec = *m_currFrameIter;
@@ -464,12 +465,15 @@ void CTimeDemoRecorder::PlayFrame()
 			{
 				// Immidiate game abort after num loops done.
 				//exit(0);
-				GetISystem()->Release();
+				//GetISystem()->Release();
+				m_lastFrameTime = GetTime();
+				return false;
 			}
 		}
 	}
 
 	m_lastFrameTime = GetTime();
+	return true;
 }
 
 //////////////////////////////////////////////////////////////////////////

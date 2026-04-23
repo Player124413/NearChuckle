@@ -890,7 +890,7 @@ public:
 	// DevMode.
 	//////////////////////////////////////////////////////////////////////////
 	void DevModeInit();
-	void DevModeUpdate();
+	bool DevModeUpdate();
 	void DevMode_SavePlayerPos( int index,const char *sTagName=NULL,const char *sDescription=NULL );
 	void DevMode_LoadPlayerPos( int index,const char *sTagName=NULL );
 	//////////////////////////////////////////////////////////////////////////
