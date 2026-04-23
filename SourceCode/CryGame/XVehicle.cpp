@@ -91,6 +91,8 @@ m_MaxHAngle = 95;
 	m_flastwheelrotation = 0.0f;
 
 	m_fWaterlevelLimit = 0.0f;
+
+	m_vCamPos = Vec3(0.0f, 0.0f, 0.0f);
 }
 
 //////////////////////////////////////////////////////////////////////////

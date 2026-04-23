@@ -379,7 +379,8 @@ CPlayer::CPlayer(CXGame *pGame) :
 	m_LegNeedsForceAngle = false;
 	m_Running = false;
 	m_bHasJumped = false;
-	m_fLastGroundHeight = 0.0f;
+	m_fLastGroundHeight = m_LandTime = 0.0f;
+	m_vPrevMntPos = Vec3(0.0f, 0.0f, 0.0f);
 	for (int i = 0; i < PLAYER_MAX_WEAPONS; i++)
 		m_vWeaponSlots[i] = 0;
 }
