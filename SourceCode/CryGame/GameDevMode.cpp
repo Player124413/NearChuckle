@@ -61,10 +61,9 @@ bool CXGame::IsDevModeEnable()
 //////////////////////////////////////////////////////////////////////////
 void CXGame::DevModeUpdate()
 {
-#ifdef WIN32
 
 	m_pTimeDemoRecorder->Update();
-
+#ifdef WIN32
 	if(m_pSystem->GetIRenderer()->GetHWND() != ::GetActiveWindow())
 		return;
 
