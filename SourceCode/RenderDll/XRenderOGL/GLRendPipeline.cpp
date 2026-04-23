@@ -4535,7 +4535,7 @@ void CGLRenderer::EF_DrawLightPasses_PS30(SShaderTechnique *hs, SShader *ef, int
 
   #ifdef DO_RENDERLOG
         if (CRenderer::CV_r_log >= 3)
-          Logv(SRendItem::m_RecurseLevel, "+++ Light Pass %d [%d Lights]\n", m_RP.m_RendPass, m_RP.m_nCurLights);
+          Logv(SRendItem::m_RecurseLevel, "+++ Light Pass %d [? Lights]\n", m_RP.m_RendPass);
   #endif
 
         EF_Scissor(false, 0, 0, 0, 0);
@@ -6673,7 +6673,7 @@ void CGLRenderer::EF_PipeLine(int nums, int nume, int nList, void (*RenderFunc)(
       // if sort value is the same (contains the same info about shaders, objects, fog volumes, ...)
       {
         //PROFILE_FRAME_TOTAL(Mesh_REPrepare);
-        re->mfPrepare();
+        pRE->mfPrepare();
       }
       continue;
     }

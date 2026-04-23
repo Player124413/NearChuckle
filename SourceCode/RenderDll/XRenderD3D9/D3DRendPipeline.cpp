@@ -4508,7 +4508,7 @@ void CD3D9Renderer::EF_DrawFurPasses(SShaderTechnique *hs, SShader *ef, int nSta
 
 #ifdef DO_RENDERLOG
     if (CRenderer::CV_r_log >= 3)
-      Logv(SRendItem::m_RecurseLevel, "+++ Shadow Pass %d [%d Samples]\n", m_RP.m_RendPass, nDeltaCasters);
+      Logv(SRendItem::m_RecurseLevel, "+++ Shadow Pass %d [? Samples]\n", m_RP.m_RendPass);
 #endif
 
     EF_Scissor(false, 0, 0, 0, 0);
@@ -5168,7 +5168,7 @@ void CD3D9Renderer::EF_DrawInstances(SShader *ef, SShaderPassHW *slw, int nCurIn
     m_nPolygons += nPolysPerInst*(nLastInst-nCurInst);
   }
 }
-
+#ifdef PIPE_USE_INSTANCING
 void CD3D9Renderer::EF_DrawGeometryInstancing_VS30(SShader *ef, SShaderPassHW *slw, CVProgram *curVP)
 {
   PROFILE_FRAME(DrawShader_GeometryInstancing_VS30);
@@ -5327,6 +5327,7 @@ void CD3D9Renderer::EF_DrawGeometryInstancing_VS30(SShader *ef, SShaderPassHW *s
   m_pd3dDevice->SetStreamSource(3, NULL, 0, 0);
   m_pd3dDevice->SetStreamSourceFreq(0, 1);
 }
+#endif //PIPE_USE_INSTANCING
 
 // Draw general/ambient passes (used in FP shaders and in programmable pipeline shaders)
 void CD3D9Renderer::EF_DrawGeneralPasses(SShaderTechnique *hs, SShader *ef, bool bFog, int nStart, int nEnd, bool bDstAlpha)
@@ -5381,11 +5382,13 @@ void CD3D9Renderer::EF_DrawGeneralPasses(SShaderTechnique *hs, SShader *ef, bool
         {
           curVP = newVP;
           int nFlags = VPF_DONTSETMATRICES;
+#ifdef PIPE_USE_INSTANCING
           if (CV_r_geominstancing && m_RP.m_MergedObjects.Num() > 2 && m_bDeviceSupportsInstancing && (curVP->m_Flags & VPFI_SUPPORTS_INSTANCING) && !(m_RP.m_FlagsModificators & RBMF_TCG))
           {
             bInstancing = true;
             nFlags |= VPF_INSTANCING_NOROTATE;
           }
+#endif
           curVP->mfSet(true, slw, nFlags);
         }
         else
@@ -5900,7 +5903,7 @@ void CD3D9Renderer::EF_DrawLightPasses_PS30(SShaderTechnique *hs, SShader *ef, i
 
   #ifdef DO_RENDERLOG
         if (CRenderer::CV_r_log >= 3)
-          Logv(SRendItem::m_RecurseLevel, "+++ Light Pass %d [%d Lights]\n", m_RP.m_RendPass, m_RP.m_nCurLights);
+          Logv(SRendItem::m_RecurseLevel, "+++ Light Pass %d [? Lights]\n", m_RP.m_RendPass);
   #endif
 
         EF_Scissor(false, 0, 0, 0, 0);
