@@ -826,6 +826,9 @@ bool CXGame::Update()
 #if !defined(LINUX)
 		if(extraTime>0&&extraTime<300)//thread sleep not process sleep
 			Sleep(extraTime);
+#else
+		if(extraTime > 0 && extraTime < 300)
+			SDL_Delay(extraTime);
 #endif
 	}
 
@@ -896,7 +899,13 @@ bool CXGame::Update()
 		fov = pVarFOV->GetFVal();
 	}
 	
-	if (!m_pSystem->Update(IsMultiplayer() ? ESYSUPDATE_MULTIPLAYER:0, nPauseMode)) //Update returns false when quitting
+	if (!m_pSystem->Update(
+#if 1
+		ESYSUPDATE_MULTIPLAYER,
+#else
+		IsMultiplayer() ? ESYSUPDATE_MULTIPLAYER:0,
+#endif
+		nPauseMode)) //Update returns false when quitting
 		return (false);
 
 	if (pVarFOV)
