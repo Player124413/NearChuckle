@@ -648,208 +648,205 @@ static char *sAdditionalVP[][2][16] =
 {
   {
     {
-      {
-        "return OUT;\n"
-        "}\n"
-      },
-      {
-        "float fCameraSpacePosZ = dot(ModelViewProj._31_32_33_34, vPos);\n"
-        "OUT.FogC = clamp((Fog.y - Fog.x*fCameraSpacePosZ), g_VSCONST_0_025_05_1.x, g_VSCONST_0_025_05_1.w);\n"
-        "return OUT;\n"
-        "}\n"
-      },
-      {
-        "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
-        "OUT.Tex3.xyw = vPos.w;\n"
-        "return OUT;\n"
-        "}\n"
-      },
-      {
-        "float fCameraSpacePosZ = dot(ModelViewProj._31_32_33_34, vPos);\n"
-        "OUT.FogC = clamp((Fog.y - Fog.x*fCameraSpacePosZ), g_VSCONST_0_025_05_1.x, g_VSCONST_0_025_05_1.w);\n"
-        "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
-        "OUT.Tex3.xyw = vPos.w;\n"
-        "return OUT;\n"
-        "}\n"
-      },
+      
+      "return OUT;\n"
+      "}\n"
+      ,
+      
+      "float fCameraSpacePosZ = dot(ModelViewProj._31_32_33_34, vPos);\n"
+      "OUT.FogC = clamp((Fog.y - Fog.x*fCameraSpacePosZ), g_VSCONST_0_025_05_1.x, g_VSCONST_0_025_05_1.w);\n"
+      "return OUT;\n"
+      "}\n"
+      ,
+      
+      "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
+      "OUT.Tex3.xyw = vPos.w;\n"
+      "return OUT;\n"
+      "}\n"
+      ,
+      
+      "float fCameraSpacePosZ = dot(ModelViewProj._31_32_33_34, vPos);\n"
+      "OUT.FogC = clamp((Fog.y - Fog.x*fCameraSpacePosZ), g_VSCONST_0_025_05_1.x, g_VSCONST_0_025_05_1.w);\n"
+      "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
+      "OUT.Tex3.xyw = vPos.w;\n"
+      "return OUT;\n"
+      "}\n"
+      ,
 
-      {
-        "return OUT;\n"
-        "}\n"
-      },
-      {
-        "return OUT;\n"
-        "}\n"
-      },
-      {
-        "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
-        "OUT.Tex3.xyw = vPos.w;\n"
-        "return OUT;\n"
-        "}\n"
-      },
-      {
-        "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
-        "OUT.Tex3.xyw = vPos.w;\n"
-        "return OUT;\n"
-        "}\n"
-      }
+      "return OUT;\n"
+      "}\n"
+      ,
+      
+      "return OUT;\n"
+      "}\n"
+      ,
+      
+      "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
+      "OUT.Tex3.xyw = vPos.w;\n"
+      "return OUT;\n"
+      "}\n"
+      ,
+      
+      "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
+      "OUT.Tex3.xyw = vPos.w;\n"
+      "return OUT;\n"
+      "}\n"
+      
     },
     {
-      {
-        "OUT.FogC = vPos.w;\n"
-        "return OUT;\n"
-        "}\n"
-      },
-      {
-        "float fCameraSpacePosZ = dot(ModelViewProj._31_32_33_34, vPos);\n"
-        "OUT.FogC = clamp((Fog.y - Fog.x*fCameraSpacePosZ), g_VSCONST_0_025_05_1.x, g_VSCONST_0_025_05_1.w);\n"
-        "return OUT;\n"
-        "}\n"
-      },
-      {
-        "OUT.FogC = vPos.w;\n"
-        "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
-        "OUT.Tex3.xyw = vPos.w;\n"
-        "return OUT;\n"
-        "}\n"
-      },
-      {
-        "float fCameraSpacePosZ = dot(ModelViewProj._31_32_33_34, vPos);\n"
-        "OUT.FogC = clamp((Fog.y - Fog.x*fCameraSpacePosZ), g_VSCONST_0_025_05_1.x, g_VSCONST_0_025_05_1.w);\n"
-        "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
-        "OUT.Tex3.xyw = vPos.w;\n"
-        "return OUT;\n"
-        "}\n"
-      },
+      
+      "OUT.FogC = vPos.w;\n"
+      "return OUT;\n"
+      "}\n"
+      ,
+      
+      "float fCameraSpacePosZ = dot(ModelViewProj._31_32_33_34, vPos);\n"
+      "OUT.FogC = clamp((Fog.y - Fog.x*fCameraSpacePosZ), g_VSCONST_0_025_05_1.x, g_VSCONST_0_025_05_1.w);\n"
+      "return OUT;\n"
+      "}\n"
+      ,
+      
+      "OUT.FogC = vPos.w;\n"
+      "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
+      "OUT.Tex3.xyw = vPos.w;\n"
+      "return OUT;\n"
+      "}\n"
+      ,
+      
+      "float fCameraSpacePosZ = dot(ModelViewProj._31_32_33_34, vPos);\n"
+      "OUT.FogC = clamp((Fog.y - Fog.x*fCameraSpacePosZ), g_VSCONST_0_025_05_1.x, g_VSCONST_0_025_05_1.w);\n"
+      "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
+      "OUT.Tex3.xyw = vPos.w;\n"
+      "return OUT;\n"
+      "}\n"
+      ,
 
-      {
-        "OUT.FogC = vPos.w;\n"
-        "return OUT;\n"
-        "}\n"
-      },
-      {
-        "OUT.FogC = vPos.w;\n"
-        "return OUT;\n"
-        "}\n"
-      },
-      {
-        "OUT.FogC = vPos.w;\n"
-        "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
-        "OUT.Tex3.xyw = vPos.w;\n"
-        "return OUT;\n"
-        "}\n"
-      },
-      {
-        "OUT.FogC = vPos.w;\n"
-        "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
-        "OUT.Tex3.xyw = vPos.w;\n"
-        "return OUT;\n"
-        "}\n"
-      }
+      
+      "OUT.FogC = vPos.w;\n"
+      "return OUT;\n"
+      "}\n"
+      ,
+      
+      "OUT.FogC = vPos.w;\n"
+      "return OUT;\n"
+      "}\n"
+      ,
+      
+      "OUT.FogC = vPos.w;\n"
+      "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
+      "OUT.Tex3.xyw = vPos.w;\n"
+      "return OUT;\n"
+      "}\n"
+      ,
+      
+      "OUT.FogC = vPos.w;\n"
+      "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
+      "OUT.Tex3.xyw = vPos.w;\n"
+      "return OUT;\n"
+      "}\n"
+      
     }
   },
 
   // Instancing support
   {
     {
-      {
-        "return OUT;\n"
-        "}\n"
-      },
-      {
-        "float fCameraSpacePosZ = dot(_CompMatrix[2], vPos);\n"
-        "OUT.FogC = clamp((Fog.y - Fog.x*fCameraSpacePosZ), g_VSCONST_0_025_05_1.x, g_VSCONST_0_025_05_1.w);\n"
-        "return OUT;\n"
-        "}\n"
-      },
-      {
-        "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
-        "OUT.Tex3.xyw = vPos.w;\n"
-        "return OUT;\n"
-        "}\n"
-      },
-      {
-        "float fCameraSpacePosZ = dot(_CompMatrix[2], vPos);\n"
-        "OUT.FogC = clamp((Fog.y - Fog.x*fCameraSpacePosZ), g_VSCONST_0_025_05_1.x, g_VSCONST_0_025_05_1.w);\n"
-        "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
-        "OUT.Tex3.xyw = vPos.w;\n"
-        "return OUT;\n"
-        "}\n"
-      },
-
-      {
-        "return OUT;\n"
-        "}\n"
-      },
-      {
-        "return OUT;\n"
-        "}\n"
-      },
-      {
-        "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
-        "OUT.Tex3.xyw = vPos.w;\n"
-        "return OUT;\n"
-        "}\n"
-      },
-      {
-        "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
-        "OUT.Tex3.xyw = vPos.w;\n"
-        "return OUT;\n"
-        "}\n"
-      }
+      
+      "return OUT;\n"
+      "}\n"
+      ,
+      
+      "float fCameraSpacePosZ = dot(_CompMatrix[2], vPos);\n"
+      "OUT.FogC = clamp((Fog.y - Fog.x*fCameraSpacePosZ), g_VSCONST_0_025_05_1.x, g_VSCONST_0_025_05_1.w);\n"
+      "return OUT;\n"
+      "}\n"
+      ,
+      
+      "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
+      "OUT.Tex3.xyw = vPos.w;\n"
+      "return OUT;\n"
+      "}\n"
+      ,
+      
+      "float fCameraSpacePosZ = dot(_CompMatrix[2], vPos);\n"
+      "OUT.FogC = clamp((Fog.y - Fog.x*fCameraSpacePosZ), g_VSCONST_0_025_05_1.x, g_VSCONST_0_025_05_1.w);\n"
+      "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
+      "OUT.Tex3.xyw = vPos.w;\n"
+      "return OUT;\n"
+      "}\n"
+      ,
+      
+      "return OUT;\n"
+      "}\n"
+      ,
+      
+      "return OUT;\n"
+      "}\n"
+      ,
+      
+      "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
+      "OUT.Tex3.xyw = vPos.w;\n"
+      "return OUT;\n"
+      "}\n"
+      ,
+      
+      "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
+      "OUT.Tex3.xyw = vPos.w;\n"
+      "return OUT;\n"
+      "}\n"
+      
     },
     {
-      {
-        "OUT.FogC = vPos.w;\n"
-        "return OUT;\n"
-        "}\n"
-      },
-      {
-        "float fCameraSpacePosZ = dot(_CompMatrix[2], vPos);\n"
-        "OUT.FogC = clamp((Fog.y - Fog.x*fCameraSpacePosZ), g_VSCONST_0_025_05_1.x, g_VSCONST_0_025_05_1.w);\n"
-        "return OUT;\n"
-        "}\n"
-      },
-      {
-        "OUT.FogC = vPos.w;\n"
-        "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
-        "OUT.Tex3.xyw = vPos.w;\n"
-        "return OUT;\n"
-        "}\n"
-      },
-      {
-        "float fCameraSpacePosZ = dot(_CompMatrix[2], vPos);\n"
-        "OUT.FogC = clamp((Fog.y - Fog.x*fCameraSpacePosZ), g_VSCONST_0_025_05_1.x, g_VSCONST_0_025_05_1.w);\n"
-        "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
-        "OUT.Tex3.xyw = vPos.w;\n"
-        "return OUT;\n"
-        "}\n"
-      },
-
-      {
-        "OUT.FogC = vPos.w;\n"
-        "return OUT;\n"
-        "}\n"
-      },
-      {
-        "OUT.FogC = vPos.w;\n"
-        "return OUT;\n"
-        "}\n"
-      },
-      {
-        "OUT.FogC = vPos.w;\n"
-        "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
-        "OUT.Tex3.xyw = vPos.w;\n"
-        "return OUT;\n"
-        "}\n"
-      },
-      {
-        "OUT.FogC = vPos.w;\n"
-        "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
-        "OUT.Tex3.xyw = vPos.w;\n"
-        "return OUT;\n"
-        "}\n"
-      }
+      
+      "OUT.FogC = vPos.w;\n"
+      "return OUT;\n"
+      "}\n"
+      ,
+      
+      "float fCameraSpacePosZ = dot(_CompMatrix[2], vPos);\n"
+      "OUT.FogC = clamp((Fog.y - Fog.x*fCameraSpacePosZ), g_VSCONST_0_025_05_1.x, g_VSCONST_0_025_05_1.w);\n"
+      "return OUT;\n"
+      "}\n"
+      ,
+      
+      "OUT.FogC = vPos.w;\n"
+      "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
+      "OUT.Tex3.xyw = vPos.w;\n"
+      "return OUT;\n"
+      "}\n"
+      ,
+      
+      "float fCameraSpacePosZ = dot(_CompMatrix[2], vPos);\n"
+      "OUT.FogC = clamp((Fog.y - Fog.x*fCameraSpacePosZ), g_VSCONST_0_025_05_1.x, g_VSCONST_0_025_05_1.w);\n"
+      "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
+      "OUT.Tex3.xyw = vPos.w;\n"
+      "return OUT;\n"
+      "}\n"
+      ,
+      
+      "OUT.FogC = vPos.w;\n"
+      "return OUT;\n"
+      "}\n"
+      ,
+      
+      "OUT.FogC = vPos.w;\n"
+      "return OUT;\n"
+      "}\n"
+      ,
+      
+      "OUT.FogC = vPos.w;\n"
+      "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
+      "OUT.Tex3.xyw = vPos.w;\n"
+      "return OUT;\n"
+      "}\n"
+      ,
+      
+      "OUT.FogC = vPos.w;\n"
+      "OUT.Tex3.z = dot(vPos, ClipPlane);\n"
+      "OUT.Tex3.xyw = vPos.w;\n"
+      "return OUT;\n"
+      "}\n"
+      
     }
   },
 };
@@ -1058,12 +1055,12 @@ static char *sSphereMapGenScriptVP[] =
   sEyeSpaceCamVecVP,
   sEyeSpaceNormal,
   sReflectVec,
-  {
-    "float3 tcEm = tcRef + float3(0,0,1);\n"
-    "tcEm.x = 2 * sqrt(dot(tcEm, tcEm));\n"
-    "float4 tcSM = {0,0,0,1};\n"
-    "tcSM.xy = tcRef.xy/tcEm.x + 0.5;\n"
-  },
+  
+  "float3 tcEm = tcRef + float3(0,0,1);\n"
+  "tcEm.x = 2 * sqrt(dot(tcEm, tcEm));\n"
+  "float4 tcSM = {0,0,0,1};\n"
+  "tcSM.xy = tcRef.xy/tcEm.x + 0.5;\n"
+  ,
   NULL
 };
 static char *sReflectionMapGenScriptVP[] = 
@@ -1071,21 +1068,21 @@ static char *sReflectionMapGenScriptVP[] =
   sEyeSpaceCamVecVP,
   sEyeSpaceNormal,
   sReflectVec,
-  {
-    "float4 tcRM;\n"
-    "tcRM.xyz = tcRef.xyz;\n"
-    "tcRM.w = vPos.w;\n"
-  },
+  
+  "float4 tcRM;\n"
+  "tcRM.xyz = tcRef.xyz;\n"
+  "tcRM.w = vPos.w;\n"
+  ,
   NULL
 };
 static char *sNormalMapGenScriptVP[] = 
 {
   sEyeSpaceNormal,
-  {
-    "float4 tcNM;\n"
-    "tcNM.xyz = tcNormal.xyz;\n"
-    "tcNM.w = vPos.w;\n"
-  },
+  
+  "float4 tcNM;\n"
+  "tcNM.xyz = tcNormal.xyz;\n"
+  "tcNM.w = vPos.w;\n"
+  ,
   NULL
 };
 
