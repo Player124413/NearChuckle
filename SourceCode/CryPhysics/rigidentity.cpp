@@ -2141,7 +2141,7 @@ int CRigidEntity::Update(float time_interval, float damping)
 	masktype contacts_mask;
 	float E,E_accum, Emin = m_bFloating && m_nColliders==0 ? m_EminWater : m_Emin;
 	vectorf v_accum,w_accum,L_accum,pt[4];
-	unsigned int collFlags;
+	unsigned int collFlags = 0;
 	//m_nStickyContacts = m_nSlidingContacts = 0;
 	m_nStepBackCount = (m_nStepBackCount&-m_bSteppedBack)+m_bSteppedBack;
 	if (m_flags & ref_use_simple_solver)

@@ -222,6 +222,7 @@ void CPhysicalWorld::SetHeightfieldData(const heightfield *phf)
 		m_pHeightfield->m_parts[0].mass = 0;
 		m_pHeightfield->m_parts[0].flags = geom_collides|geom_has_thin_parts;
 		m_pHeightfield->m_parts[0].minContactDist = phf->step.x;
+		m_pHeightfield->m_parts[0].maxdim = 0.0f;
 		m_pHeightfield->m_nParts = 1;
 		m_pHeightfield->m_id = -1;
 	}
@@ -742,6 +743,7 @@ void CPhysicalWorld::TimeStep(float time_interval, int flags)
 	float m,max_time_step,time_interval_org = time_interval, Ebefore,Eafter,damping;
 	CPhysicalEntity *pent,*phead,*ptail,**pentlist,*pent_next,*pent1,*pentmax;
 	int i,j,n,iter,ipass,nGroups,bHeadAdded,bGroupFinished,bAllGroupsFinished,bStepValid,nAnimatedObjects,nEnts,bSkipFlagged;
+	max_time_step = 0.0f;
 
 	if (time_interval<0)
 		return;

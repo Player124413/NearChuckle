@@ -91,6 +91,7 @@ CSound::CSound(CSoundSystem *pSSys,const char *szFile)
 	m_bPostLoadSetRatio=false;
 	m_bAutoStop = false;
 	m_bAlreadyLoaded = false;
+	m_fChannelPlayTime = -1.0f;
 
 	SetAttrib(255, 1.0f, 127);
 

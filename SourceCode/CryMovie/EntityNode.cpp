@@ -117,6 +117,7 @@ CAnimEntityNode::CAnimEntityNode( IMovieSystem *sys )
 	m_pMovie=sys;
 	m_bMatrixValid = 0;
 	m_bMatrixInWorldSpace = 0;
+	m_time = 0.0f;
 	m_worldTM.SetIdentity();
 	m_pos(0,0,0);
 	m_scale(1,1,1);

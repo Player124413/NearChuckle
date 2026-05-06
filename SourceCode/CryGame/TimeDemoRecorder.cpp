@@ -177,7 +177,7 @@ void CTimeDemoRecorder::Play( bool bEnable )
 	m_fpsCounter = 0;
 	m_lastFpsTimeRecorded = GetTime();
 
-	m_currFPS = 0;
+	m_currFPS = m_nCurrPolys = 0;
 	m_minFPS = 10000;
 	m_maxFPS = -10000;
 	m_nMaxPolys = INT_MIN;

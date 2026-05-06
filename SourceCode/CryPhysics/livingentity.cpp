@@ -158,6 +158,7 @@ CLivingEntity::CLivingEntity(CPhysicalWorld *pWorld) : CPhysicalEntity(pWorld)
 	m_pContacts = 0;
 	m_iSnapshot = 0;
 	m_iTimeLastSend = -1;
+	m_timeStepPerformed = m_timeStepFull = 0.0f;
 }
 
 CLivingEntity::~CLivingEntity()

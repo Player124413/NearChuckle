@@ -329,7 +329,7 @@ public:
 			for(i=0,maxel=0;i<nRows;i++) maxel = max(maxel,fabs_tpl(r[i]));
 		} while (--iter && (r2new>minlen || maxel>minel));
 
-		if (pbuf!=buf) delete pbuf;
+		if (pbuf!=buf) delete [] pbuf;
 		return nRows-iter;
 	}
 	int biconjugate_gradient(ftype *startx,ftype *rightside, ftype minlen=0,ftype minel=0) const;
