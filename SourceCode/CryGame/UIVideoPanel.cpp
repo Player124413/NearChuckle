@@ -40,7 +40,6 @@ string CUIVideoPanel::GetClassName()
 ////////////////////////////////////////////////////////////////////// 
 int CUIVideoPanel::LoadVideo(const string& szFileName, bool bSound)
 {
-#ifndef CRY_NO_FFMPEG
 	m_videoPlayer.Terminate();
 	if (!m_videoPlayer.Init(szFileName.c_str(), bSound))
 	{
@@ -50,17 +49,15 @@ int CUIVideoPanel::LoadVideo(const string& szFileName, bool bSound)
 	m_szVideoFile = szFileName;
 	m_bFinished = false;
 	m_bPaused = false;
+#ifndef CRY_NO_FFMPEG
 	m_videoPlayer.m_onFinished = [this]() {
 		if(m_bLooping)
 			m_videoPlayer.Rewind();
 		else
 			m_bFinished = true;
 	};
-
-	return 1;
-#else
-	return 0;
 #endif
+	return 1;
 }
 
 ////////////////////////////////////////////////////////////////////// 
@@ -69,17 +66,19 @@ LRESULT CUIVideoPanel::Update(unsigned int iMessage, WPARAM wParam, LPARAM lPara
 	FUNCTION_PROFILER(m_pUISystem->GetISystem(), PROFILE_GAME);
 
 	// update texture
-#ifndef CRY_NO_FFMPEG
 	m_videoPlayer.Present();
+#ifdef CRY_NO_FFMPEG
+	if (!m_videoPlayer.IsPlaying())
+	{
+		m_bFinished = true;
+	}
 #endif
 
 	if (m_bFinished)
 	{
 		if (m_bLooping)
 		{
-#ifndef CRY_NO_FFMPEG
 			m_videoPlayer.Rewind();
-#endif
 		}
 		else
 		{
@@ -105,33 +104,25 @@ LRESULT CUIVideoPanel::Update(unsigned int iMessage, WPARAM wParam, LPARAM lPara
 ////////////////////////////////////////////////////////////////////// 
 int CUIVideoPanel::Play()
 {
-#ifndef CRY_NO_FFMPEG
 	if (m_videoPlayer.GetTextureId() == -1)
 		return 0;
 	m_videoPlayer.Start();
 	m_bPaused = false;
 	return 1;
-#else
-	return 0;
-#endif
 }
 
 ////////////////////////////////////////////////////////////////////// 
 int CUIVideoPanel::Stop()
 {
-#ifndef CRY_NO_FFMPEG
 	m_videoPlayer.Stop();
 	m_videoPlayer.Terminate();
-#endif
 	return 1;
 }
 
 ////////////////////////////////////////////////////////////////////// 
 int CUIVideoPanel::ReleaseVideo()
 {
-#ifndef CRY_NO_FFMPEG
 	m_videoPlayer.Terminate();
-#endif
 	return 1;
 }
 
@@ -139,12 +130,10 @@ int CUIVideoPanel::ReleaseVideo()
 int CUIVideoPanel::Pause(bool bPause)
 {
 	m_bPaused = bPause;
-#ifndef CRY_NO_FFMPEG
 	if (bPause)
 		m_videoPlayer.Stop();
 	else
 		m_videoPlayer.Start();
-#endif
 	return 1;
 }
 
@@ -175,9 +164,7 @@ int CUIVideoPanel::SetPan(int iTrackID, float fPan)
 ////////////////////////////////////////////////////////////////////// 
 int CUIVideoPanel::SetFrameRate(int iFrameRate)
 {
-#ifndef CRY_NO_FFMPEG
 	m_videoPlayer.SetTimeScale(1);	// TODO: figure out, maybe not needed
-#endif
 	return 1;
 }
 
@@ -218,11 +205,7 @@ int CUIVideoPanel::Draw(int iPass)
 	UIRect pGreyedRect = pAbsoluteRect;
 
 	// video
-#ifndef CRY_NO_FFMPEG
 	const int textureId = m_videoPlayer.GetTextureId();
-#else
-	const int textureId = -1;
-#endif
 	if (textureId > -1)
 	{
 		float fWidth = pAbsoluteRect.fWidth;
@@ -230,11 +213,7 @@ int CUIVideoPanel::Draw(int iPass)
 
 		if (m_bKeepAspect)
 		{
-#ifndef CRY_NO_FFMPEG
 			float fAspect = m_videoPlayer.GetWidth() / (float)m_videoPlayer.GetHeight();
-#else
-			float fAspect = 1.0f;
-#endif
 
 			if (fAspect < 1.0f)
 			{
@@ -267,7 +246,26 @@ int CUIVideoPanel::Draw(int iPass)
 		pRect.fTop = pAbsoluteRect.fTop + (pAbsoluteRect.fHeight - fHeight) * 0.5f;
 		pRect.fWidth = fWidth;
 		pRect.fHeight = fHeight;
+#ifdef CRY_NO_FFMPEG
+		IRenderer *rend = m_pUISystem->GetIRenderer();
 
+		float window_ratio = (float)rend->GetWidth() / (float)rend->GetHeight();
+		float video_ratio = m_videoPlayer.GetWidth() / (float)m_videoPlayer.GetHeight();
+
+		float ratio_scale = (window_ratio / video_ratio);
+		float wscale = 800.0f / ratio_scale;
+
+		if (ratio_scale > 1.0f)
+		{
+			pRect.fLeft = (float)(800.0f - wscale) / 2.0f;
+			pRect.fWidth = (float)800.0f / ratio_scale;
+		}
+		else
+		{
+			pRect.fLeft = 0.0f;
+			pRect.fWidth = 800.0f;
+		}
+#endif
 		if (m_bKeepAspect)
 		{
 			m_pUISystem->DrawQuad(pAbsoluteRect, m_cColor);

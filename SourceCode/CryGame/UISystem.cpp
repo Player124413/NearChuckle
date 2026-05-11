@@ -300,7 +300,7 @@ int CUISystem::ResetKeyRepeat()
 void CUISystem::Update()
 {
 	// hack to get a background picture if not using any video player
-#ifdef CRY_NO_FFMPEG
+#if 0
 	ui_BackGroundVideo->Set(0);
 #endif
 	

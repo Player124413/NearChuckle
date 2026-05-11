@@ -909,11 +909,58 @@ DLL_API signed char     F_API CS_FX_SetWavesReverb(int fxid, float InGain, float
 	return 0;
 }
 
+//A hack for Bink audio streams from libbinkdec, which
+//buffer a large amount of bytes at the start, but then
+//send much less afterward. Check how many bytes were
+//actually processed, then send only that much to OpenAL.
+static int BytesFromBinkDec(char* buffer, int len)
+{
+	int i, j, bytes_processed;
+	const int MAX_END_CHECK = 100;
+	bool hit_end = false;
+
+	for (i = bytes_processed = 0; i < len - MAX_END_CHECK; i++)
+	{
+		if (buffer[i] != -1)
+		{
+			bytes_processed++;
+		}
+		else
+		{
+			hit_end = true;
+			for (j = 1; j < MAX_END_CHECK; j++)
+			{
+				if (buffer[i + j] != -1)
+				{
+					hit_end = false;
+					break;
+				}
+			}
+			
+			if (hit_end)
+			{
+				break;
+			}
+			else
+			{
+				bytes_processed++;
+			}
+		}
+	}
+
+	if (bytes_processed == len - MAX_END_CHECK)
+	{
+		bytes_processed += MAX_END_CHECK;
+	}
+
+	return bytes_processed;
+}
+
 static void UpdateStream(ALStream_t* stream)
 {
 	ALenum state;
 	ALuint buffer, stream_buf;
-	int i;
+	int i, bytes_processed;
 	int num_processed_buffers = 0;
 	int num_queued_buffers = 0;
 
@@ -935,11 +982,23 @@ static void UpdateStream(ALStream_t* stream)
 			stream->callback((CS_STREAM*)stream, stream->buffer,
 				stream->len, stream->userdata);
 
-			alGenBuffers(1, &stream_buf);
-			alBufferData(stream_buf, AL_FORMAT_STEREO16,
-				(ALvoid *)stream->buffer, stream->len, 44100);
-			alSourceQueueBuffers(stream->source, 1, &stream_buf);
-			alGetSourcei(stream->source, AL_BUFFERS_QUEUED, &num_queued_buffers);
+			if (stream->len == 138240)
+			{
+				bytes_processed = BytesFromBinkDec(stream->buffer, stream->len);
+			}
+			else
+			{
+				bytes_processed = stream->len;
+			}
+
+			if (bytes_processed > 0)
+			{
+				alGenBuffers(1, &stream_buf);
+				alBufferData(stream_buf, AL_FORMAT_STEREO16,
+					(ALvoid *)stream->buffer, bytes_processed, 44100);
+				alSourceQueueBuffers(stream->source, 1, &stream_buf);
+				alGetSourcei(stream->source, AL_BUFFERS_QUEUED, &num_queued_buffers);
+			}
 
 			if (state != AL_PLAYING && stream->callback != &StreamOGGCallback)
 			{

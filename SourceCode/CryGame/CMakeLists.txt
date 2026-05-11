@@ -2,7 +2,7 @@ project(CryGame)
 
 add_definitions(-D_USRDLL -DCRYGAME_EXPORTS)
 
-option(DISABLE_FFMPEG "Disable Bink video support" OFF)
+option(DISABLE_FFMPEG "Disable FFMPEG and use libbinkdec for video support" ON)
 
 if (DISABLE_FFMPEG)
 add_definitions(-DCRY_NO_FFMPEG)
@@ -104,6 +104,28 @@ set(SRC_FILES
 
 if (NOT DISABLE_FFMPEG)
 set(SRC_FILES ${SRC_FILES} "UIVideoFFmpeg.cpp")
+else()
+set(SRC_FILES ${SRC_FILES} 
+"UIVideoBinkDec.cpp"
+"libbinkdec/src/BinkAudio.cpp"
+"libbinkdec/src/BinkAudio.cpp"
+"libbinkdec/src/BinkDecoder.cpp"
+"libbinkdec/src/BinkVideo.cpp"
+"libbinkdec/src/BitReader.cpp"
+"libbinkdec/src/FileStream.cpp"
+"libbinkdec/src/HuffmanVLC.cpp"
+"libbinkdec/src/LogError.cpp"
+"libbinkdec/src/Util.cpp"
+"libbinkdec/src/avfft.c"
+"libbinkdec/src/dct32.c"
+"libbinkdec/src/dct.c"
+"libbinkdec/src/fft.c"
+"libbinkdec/src/mdct.c"
+"libbinkdec/src/rdft.c"
+)
+include_directories(
+    ./libbinkdec/include
+)
 endif()
 
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES})

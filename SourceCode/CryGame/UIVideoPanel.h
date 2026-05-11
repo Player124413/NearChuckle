@@ -17,6 +17,7 @@
 #include "UIWidget.h"
 #include "UISystem.h"
 #include "UIVideoFFmpeg.h"
+#include "UIVideoBinkDec.h"
 
 class CUISystem;
 
@@ -86,6 +87,8 @@ public:
 	string					m_szVideoFile;
 #ifndef CRY_NO_FFMPEG
 	CUIVideoFFmpeg			m_videoPlayer;
+#else
+	CUIVideoBinkDecoder		m_videoPlayer;
 #endif
 	bool					m_bKeepAspect;
 	bool					m_bLooping;
