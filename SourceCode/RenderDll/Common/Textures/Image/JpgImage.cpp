@@ -215,6 +215,11 @@ mfSet_error(eIFE_BadFormat, "IJL disabled");
 
 #if defined(WIN64) || defined(__linux)
 
+#ifdef __linux
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+#endif
+
 extern "C"
 {
   #include "jpeg6/jpeglib.h"
@@ -427,6 +432,6 @@ void WriteJPG(byte *dat, int wdt, int hgt, char *name)
 
   delete [] data;
 #else
-	OutputDebugString("Not Implemented");
+  stbi_write_jpg(name, wdt, hgt, 4, dat, 100);
 #endif //!defined(PS2) && !defined(WIN64)
 }

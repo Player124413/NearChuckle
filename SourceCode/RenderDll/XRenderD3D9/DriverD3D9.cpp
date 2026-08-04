@@ -1788,7 +1788,11 @@ void CD3D9Renderer::ScreenShot(const char *filename)
   D3DLOCKED_RECT d3dlrSys;
   int wdt = m_deskwidth;
   int hgt = m_deskheight;
+#ifdef __linux
+  if (true)
+#else
   if (m_bFullScreen)
+#endif
   {
     wdt = m_width;
     hgt = m_height;
