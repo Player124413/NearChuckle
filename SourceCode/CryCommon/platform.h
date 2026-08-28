@@ -215,6 +215,8 @@ typedef std::wstring wstring;
 #define DEFINE_ALIGNED_DATA( type, name, alignment ) type name __attribute__ ((aligned(alignment)));
 #define DEFINE_ALIGNED_DATA_STATIC( type, name, alignment ) static type name __attribute__ ((aligned(alignment)));
 #define DEFINE_ALIGNED_DATA_CONST( type, name, alignment ) const type name __attribute__ ((aligned(alignment)));
+// variant with an initializer (attribute must precede '=')
+#define DEFINE_ALIGNED_DATA_STATIC_INIT( type, name, alignment, init ) static type name __attribute__ ((aligned(alignment))) = init;
 #else
 #define DEFINE_ALIGNED_DATA( type, name, alignment ) _declspec(align(alignment)) type name;
 #define DEFINE_ALIGNED_DATA_STATIC( type, name, alignment ) static _declspec(align(alignment)) type name;
@@ -260,8 +262,11 @@ static int64 GetTicks()
 	__asm__ __volatile__ ( "rdtsc" : "=a" (counter.u.LowPart), "=d" (counter.u.HighPart) );
 	return counter.QuadPart;
 #else
-	//return SDL_GetTicks64();
-	return SDL_GetTicks();
+	// ARM (and other non-x86) Linux/Android: no TSC - use the monotonic
+	// clock in nanoseconds (vDSO fast path, no syscalls on modern kernels).
+	struct timespec ts;
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	return (int64)ts.tv_sec * 1000000000ll + ts.tv_nsec;
 #endif
 }
 #endif

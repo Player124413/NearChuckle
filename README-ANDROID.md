@@ -26,8 +26,10 @@ English summary below — [Installation](#installation-en) · [Touch controls](#
 
 ## Установка (RU)
 
-1. Скачайте `NearChuckle-Android-debug.apk` из артефактов CI (GitHub Actions →
-   CI Android → NearChuckle-Android-debug) или соберите сами (ниже).
+1. Соберите APK сами (см. ниже) — CI-workflow в репозиторий не заливаются
+   (у GitHub-App нет прав на `.github/workflows`), поэтому артефактов CI нет.
+   Файлы workflow лежат локально в `.github/workflows/` и могут быть
+   закоммичены вручную из аккаунта с полными правами.
 2. Установите APK (разрешите установку из неизвестных источников).
 3. **Нужны данные игры.** Скопируйте из оригинальной игры (GOG/Steam/диск)
    папки в `/sdcard/Android/data/app.nearchuckle.farcry/files/`:
@@ -122,8 +124,10 @@ fixed function). На Android таких драйверов нет, поэтом
 
 ## Installation (EN)
 
-1. Get the APK from CI artifacts (`CI Android` → `NearChuckle-Android-debug`)
-   or build it yourself:
+1. Build the APK yourself (below). The CI workflows are intentionally kept
+   out of the repository (the GitHub App lacks `.github/workflows` push
+   permission), so there are no CI artifacts; the workflow files live
+   locally in `.github/workflows/` and can be committed manually if wanted.
    ```bash
    # native modules (needs Android NDK r27+, cmake, ninja)
    ./scripts/build_native.sh release
@@ -148,7 +152,9 @@ original engine, not of the port.
 
 EDIT button (top-right) opens the layout editor: drag to move, the yellow
 corner grip resizes, the red x-badge hides a button, the toolbar
-(SAVE/ADD/DEL/GRID/EXIT) manages the layout. Layout persists in
+(SAVE/ADD/DEL/GRID/TCH/EXIT) manages the layout. TCH toggles ALL touch
+input on/off (state persists; when off, a small green TOUCH OFF button
+stays top-right - tap it to re-enable). Layout persists in
 `touch_layout.json`. CVars: `touch_enabled`, `touch_edit`, `touch_opacity`,
 `touch_scale`, `touch_look_sens`, `touch_vibrate`, `touch_stick_dynamic`.
 

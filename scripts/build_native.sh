@@ -91,6 +91,16 @@ for ABI in $ABIS; do
     count=$((count+1))
   done
   echo "    copied $count libraries to $OUT_DIR"
+  # libc++_shared.so is required alongside the modules (ANDROID_STL=c++_shared)
+  TRIPLE="$ABI"; [ "$ABI" = "arm64-v8a" ] && TRIPLE="aarch64-linux-android"
+  [ "$ABI" = "armeabi-v7a" ] && TRIPLE="arm-linux-androideabi"
+  LIBCXX="$(find "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt"/*/sysroot/usr/lib/"$TRIPLE" -name libc++_shared.so 2>/dev/null | head -1 || true)"
+  if [ -n "$LIBCXX" ]; then
+    cp -f "$LIBCXX" "$OUT_DIR/libc++_shared.so"
+    echo "    copied libc++_shared.so from NDK"
+  else
+    echo "    WARNING: libc++_shared.so not found in NDK sysroot for $TRIPLE" >&2
+  fi
   ls -la "$OUT_DIR" | tail -n +2
   # clean for the next ABI
   rm -rf "$SRC_BIN_DIR"/*.so "$SRC_BIN_DIR"/*-Release "$SRC_BIN_DIR"/*-Debug 2>/dev/null || true
