@@ -668,10 +668,25 @@ bool CTouchControls::OnTouchDown(int idFinger, float fX, float fY)
 			switch (nTool)
 			{
 			case 0: SaveLayout(m_sLayoutFile.c_str()); m_bToolbarDirty = true; break; // SAVE
-			case 1: AddElement(); break;																					// ADD
+			case 1: AddElement(); break;																										// ADD
 			case 2: DeleteElement(m_nLastTouched); break;											// DEL
 			case 3: m_bSnapGrid = !m_bSnapGrid; break;											// GRID
-			case 4: LeaveEditMode(true); return true;										// EXIT
+			case 4: // TCH - master toggle for the whole touch overlay
+				if (m_pCVarTouchEnabled)
+				{
+					if (m_pCVarTouchEnabled->GetIVal() != 0)
+					{
+						// disabling from the editor: keep the user's layout edits
+						SaveLayout(m_sLayoutFile.c_str());
+						m_pCVarTouchEnabled->Set(0);
+					}
+					else
+					{
+						m_pCVarTouchEnabled->Set(1);
+					}
+				}
+				break;
+			case 5: LeaveEditMode(true); return true;												// EXIT
 			}
 			m_nEditFinger = -1;
 			return true;
@@ -984,6 +999,30 @@ bool CTouchControls::IsTouchEnabled() const
 }
 
 //////////////////////////////////////////////////////////////////////////
+// Tap on the tiny "TOUCH OFF" recovery button (drawn top-right while the
+// overlay is globally disabled) re-enables touch controls.
+bool CTouchControls::OnDisabledTap(float fX, float fY)
+{
+	if (!m_pRenderer)
+		return false;
+	m_fScreenWidth = (float)m_pRenderer->GetWidth();
+	m_fScreenHeight = (float)m_pRenderer->GetHeight();
+
+	float bw = m_fScreenWidth * 0.05f, bh = m_fScreenHeight * 0.035f;
+	float bx = m_fScreenWidth - bw - m_fScreenHeight * 0.01f;
+	float by = m_fScreenHeight * 0.01f;
+	// finger-friendly margin around the drawn rect
+	float m = bh * 0.75f;
+	if (fX < bx - m || fX > bx + bw + m || fY < by - m || fY > by + bh + m)
+		return false;
+
+	if (m_pCVarTouchEnabled)
+		m_pCVarTouchEnabled->Set(1);
+	TouchVibrate(30);
+	return true;
+}
+
+//////////////////////////////////////////////////////////////////////////
 void CTouchControls::EnterEditMode()
 {
 	if (m_bEditMode)
@@ -1177,9 +1216,9 @@ void CTouchControls::LogToConsole(const char *szFormat, ...)
 //////////////////////////////////////////////////////////////////////////
 int CTouchControls::HitTestToolbar(float fX, float fY)
 {
-	// toolbar: SAVE ADD DEL GRID EXIT - top center row
-	static const char *labels[5] = { "SAVE", "ADD", "DEL", "GRID", "EXIT" };
-	int count = 5;
+	// toolbar: SAVE ADD DEL GRID TCH EXIT - top center row
+	static const char *labels[6] = { "SAVE", "ADD", "DEL", "GRID", "TCH", "EXIT" };
+	int count = 6;
 	float bh = m_fScreenHeight * 0.045f;
 	float bw = m_fScreenWidth * 0.085f;
 	float gap = m_fScreenWidth * 0.012f;
@@ -1242,24 +1281,33 @@ void CTouchControls::OnTouchRender()
 			m_pRenderer->Draw2dLine(0, yy, m_fScreenWidth, yy);
 
 		// toolbar
-		static const char *labels[5] = { "SAVE", "ADD", "DEL", "GRID", "EXIT" };
+		static const char *labels[6] = { "SAVE", "ADD", "DEL", "GRID", "TCH", "EXIT" };
 		float bh = m_fScreenHeight * 0.045f;
 		float bw = m_fScreenWidth * 0.085f;
 		float gap = m_fScreenWidth * 0.012f;
-		float total = 5 * bw + 4 * gap;
+		float total = 6 * bw + 5 * gap;
 		float x0 = (m_fScreenWidth - total) * 0.5f;
 		float y0 = m_fScreenHeight * 0.012f;
-		for (int i = 0; i < 5; i++)
+		for (int i = 0; i < 6; i++)
 		{
 			float bx = x0 + i * (bw + gap);
 			DrawFillRect(bx, y0, bw, bh, 0.1f, 0.1f, 0.2f, 0.35f);
-			DrawFrameRect(bx, y0, bw, bh, 0.5f, 0.8f, 1.0f, 0.9f);
+			// TCH reflects the current master-switch state (green=on, red=off)
+			if (i == 4)
+			{
+				bool on = IsTouchEnabled();
+				DrawFrameRect(bx, y0, bw, bh, on ? 0.3f : 1.0f, on ? 1.0f : 0.35f, on ? 0.3f : 0.35f, 0.9f);
+			}
+			else
+			{
+				DrawFrameRect(bx, y0, bw, bh, 0.5f, 0.8f, 1.0f, 0.9f);
+			}
 			DrawText(bx + bw * 0.5f, y0 + bh * 0.55f, labels[i], 0.8f, 0.9f, 0.95f, 1.0f, 1.0f);
 		}
 
 		// help text
 		float hy = y0 + bh + m_fScreenHeight * 0.02f;
-		DrawText(m_fScreenWidth * 0.5f, hy, m_bSnapGrid ? "EDIT MODE - grid ON - drag=move  grip=resize  x=hide" : "EDIT MODE - drag=move  grip=resize  x=hide", 0.75f, 1.0f, 1.0f, 0.6f, 0.9f);
+		DrawText(m_fScreenWidth * 0.5f, hy, m_bSnapGrid ? "EDIT - grid ON - drag=move grip=resize x=hide TCH=on/off" : "EDIT - drag=move grip=resize x=hide TCH=on/off", 0.75f, 1.0f, 1.0f, 0.6f, 0.9f);
 
 		// elements (including hidden, ghosted)
 		for (unsigned i = 0; i < m_Elements.size(); i++)

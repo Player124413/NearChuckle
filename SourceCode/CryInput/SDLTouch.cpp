@@ -186,6 +186,21 @@ void CSDLTouch::Update(bool bFocus)
 		{
 			if (!bTouchEnabled || !bFocus)
 			{
+				// without focus never route to the overlay
+				if (!bFocus)
+				{
+					events.push_back(event); // let SDL's mouse emulation feed the menus
+					break;
+				}
+				// overlay disabled: only the small "TOUCH OFF" recovery button
+				// reacts, so the user can re-enable touch from the UI
+				if (event.type == SDL_EVENT_FINGER_DOWN && pSink)
+				{
+					float px = event.tfinger.x * (float)m_nWinWidth;
+					float py = event.tfinger.y * (float)m_nWinHeight;
+					if (pSink->OnDisabledTap(px, py))
+						break; // consumed - no mouse emulation for this tap
+				}
 				events.push_back(event); // let SDL's mouse emulation feed the menus
 				break;
 			}
