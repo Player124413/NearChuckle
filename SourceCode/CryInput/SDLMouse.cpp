@@ -83,8 +83,38 @@ void CSDLMouse::Update(bool bPrevFocus)
 	float mouseDelta[6];
 	memset(mouseDelta, 0, sizeof(mouseDelta));
 
+	// finger look-deltas gathered by the touch device this frame
+	if (m_pInput && m_pInput->GetTouch())
+	{
+		mouseDelta[0] += m_pInput->GetTouch()->ConsumeLookDeltaX();
+		mouseDelta[1] += m_pInput->GetTouch()->ConsumeLookDeltaY();
+	}
+
 	while (SDL_PollEvent(&event))
 	{
+		// When the touch overlay is active we drive the game from raw finger
+		// events ourselves; SDL's synthesized "touch mouse" must not rotate
+		// the camera or click. In menus the overlay steps aside and the
+		// synthesized mouse gives us free cursor + tap support.
+		if (m_pInput && m_pInput->GetTouchOverlaySink() && m_pInput->GetTouchOverlaySink()->IsTouchEnabled())
+		{
+			bool bTouchMouse = false;
+			switch (event.type)
+			{
+			case SDL_EVENT_MOUSE_BUTTON_DOWN:
+			case SDL_EVENT_MOUSE_BUTTON_UP:
+				bTouchMouse = (event.button.which == SDL_TOUCH_MOUSEID);
+				break;
+			case SDL_EVENT_MOUSE_MOTION:
+				bTouchMouse = (event.motion.which == SDL_TOUCH_MOUSEID);
+				break;
+			default:
+				break;
+			}
+			if (bTouchMouse)
+				continue;
+		}
+
 		if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
 		{
 			if (event.button.button == SDL_BUTTON_LEFT)
@@ -476,4 +506,23 @@ void CSDLMouse::CapDeltas(float cap)
 	temp = fabs(m_Deltas[1]) / cap;
 	if (temp > 1.0f)
 		m_Deltas[1] /= temp;
+}
+
+//////////////////////////////////////////////////////////////////////////
+// Touch controls support
+//////////////////////////////////////////////////////////////////////////
+void CSDLMouse::SetVirtualButtonState(int xkey, bool bDown)
+{
+	int nkey = XKEY2IDX(xkey);
+	if (nkey < 0 || nkey >= XMOUSE_MAX_MOUSE_EVENTS)
+		return;
+	m_Events[nkey] = bDown ? 128 : 0;
+}
+
+void CSDLMouse::AddTouchLookDelta(float dx, float dy)
+{
+	if (m_pInput && m_pInput->GetTouch())
+	{
+		m_pInput->GetTouch()->AddLookDelta(dx, dy);
+	}
 }

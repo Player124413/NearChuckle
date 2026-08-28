@@ -1882,6 +1882,15 @@ exr:
 #ifndef USE_SDL
   rc->m_Glhwnd = (HWND)Glhwnd;
 #else
+#ifdef __ANDROID__
+  // The engine is written against desktop GL 2.x (fixed function + ARB
+  // programs). On Android request a COMPATIBILITY profile context - this
+  // succeeds on desktop-GL-over-Vulkan drivers (Mesa/Zink) and cleanly
+  // fails on plain GLES drivers (the engine then falls back to NULL).
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+#endif
   rc->m_Window = win;
 #endif
 

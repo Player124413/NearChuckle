@@ -57,6 +57,7 @@ set(SRC_FILES
     "Synched2DTable.cpp"
     "SynchedRandomSeed.cpp"
     "TimeDemoRecorder.cpp"
+    "TouchControls.cpp"
     "UIButton.cpp"
     "UICheckBox.cpp"
     "UIComboBox.cpp"

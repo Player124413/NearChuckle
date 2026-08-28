@@ -52,6 +52,8 @@ public:
 	unsigned char XKEY2ASCII(unsigned short nCode,int modifiers);
 	bool GetOSKeyName(int nKey, wchar_t *szwKeyName, int iBufSize);
 	void FeedVirtualKey(int nVirtualKey,long lParam,bool bDown);
+	// Touch controls: inject a virtual key as if pressed on the hardware keyboard.
+	void PostVirtualKey(unsigned short nKey, bool bPressed);
 	
 protected:
 	bool	Acquire();

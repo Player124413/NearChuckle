@@ -24,6 +24,7 @@ else()
 set (SRC_FILES ${SRC_FILES}
     "SDLKeyboard.cpp"
     "SDLMouse.cpp"
+    "SDLTouch.cpp"
 )
 endif()
 

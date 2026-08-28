@@ -17,6 +17,9 @@
 #include <SDL.h>
 #else
 #include <SDL3/SDL.h>
+#ifdef __ANDROID__
+#include <SDL3/SDL_main.h> // main -> SDL_main for the Android launcher
+#endif
 #endif
 
 #ifdef WIN32
@@ -191,8 +194,13 @@ void SetMasterCDFolder()
 		strcat(dll_path, "/");
 		SetModulePath(dll_path);
 	}
-	
+
+#ifndef __ANDROID__
+	// Desktop: the binary lives in <gamedir>/bin, data is one level up.
 	chdir("../");
+#endif
+	// Android: AndroidBootstrap() already changed into the game folder
+	// (external app storage); module path is handled by the system linker.
 #endif
 }
 
@@ -694,8 +702,17 @@ bool RunGame(int argc, char** argv)
 #ifdef __linux
 	int i;
 #endif
+#ifdef __ANDROID__
+	{
+		// bootstrap the game directory & config before any engine init
+		extern void AndroidBootstrap();
+		AndroidBootstrap();
+	}
+#endif
 	SDL_Init(SDL_INIT_VIDEO);
+#ifndef __ANDROID__
 	setlocale(LC_ALL, "en_US.utf8");
+#endif
 
 //	InvokeExternalConfigTool();
 

@@ -67,6 +67,7 @@ struct	I3DEngine;
 class		CXServer;
 class		CXClient;
 class		CUIHud;
+class		CTouchControls;
 class		CXServerRules;
 class		CWeaponSystemEx;
 class		CVehicleSystem;

@@ -20,6 +20,8 @@
 
 #include "UIHud.h"
 
+#include "TouchControls.h"
+
 #include "WeaponSystemEx.h"
 #include "WeaponClass.h"
 
@@ -199,6 +201,9 @@ CXGame::CXGame()
 //!destructor
 CXGame::~CXGame()
 {
+	// shut down the touch overlay before the systems it talks to
+	ShutDownTouchControls();
+
 	m_pScriptSystem->BeginCall("Shutdown");
 	m_pScriptSystem->PushFuncParam(0);
 	m_pScriptSystem->EndCall();
@@ -732,6 +737,14 @@ bool CXGame::Init(struct ISystem *pSystem,bool bDedicatedSrv,bool bInEditor,cons
 	m_bOK = true;	
 	e_deformable_terrain = NULL;
 
+	// on-screen touch controls (Android / touch-screens)
+	if (!GetTouchControls())
+	{
+		CTouchControls *pTouch = new CTouchControls();
+		if (!pTouch->Init(this))
+			delete pTouch;
+	}
+
 	return (true);
 }
 
@@ -1130,6 +1143,11 @@ bool CXGame::Update()
 	// End Profiling Frame
 	m_pSystem->GetIProfileSystem()->EndFrame();
 	//////////////////////////////////////////////////////////////////////////
+
+	// draw the on-screen touch overlay last (topmost 2D layer)
+	CTouchControls *pTouchOverlay = GetTouchControls();
+	if (pTouchOverlay)
+		pTouchOverlay->OnTouchRender();
 
 	return (m_bUpdateRet);
 }

@@ -1,9 +1,15 @@
 cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 cmake_policy(VERSION 3.12)
 
-project(farcry LANGUAGES CXX)
+project(farcry LANGUAGES C CXX)
 
-if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+if (ANDROID)
+    if (ANDROID_ABI STREQUAL "arm64-v8a")
+        set(ARCH_TYPE "arm64")
+    else()
+        set(ARCH_TYPE "arm32")
+    endif()
+elseif (CMAKE_SIZEOF_VOID_P EQUAL 8)
     set(ARCH_TYPE "x64")
 else (CMAKE_SIZEOF_VOID_P EQUAL 4)
     set(ARCH_TYPE "x86")
@@ -28,13 +34,22 @@ if (MSVC)
 
     add_compile_options(/W3) # Warning level
 else()
-    add_definitions(-DLINUX -fpermissive)
+    add_definitions(-DLINUX)
+    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        add_compile_options(-fpermissive)
+    endif()
     if (${ARCH_TYPE} STREQUAL "x64")
         add_definitions(-DLINUX64 -D_AMD64_)
     endif()
+
+    # SDL3 headers from Externals (built from source below)
+    include_directories(${CMAKE_SOURCE_DIR}/Externals/SDL/include)
+    # OpenAL-soft headers (built from source in Externals)
+    include_directories(${CMAKE_SOURCE_DIR}/Externals/openal-soft/include)
 
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -D_DEBUG -g")
 endif()
 
+add_subdirectory(Externals)
 add_subdirectory(SourceCode)

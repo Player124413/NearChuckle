@@ -800,7 +800,13 @@ void CSystem::CreateRendererVars()
 		"Usage: r_ColorBits [32/24/16/8]");
 	m_rDepthBits = GetIConsole()->CreateVariable("r_DepthBits", "32", VF_DUMPTODISK|VF_CHEAT);
 	m_rStencilBits = GetIConsole()->CreateVariable("r_StencilBits", "8", VF_DUMPTODISK);	
-	m_rDriver= GetIConsole()->CreateVariable("r_Driver", "Direct3D9", VF_DUMPTODISK,
+	m_rDriver= GetIConsole()->CreateVariable("r_Driver",
+#ifdef __ANDROID__
+		"OpenGL",	// Android has no D3D9/DXVK; desktop GL (e.g. Zink) or NULL
+#else
+		"Direct3D9",
+#endif
+		VF_DUMPTODISK,
 		"Sets the renderer driver. Default is 'Direct3D9'.\n"
 		"Usage: r_Driver Direct3D9");
   m_rFullscreen = GetIConsole()->CreateVariable("r_Fullscreen", "0", VF_DUMPTODISK,

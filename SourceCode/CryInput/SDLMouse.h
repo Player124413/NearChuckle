@@ -73,6 +73,11 @@ public:
 	void SetVScreenY(float fY);
 	float GetVScreenX();
 	float GetVScreenY();
+
+	// Touch controls support: virtual buttons driven by the on-screen
+	// overlay and look deltas gathered from finger drags.
+	void SetVirtualButtonState(int xkey, bool bDown);
+	void AddTouchLookDelta(float dx, float dy);
 private:
 	int XKEY2IDX(int nKey);
 

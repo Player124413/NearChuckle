@@ -1,0 +1,48 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'app.nearchuckle.farcry'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "app.nearchuckle.farcry"
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+    }
+
+    // Native modules are prebuilt by scripts/build_native.sh and picked up
+    // from src/main/jniLibs/<abi>.
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['src/main/jniLibs']
+        }
+    }
+
+    packagingOptions {
+        // engine modules are dlopen()ed by name at runtime -> must be extracted
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix ""
+        }
+        release {
+            minifyEnabled false
+        }
+    }
+
+    lint {
+        abortOnError false
+    }
+}
+
+// empty dependencies: the whole engine is bundled as native libraries
+dependencies {
+}

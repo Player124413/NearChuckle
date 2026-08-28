@@ -594,3 +594,12 @@ unsigned char CSDLKeyboard::GetKeyState(int nKey)
 		return m_cKeysState[nKey];
 	return 0;
 }
+//////////////////////////////////////////////////////////////////////////
+// Touch controls support: virtual key injection
+//////////////////////////////////////////////////////////////////////////
+void CSDLKeyboard::PostVirtualKey(unsigned short nKey, bool bPressed)
+{
+	if (nKey == 0 || nKey >= 256)
+		return;
+	ProcessKey(nKey, bPressed, m_cTempKeys);
+}

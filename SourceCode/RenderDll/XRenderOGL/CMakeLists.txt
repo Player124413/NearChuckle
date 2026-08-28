@@ -152,6 +152,11 @@ else() #x64
     )
 endif()
 
+# bundled GLU replacement (Android has no libGLU; optional on desktop)
+list(APPEND SRC_FILES
+    "GluCompat.cpp"
+)
+
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -176,9 +181,7 @@ if (MSVC)
         "cgGL.lib"
     )
 else()
-    set(SYSTEM_DEPS
-        GLU
-    )
+    # GLU is provided by the bundled GluCompat.cpp - no system libGLU needed
     if (NOT DISABLE_CG)
     set (SYSTEM_DEPS ${SYSTEM_DEPS} Cg CgGL)
     endif()

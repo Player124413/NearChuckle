@@ -43,6 +43,7 @@
 #else
 #include "SDLKeyboard.h"
 #include "SDLMouse.h"
+#include "SDLTouch.h"
 #endif
 
 #include "Joystick.h"
@@ -81,6 +82,7 @@ public:
 		m_console = 0;
 		m_pSystem = NULL;
 		m_pLog=NULL; 
+		m_pTouchSink = NULL;
 #if !defined(_XBOX) && !defined(PS2) && !defined(USE_SDL_INPUT)
 		m_g_pdi = NULL; 
 #endif
@@ -220,6 +222,19 @@ public:
 	int GetKeyID(const char *sName);
 	IActionMapManager* CreateActionMapManager();
 	const char *GetXKeyPressedName();
+#ifdef USE_SDL_INPUT
+	// Touch controls plumbing (Android / touch-screens).
+	virtual void SetTouchOverlaySink( struct ITouchOverlaySink *pSink ) { m_pTouchSink = pSink; }
+	virtual struct ITouchOverlaySink *GetTouchOverlaySink() { return m_pTouchSink; }
+	virtual void PostVirtualKeyEvent( int xkey, bool bKeyDown );
+	virtual void PostVirtualMouseMove( float dx, float dy );
+	inline CSDLTouch *GetTouch() { return &m_Touch; }
+#else
+	virtual void SetTouchOverlaySink( struct ITouchOverlaySink *pSink ) {}
+	virtual struct ITouchOverlaySink *GetTouchOverlaySink() { return 0; }
+	virtual void PostVirtualKeyEvent( int xkey, bool bKeyDown ) {}
+	virtual void PostVirtualMouseMove( float dx, float dy ) {}
+#endif
 #ifdef _WIN32
 	int VK2XKEY(int nKey);
 #endif
@@ -266,6 +281,8 @@ private:
 #ifdef USE_SDL_INPUT
 	CSDLKeyboard	m_Keyboard;
 	CSDLMouse		m_Mouse;
+	CSDLTouch		m_Touch;
+	struct ITouchOverlaySink *m_pTouchSink;
 #else
 	CXKeyboard	m_Keyboard;
 	CXMouse		m_Mouse;

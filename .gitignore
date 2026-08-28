@@ -7,3 +7,8 @@ Debug_XBox
 Release
 build
 cmake-build-*
+android/build
+android/app/src/main/jniLibs
+android/.gradle
+android/local.properties
+*.apk

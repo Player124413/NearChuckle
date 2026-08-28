@@ -137,7 +137,22 @@ bool CSystem::OpenRenderLibrary(const char *t_rend)
   }
 
 	if (stricmp(t_rend, "OpenGL") == 0)
+  {
+#ifdef __ANDROID__
+		// On Android a desktop-GL context (e.g. Zink/Mesa) is required for
+		// the OpenGL renderer. If it is unavailable, fall back to the NULL
+		// renderer so the game still starts and the console/touch UI work.
+		if (!OpenRenderLibrary(R_GL_RENDERER))
+		{
+			GetILog()->Log("OpenGL renderer init failed on Android - falling back to NULL renderer.");
+			GetILog()->Log("For real rendering, install a desktop-GL driver (e.g. Mesa Zink) or use a device/driver with GL support.");
+			return OpenRenderLibrary(R_NULL_RENDERER);
+		}
+		return true;
+#else
     return OpenRenderLibrary(R_GL_RENDERER);
+#endif
+  }
   else
 	if (stricmp(t_rend, "Direct3D8") == 0)
 		return OpenRenderLibrary(R_DX8_RENDERER);

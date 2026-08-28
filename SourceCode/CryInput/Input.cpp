@@ -328,6 +328,12 @@ bool CInput::Init(ISystem *pSystem
 #endif
 		return (false);
 	m_pLog->Log("Mouse initialized\n");		
+#ifdef USE_SDL_INPUT
+	if (!m_Touch.Init(this, m_pSystem, window))
+		m_pLog->Log("Cannot initialize touch device\n");
+	else
+		m_pLog->Log("Touch device initialized\n");
+#endif
 #ifndef __linux
 	if (!m_Joystick.Init(m_g_pdi,hinst,hwnd,m_pLog)) 
 #else
@@ -441,6 +447,10 @@ void CInput::ShutDown()
 	m_Keyboard.ShutDown();
 	m_Mouse.Shutdown();
 	m_Joystick.ShutDown();
+#ifdef USE_SDL_INPUT
+	m_Touch.ShutDown();
+	m_pTouchSink = NULL;
+#endif
 #else //_XBOX
   m_Gamepad.ShutDown();
 #ifdef DEBUG_KEYBOARD
@@ -469,6 +479,11 @@ void CInput::Update(bool bFocus)
 		m_console = m_pSystem->GetIConsole();
 #ifndef _XBOX
     m_Keyboard.Update();
+#ifdef USE_SDL_INPUT
+		// touch runs before the mouse so that finger look-deltas and
+		// virtual buttons are consumed by the very same frame
+		m_Touch.Update(bFocus);
+#endif
 	  m_Mouse.Update(m_bPreviousFocus); // m_bPreviousFocus used to skip first mouse read after getting focus
 	  m_Joystick.Update();
 
@@ -1457,3 +1472,24 @@ int CInput::GetModifiers() const
 {
 	return m_Keyboard.GetModifiers();
 }
+//////////////////////////////////////////////////////////////////////////
+// Touch controls support
+//////////////////////////////////////////////////////////////////////////
+#ifdef USE_SDL_INPUT
+void CInput::PostVirtualKeyEvent(int xkey, bool bKeyDown)
+{
+	if (xkey >= XKEY_MOUSE1 && xkey <= XKEY_MOUSE8)
+	{
+		m_Mouse.SetVirtualButtonState(xkey, bKeyDown);
+	}
+	else
+	{
+		m_Keyboard.PostVirtualKey((unsigned short)xkey, bKeyDown);
+	}
+}
+
+void CInput::PostVirtualMouseMove(float dx, float dy)
+{
+	m_Touch.AddLookDelta(dx, dy);
+}
+#endif
