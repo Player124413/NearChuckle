@@ -26,10 +26,23 @@ English summary below — [Installation](#installation-en) · [Touch controls](#
 
 ## Установка (RU)
 
-1. Соберите APK сами (см. ниже) — CI-workflow в репозиторий не заливаются
-   (у GitHub-App нет прав на `.github/workflows`), поэтому артефактов CI нет.
-   Файлы workflow лежат локально в `.github/workflows/` и могут быть
-   закоммичены вручную из аккаунта с полными правами.
+1. Соберите APK:
+   **Через GitHub Actions.** Файл workflow лежит в `ci-workflows/android-apk.yml`
+   (GitHub-App не может пушить в `.github/workflows/`). Активируйте одной
+   командой и запушьте — в Actions появится workflow **«CI Android APK»**:
+   ```bash
+   mkdir -p .github/workflows
+   cp ci-workflows/android-apk.yml .github/workflows/
+   git add .github/workflows/android-apk.yml && git commit -m "ci: android apk" && git push
+   ```
+   После прогона скачайте артефакт **NearChuckle-Android-apk** — внутри
+   `apk-out/NearChuckle-Android-debug.apk` (готов к установке).
+   **Или локально** (нужны NDK r27+, JDK 17, Android SDK):
+   ```bash
+   ./scripts/build_native.sh release
+   gradle -p android assembleDebug
+   # -> android/app/build/outputs/apk/debug/app-debug.apk
+   ```
 2. Установите APK (разрешите установку из неизвестных источников).
 3. **Нужны данные игры.** Скопируйте из оригинальной игры (GOG/Steam/диск)
    папки в `/sdcard/Android/data/app.nearchuckle.farcry/files/`:
@@ -124,14 +137,19 @@ fixed function). На Android таких драйверов нет, поэтом
 
 ## Installation (EN)
 
-1. Build the APK yourself (below). The CI workflows are intentionally kept
-   out of the repository (the GitHub App lacks `.github/workflows` push
-   permission), so there are no CI artifacts; the workflow files live
-   locally in `.github/workflows/` and can be committed manually if wanted.
+1. Build the APK via **GitHub Actions**: the workflow file lives in
+   `ci-workflows/android-apk.yml` (the GitHub App cannot push into
+   `.github/workflows/`). Activate and push:
    ```bash
-   # native modules (needs Android NDK r27+, cmake, ninja)
+   mkdir -p .github/workflows
+   cp ci-workflows/android-apk.yml .github/workflows/
+   git add .github/workflows/android-apk.yml && git commit -m "ci: android apk" && git push
+   ```
+   Then grab the **NearChuckle-Android-apk** artifact from the workflow run
+   (contains `apk-out/NearChuckle-Android-debug.apk`). Or build locally
+   (needs NDK r27+, JDK 17, Android SDK):
+   ```bash
    ./scripts/build_native.sh release
-   # APK (needs JDK 17, Android SDK, gradle 8.5+)
    gradle -p android assembleDebug
    # -> android/app/build/outputs/apk/debug/app-debug.apk
    ```
@@ -163,6 +181,7 @@ stays top-right - tap it to re-enable). Layout persists in
 ```
 scripts/build_native.sh     # NDK build -> android/app/src/main/jniLibs/<abi>
 android/                    # Gradle project (packages prebuilt .so files)
+ci-workflows/android-apk.yml # GitHub Actions APK build (move to .github/workflows/ to enable)
 SourceCode/AndroidApp/      # libmain.so: SDL_main bootstrap + haptics
 SourceCode/CryInput/SDLTouch.*   # finger routing, look-drag, virtual keys
 SourceCode/CryGame/TouchControls.* # on-screen overlay + EDIT layout editor

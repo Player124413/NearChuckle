@@ -441,7 +441,7 @@ void CTerrain::ResetDLightMaskInSectors()
   CSectorInfo ** pEnd  = &m_arrSecInfoTable[CTerrain::GetSectorsTableSize()-1][CTerrain::GetSectorsTableSize()-1];
   while(p <= pEnd)
   {
-		register CSectorInfo *pSector = *p;
+		CSectorInfo *pSector = *p;
     pSector->m_nDynLightMaskNoSun = 0;
     pSector->m_nDynLightMask = 0;
     ++p;

@@ -1,0 +1,87 @@
+# NearChuckle — Android APK build workflow
+#
+# NOTE: the GitHub App used by Arena cannot push into `.github/workflows/`,
+# so this file lives in `ci-workflows/`. To activate it on GitHub, copy/move
+# it to `.github/workflows/android-apk.yml`:
+#
+#   mkdir -p .github/workflows && cp ci-workflows/android-apk.yml .github/workflows/
+#   git add .github/workflows/android-apk.yml && git commit -m "ci: android apk" && git push
+#
+# What it does: builds every native engine module for arm64-v8a and
+# armeabi-v7a with the Android NDK, packages a debug APK with Gradle,
+# copies the APK into `apk-out/` and uploads it as a build artifact
+# ("NearChuckle-Android-apk"). Download it from the run page, unzip,
+# and the .apk inside is ready to install on a phone.
+
+name: CI Android APK
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  apk:
+    name: Build debug APK (arm64-v8a + armeabi-v7a)
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+
+    steps:
+      - name: Checkout (with engine dependency submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android NDK r27c
+        id: ndk
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r27c
+          add-to-path: false
+
+      - name: Set up Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      # pinned cmake 3.x + ninja: reproducible, immune to runner image drift
+      - name: Install pinned cmake & ninja
+        run: |
+          pip3 install --user "cmake>=3.25,<4" ninja
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          cmake --version | head -1
+          ninja --version
+
+      - name: Build native engine modules (NDK)
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+          JOBS: '4'
+        run: |
+          bash ./scripts/build_native.sh release arm64-v8a armeabi-v7a
+
+      - name: Assemble debug APK
+        run: |
+          gradle -p android assembleDebug --no-daemon --stacktrace
+
+      - name: Collect APK into apk-out/
+        run: |
+          mkdir -p apk-out
+          cp -f android/app/build/outputs/apk/debug/app-debug.apk \
+                apk-out/NearChuckle-Android-debug.apk
+          ls -la apk-out/
+          echo "APK size: $(du -h apk-out/NearChuckle-Android-debug.apk | cut -f1)"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NearChuckle-Android-apk
+          path: apk-out/
+          if-no-files-found: error

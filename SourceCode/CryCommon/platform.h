@@ -81,8 +81,10 @@ typedef void *EVENT_HANDLE;
 #define _CPU_AMD64
 #endif
 
-#if defined(LINUX32)
+#if defined(LINUX32) && (defined(__i386__) || defined(_M_IX86))
 #define _CPU_X86
+#endif
+#if defined(LINUX32)
 #include <Linux32Specific.h>
 #endif
 
