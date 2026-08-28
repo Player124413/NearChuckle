@@ -4001,7 +4001,7 @@ void CGLTexMan::DrawFlashBangMap(int iId, int iRenderFlags, CREFlashBang *pRE)
 
   // set screen mode
   gRenDev->Set2DMode(true, 800, 600);
-  gRenDev->DrawTriStrip(&(CVertexBuffer (pScreenData,VERTEX_FORMAT_P3F_TEX2F)), 4);  
+  { CVertexBuffer vb_(pScreenData,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_, 4); }  
   gRenDev->Set2DMode(false, 800, 600);
 
   // render flashbang flash 
@@ -4120,7 +4120,7 @@ void CGLTexMan::DrawFlashBangMap(int iId, int iRenderFlags, CREFlashBang *pRE)
   // blur texture
   for(int iBlurPasses=0; iBlurPasses<2;iBlurPasses++) 
   {
-    gRenDev->DrawTriStrip(&(CVertexBuffer (pData,VERTEX_FORMAT_P3F_TEX2F)), 4);
+    { CVertexBuffer vb_(pData,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_, 4); }
     glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, pTex->m_Width, pTex->m_Height);
   }
 
@@ -4244,7 +4244,7 @@ void CGLTexMan::DrawToTextureForGlare(int Id)
 
       // set screen mode
       gRenDev->Set2DMode(true, 1, 1);
-      gRenDev->DrawTriStrip(&(CVertexBuffer (pScrData,VERTEX_FORMAT_P3F_TEX2F)), 4);  
+      { CVertexBuffer vb_(pScrData,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_, 4); }  
       gRenDev->Set2DMode(false, 1, 1);
      
       // copy 4 pixels
@@ -4337,7 +4337,7 @@ void CGLTexMan::DrawToTextureForGlare(int Id)
 
   // set screen mode
   gRenDev->Set2DMode(true, 800, 600);
-  gRenDev->DrawTriStrip(&(CVertexBuffer (pScreenData,VERTEX_FORMAT_P3F_TEX2F)), 4);  
+  { CVertexBuffer vb_(pScreenData,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_, 4); }  
       
   // get screen
   SetTexture(pTex->m_Bind, eTT_Base);
@@ -4458,7 +4458,7 @@ void CGLTexMan::DrawToTextureForGlare(int Id)
   // blur texture
   for(int iBlurPasses=0; iBlurPasses<CRenderer::CV_r_glareboxsize;iBlurPasses++)  
   {
-    gRenDev->DrawTriStrip(&(CVertexBuffer (pData,VERTEX_FORMAT_P3F_TEX2F)), 4);
+    { CVertexBuffer vb_(pData,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_, 4); }
     glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, pTex->m_Width, pTex->m_Height);
   }
 
@@ -4487,7 +4487,7 @@ void CGLTexMan::DrawToTextureForGlare(int Id)
 
   // set screen mode
   gRenDev->Set2DMode(true, 800, 600); 
-  gRenDev->DrawTriStrip(&(CVertexBuffer (pScreenData,VERTEX_FORMAT_P3F_TEX2F)), 4);  
+  { CVertexBuffer vb_(pScreenData,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_, 4); }  
   gRenDev->Set2DMode(false, 800, 600);  
 
   gRenDev->SetCamera(pPrevCamera); 

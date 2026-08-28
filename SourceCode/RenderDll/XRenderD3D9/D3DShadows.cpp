@@ -131,7 +131,7 @@ void CD3D9Renderer::BlurImage(int nSizeX, int nSizeY, int nType, ShadowMapTexInf
         // set current rendertarget
         //pRenderer->m_pd3dDevice->SetRenderTarget( 0, pTexSurf);
         // render screen aligned quad...
-        gRenDev->DrawTriStrip(&(CVertexBuffer (pScreenBlur,VERTEX_FORMAT_P3F_TEX2F)), 4);  
+        { CVertexBuffer vb_(pScreenBlur,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_, 4); }  
       }
       vpBlur->mfSet(false, 0);
       fpBlur->mfSet(false, 0);
@@ -202,7 +202,7 @@ void CD3D9Renderer::BlurImage(int nSizeX, int nSizeY, int nType, ShadowMapTexInf
       fpGaussBlur5x5->mfParameter(bind, &avSampleWeights[0].x, 9);
 
       // Draw a fullscreen quad to sample the RT
-      DrawTriStrip(&(CVertexBuffer (pScreenBlur,VERTEX_FORMAT_P3F_TEX2F)), 4);  
+      { CVertexBuffer vb_(pScreenBlur,VERTEX_FORMAT_P3F_TEX2F); DrawTriStrip(&vb_, 4); }  
 
       fpGaussBlur5x5->mfSet(false);
     }
@@ -279,7 +279,7 @@ void CD3D9Renderer::BlurImage(int nSizeX, int nSizeY, int nType, ShadowMapTexInf
       fpGaussSep->mfParameter(bindW, &vWeight[0][0], 8);
   
       // Draw a fullscreen quad to sample the RT
-      DrawTriStrip(&(CVertexBuffer (pScreenBlur,VERTEX_FORMAT_P3F_TEX2F)), 4);  
+      { CVertexBuffer vb_(pScreenBlur,VERTEX_FORMAT_P3F_TEX2F); DrawTriStrip(&vb_, 4); }  
 
       // Y Blur
       v[0] = 0;
@@ -291,7 +291,7 @@ void CD3D9Renderer::BlurImage(int nSizeX, int nSizeY, int nType, ShadowMapTexInf
       tpDst2->Set();
 
       // Draw a fullscreen quad to sample the RT
-      DrawTriStrip(&(CVertexBuffer (pScreenBlur,VERTEX_FORMAT_P3F_TEX2F)), 4);  
+      { CVertexBuffer vb_(pScreenBlur,VERTEX_FORMAT_P3F_TEX2F); DrawTriStrip(&vb_, 4); }  
 
       fpGaussSep->mfSet(false);
       vpGaussSep->mfSet(false);

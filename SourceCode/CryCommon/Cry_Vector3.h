@@ -27,6 +27,13 @@ enum type_max { MAX };
 
 extern const float gf_PI;
 
+// isneg() is defined in Cry_Math.h, but this header is included from it
+// before those definitions; forward-declare the overloads used by the
+// templates below so strict compilers (clang) resolve them.
+int isneg(float x);
+int isneg(double x);
+int isneg(int x);
+
 #define	VEC_EPSILON	( 0.01f )
 #define DEG2RAD( a ) ( (a) * (gf_PI/180.0f) )
 #define RAD2DEG( a ) ( (a) * (180.0f/gf_PI) )

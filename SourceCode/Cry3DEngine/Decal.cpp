@@ -301,7 +301,7 @@ void CDecal::DrawBigDecalOnTerrain(C3DEngine * p3DEngine, IRenderer * pIRenderer
 		{
 			pIRenderer->SetTexture(m_nTexId);
 			pIRenderer->SetTexClampMode(true);
-			pIRenderer->DrawTriStrip(&(CVertexBuffer (&verts[0].xyz.x,VERTEX_FORMAT_P3F_TEX2F)),verts.Count());
+			{ CVertexBuffer tmpVB(verts[0].xyz,VERTEX_FORMAT_P3F_TEX2F); pIRenderer->DrawTriStrip(&tmpVB,verts.Count()); }
 		}
   }
 }

@@ -4,10 +4,15 @@ cmake_policy(VERSION 3.12)
 project(farcry LANGUAGES C CXX)
 
 if (ANDROID)
+    # 64-bit ARM reuses the engine's existing 64-bit Linux configuration
+    # (LINUX64 + _AMD64_); all x86-only code is already excluded by LINUX
+    # guards, and Linux64Specific.h provides the base typedefs.
     if (ANDROID_ABI STREQUAL "arm64-v8a")
         set(ARCH_TYPE "arm64")
+        add_definitions(-DLINUX64 -D_AMD64_)
     else()
         set(ARCH_TYPE "arm32")
+        add_definitions(-DLINUX32)
     endif()
 elseif (CMAKE_SIZEOF_VOID_P EQUAL 8)
     set(ARCH_TYPE "x64")
@@ -36,7 +41,7 @@ if (MSVC)
 else()
     add_definitions(-DLINUX)
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-        add_compile_options(-fpermissive)
+        
     endif()
     if (${ARCH_TYPE} STREQUAL "x64")
         add_definitions(-DLINUX64 -D_AMD64_)
@@ -47,6 +52,8 @@ else()
     # OpenAL-soft headers (built from source in Externals)
     include_directories(${CMAKE_SOURCE_DIR}/Externals/openal-soft/include)
 
+    # NOTE: no -fpermissive here on purpose: the codebase is kept strict-clean
+    # (required for clang/Android-NDK builds; verified clean with GCC too).
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -D_DEBUG -g")
 endif()

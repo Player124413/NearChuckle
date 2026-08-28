@@ -459,7 +459,7 @@ void C3DEngine::SetCamera(const CCamera &cam, bool bToTheScreen)
 												*/
 	// under water camera effects
 //  float fUnderWater = GetWaterLevel(&GetViewCamera().GetPos())-GetViewCamera().GetPos().z;
-//  int nRecursionLevel = (int)GetRenderer()->EF_Query(EFQ_RecurseLevel);
+//  int nRecursionLevel = (int)(intptr_t)GetRenderer()->EF_Query(EFQ_RecurseLevel);
 //	float fZMin = GetViewCamera().GetZMin();
   //if(fUnderWater>(-fZMin) && nRecursionLevel==0)
   {
@@ -860,7 +860,7 @@ bool C3DEngine::PhysicalizeStaticObject(void *pForeignData,int iForeignData,int 
 	if (!m_pTerrain || !m_pObjManager)
 		return false;
 
-	int ix=(int)pForeignData&0xFF, iy=(int)pForeignData>>8&0xFF, iobj=(int)pForeignData>>16&0xFFFF;
+	int ix=(int)(intptr_t)pForeignData&0xFF, iy=(int)(intptr_t)pForeignData>>8&0xFF, iobj=(int)(intptr_t)pForeignData>>16&0xFFFF;
 	return 0;//m_pObjManager->PhysicalizeStatObjInst( &m_pTerrain->m_arrSecInfoTable[ix][iy]->m_lstStatObjects[iobj], true );
 }
 

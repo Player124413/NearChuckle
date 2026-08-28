@@ -2740,7 +2740,7 @@ bool CGLRenderer::EF_ObjectChange(SShader *Shader, SRenderShaderResources *Res, 
   return true;
 }
 
-DEFINE_ALIGNED_DATA_STATIC( Matrix44, sIdentityMatrix(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1), 16 );
+DEFINE_ALIGNED_DATA_STATIC_INIT( Matrix44, sIdentityMatrix, 16, Matrix44(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1) );
 
 // Get inverted matrix of the object matrix
 // All matrices are 16 bytes alligned to speedup matrix calculations using SSE instructions

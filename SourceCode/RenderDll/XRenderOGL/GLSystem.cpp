@@ -239,14 +239,14 @@ void CGLRenderer::FindProc( void*& ProcAddress, char* Name, char* SupportName, b
   if( !ProcAddress )
     ProcAddress = GetProcAddress( (HINSTANCE)m_hLibHandleGDI, Name );
 #else
-  ProcAddress = SDL_GL_GetProcAddress( Name );
+  ProcAddress = (void*)(intptr_t)SDL_GL_GetProcAddress( Name );
 #endif
   if( !ProcAddress && Supports && AllowExt )
   {
 #ifndef USE_SDL
     ProcAddress = pwglGetProcAddress( Name ); 
 #else
-    ProcAddress = SDL_GL_GetProcAddress( Name );
+    ProcAddress = (void*)(intptr_t)SDL_GL_GetProcAddress( Name );
 #endif
   }
     
@@ -2721,6 +2721,6 @@ void *gGet_D3DDevice()
 }
 void *gGet_glReadPixels()
 {
-  return glReadPixels;
+  return (void*)(intptr_t)&glReadPixels;
 }
 

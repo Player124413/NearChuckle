@@ -107,7 +107,11 @@ static ISystem *g_pISystem=NULL;
 static bool g_bSystemRelaunch = false;
 static char szMasterCDFolder[_MAX_PATH];
 
+#ifndef __linux
 static void* g_hSystemHandle=NULL;
+#else
+static SDL_SharedObject* g_hSystemHandle=NULL; // SDL3: LoadObject/LoadFunction are strongly typed
+#endif
 #ifdef _WIN32
 #define DLL_SYSTEM "CrySystem.dll"
 #define DLL_GAME	 "CryGame.dll"

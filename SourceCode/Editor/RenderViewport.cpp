@@ -846,7 +846,7 @@ void CRenderViewport::RenderMarker()
 	m_renderer->SetMaterialColor( 1,0,0.8f,0.6f );
 	m_renderer->SetBlendMode();
 	m_renderer->EnableBlend( true );
-	m_renderer->DrawTriStrip(&(CVertexBuffer(verts,VERTEX_FORMAT_P3F_TEX2F)),4);
+	{ CVertexBuffer vb_(verts,VERTEX_FORMAT_P3F_TEX2F); m_renderer->DrawTriStrip(&vb_,4); }
 	m_renderer->SetMaterialColor( 1,1,0,0.6f );
 	m_renderer->DrawBall( p,size*0.8f );
 	m_renderer->ResetToDefault();
@@ -1156,7 +1156,7 @@ void CRenderViewport::RenderTerrainGrid( float x1,float y1,float x2,float y2 )
 			GetRenderer()->SetMaterialColor(1,1,1,alpha);
 			GetRenderer()->SetTexture(tid);
 			*/
-			m_renderer->DrawTriStrip(&(CVertexBuffer(verts,VERTEX_FORMAT_P3F_TEX2F)),4);
+			{ CVertexBuffer vb_(verts,VERTEX_FORMAT_P3F_TEX2F); m_renderer->DrawTriStrip(&vb_,4); }
 		}
 	}
 

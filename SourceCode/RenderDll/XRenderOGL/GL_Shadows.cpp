@@ -80,7 +80,7 @@ void CGLRenderer::BlurImage(int nSizeX, int nSizeY, int nType, int nTexIdSrc, in
       Vec3(1, 0, 0), 1, 1,   
     }; 
   	EF_SetColorOp(eCO_REPLACE, eCO_REPLACE, DEF_TEXARG0, DEF_TEXARG0);
-    DrawTriStrip(&(CVertexBuffer (pScreenBlur,VERTEX_FORMAT_P3F_TEX2F)), 4);  
+    { CVertexBuffer vb_(pScreenBlur,VERTEX_FORMAT_P3F_TEX2F); DrawTriStrip(&vb_, 4); }  
  
     EF_SetState(GS_NODEPTHTEST | GS_COLMASKONLYALPHA);
 
@@ -122,7 +122,7 @@ void CGLRenderer::BlurImage(int nSizeX, int nSizeY, int nType, int nTexIdSrc, in
         // set current rendertarget
         //pRenderer->m_pd3dDevice->SetRenderTarget( 0, pTexSurf);
         // render screen aligned quad...
-        DrawTriStrip(&(CVertexBuffer (pScreenBlur,VERTEX_FORMAT_P3F_TEX2F)), 4);  
+        { CVertexBuffer vb_(pScreenBlur,VERTEX_FORMAT_P3F_TEX2F); DrawTriStrip(&vb_, 4); }  
       }
       vpBlur->mfSet(false, 0);
       fpBlur->mfSet(false, 0);

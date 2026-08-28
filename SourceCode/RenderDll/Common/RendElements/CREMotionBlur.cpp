@@ -80,7 +80,7 @@ bool CREMotionBlur::mfDraw(SShader *ef, SShaderPass *sfm)
     }
 
     gRenDev->TranslateMatrix(Vec3d(-50,-50,0));
-    gRenDev->DrawTriStrip(&(CVertexBuffer (data,VERTEX_FORMAT_P3F_TEX2F)),4);
+    { CVertexBuffer vb_(data,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,4); }
     gRenDev->PopMatrix();
   }
 

@@ -267,7 +267,7 @@ bool CREOutSpace::mfDraw(SShader *ef, SShaderPass *sfm)
 
 //    gRenDev->SetTexture(m_TexID[0]);
 //    gRenDev->SetTexClampMode(true);
-    gRenDev->DrawTriStrip(&(CVertexBuffer (data,VERTEX_FORMAT_P3F_TEX2F)),4);
+    { CVertexBuffer vb_(data,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,4); }
   }
 
   { // s
@@ -281,7 +281,7 @@ bool CREOutSpace::mfDraw(SShader *ef, SShaderPass *sfm)
 
 //    gRenDev->SetTexture(m_TexID[0]);
 //    gRenDev->SetTexClampMode(true);
-    gRenDev->DrawTriStrip(&(CVertexBuffer (data,VERTEX_FORMAT_P3F_TEX2F)),4);
+    { CVertexBuffer vb_(data,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,4); }
   }
   { // e
     struct_VERTEX_FORMAT_P3F_TEX2F data[] = 
@@ -294,7 +294,7 @@ bool CREOutSpace::mfDraw(SShader *ef, SShaderPass *sfm)
 
 //    gRenDev->SetTexture(m_TexID[0]);
 //    gRenDev->SetTexClampMode(true);
-    gRenDev->DrawTriStrip(&(CVertexBuffer (data,VERTEX_FORMAT_P3F_TEX2F)),4);
+    { CVertexBuffer vb_(data,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,4); }
   }
   { // n
     struct_VERTEX_FORMAT_P3F_TEX2F data[] = 
@@ -307,7 +307,7 @@ bool CREOutSpace::mfDraw(SShader *ef, SShaderPass *sfm)
 
 //    gRenDev->SetTexture(m_TexID[0]);
 //    gRenDev->SetTexClampMode(true);
-    gRenDev->DrawTriStrip(&(CVertexBuffer (data,VERTEX_FORMAT_P3F_TEX2F)),4);
+    { CVertexBuffer vb_(data,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,4); }
   }
   { // w
     struct_VERTEX_FORMAT_P3F_TEX2F data[] = 
@@ -320,7 +320,7 @@ bool CREOutSpace::mfDraw(SShader *ef, SShaderPass *sfm)
 
 //    gRenDev->SetTexture(m_TexID[0]);
 //    gRenDev->SetTexClampMode(true);
-    gRenDev->DrawTriStrip(&(CVertexBuffer (data,VERTEX_FORMAT_P3F_TEX2F)),4);
+    { CVertexBuffer vb_(data,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,4); }
   }
   
   { // bottom
@@ -334,7 +334,7 @@ bool CREOutSpace::mfDraw(SShader *ef, SShaderPass *sfm)
 
 //    gRenDev->SetTexture(m_TexID[0]);
 //    gRenDev->SetTexClampMode(true);
-    gRenDev->DrawTriStrip(&(CVertexBuffer (data,VERTEX_FORMAT_P3F_TEX2F)),4);
+    { CVertexBuffer vb_(data,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,4); }
   }
 
   gRenDev->ResetToDefault();

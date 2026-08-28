@@ -68,7 +68,7 @@ bool CRE2DQuad::mfDraw(SShader *ef, SShaderPass *sfm)
   };
 
   gRenDev->Set2DMode(true, 1, 1);  
-  gRenDev->DrawTriStrip(&CVertexBuffer(pScreenQuad,VERTEX_FORMAT_P3F_TEX2F),4);
+  { CVertexBuffer vb_(pScreenQuad,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,4); }
   gRenDev->Set2DMode(false, 1, 1);
   
   return true;
@@ -571,7 +571,7 @@ bool CREGlare::mfDraw(SShader *ef, SShaderPass *sfm)
 
   //// render quad
   //gRenDev->Set2DMode(true, 1, 1);
-  //gRenDev->DrawTriStrip(&(CVertexBuffer (pScreenQuad, VERTEX_FORMAT_P3F_TEX2F)), 4);  
+  //{ CVertexBuffer vb_(pScreenQuad, VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_, 4); }  
   //gRenDev->Set2DMode(false, 1, 1);
 
   return true;
@@ -605,7 +605,7 @@ bool CREFlashBang::mfDraw(SShader *ef, SShaderPass *sfm)
   //};
 
   //// render quad
-  //gRenDev->DrawTriStrip(&(CVertexBuffer (pScreenQuad,VERTEX_FORMAT_P3F_TEX2F)), 4);
+  //{ CVertexBuffer vb_(pScreenQuad,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_, 4); }
 
   return true;
 }

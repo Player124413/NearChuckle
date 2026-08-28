@@ -333,6 +333,7 @@ void CVisAreaManager::SetupFogVolumes(CTerrain * pTerrain)
 void CVisAreaManager::PortalsDrawDebug()
 {
 	UpdateConnections();
+	static Vec3d m_tmpDebugColor3(1,1,1); // debug label color (lvalue for &-of)
 /*
 	if(m_pCurArea)
 	{
@@ -354,7 +355,7 @@ void CVisAreaManager::PortalsDrawDebug()
 		{
 			GetRenderer()->Draw3dBBox(m_lstVisAreas[v]->m_vBoxMin, m_lstVisAreas[v]->m_vBoxMax, DPRIM_SOLID_BOX);
 			GetRenderer()->DrawLabelEx((m_lstVisAreas[v]->m_vBoxMin+ m_lstVisAreas[v]->m_vBoxMax)*0.5f,
-        1,(float*)&Vec3d(1,1,1),0,1,m_lstVisAreas[v]->m_sName);
+        1,(float*)&m_tmpDebugColor3,0,1,m_lstVisAreas[v]->m_sName);
 
 			GetRenderer()->SetMaterialColor(0,1,0,0.25f);
 			GetRenderer()->Draw3dBBox(m_lstVisAreas[v]->m_vGeomBoxMin, m_lstVisAreas[v]->m_vGeomBoxMax);
@@ -368,7 +369,7 @@ void CVisAreaManager::PortalsDrawDebug()
 			GetRenderer()->Draw3dBBox(m_lstPortals[v]->m_vBoxMin, m_lstPortals[v]->m_vBoxMax, DPRIM_SOLID_BOX);
 
 			GetRenderer()->DrawLabelEx((m_lstPortals[v]->m_vBoxMin+ m_lstPortals[v]->m_vBoxMax)*0.5f,
-				1,(float*)&Vec3d(1,1,1),0,1,m_lstPortals[v]->m_sName);
+				1,(float*)&m_tmpDebugColor3,0,1,m_lstPortals[v]->m_sName);
 
 			CVisArea * pPortal = m_lstPortals[v];
 			Vec3d vCenter = (pPortal->m_vBoxMin+pPortal->m_vBoxMax)*0.5f;

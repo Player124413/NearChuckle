@@ -50,7 +50,7 @@ void DisplayContext::DrawTri( const Vec3 &p1,const Vec3 &p2,const Vec3 &p3 )
 
 	verts[2].xyz = p3;
 
-	renderer->DrawTriStrip(&(CVertexBuffer(verts,VERTEX_FORMAT_P3F_TEX2F)),3);
+	{ CVertexBuffer vb_(verts,VERTEX_FORMAT_P3F_TEX2F); renderer->DrawTriStrip(&vb_,3); }
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -66,7 +66,7 @@ void DisplayContext::DrawQuad( const Vec3 &p1,const Vec3 &p2,const Vec3 &p3,cons
 
 	verts[2].xyz = p4;
 
-	renderer->DrawTriStrip(&(CVertexBuffer(verts,VERTEX_FORMAT_P3F_TEX2F)),4);
+	{ CVertexBuffer vb_(verts,VERTEX_FORMAT_P3F_TEX2F); renderer->DrawTriStrip(&vb_,4); }
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -74,7 +74,7 @@ void DisplayContext::DrawTexturePolygon( PolyVertex *points,int numPoints )
 {
 	assert( points != 0 );
 	assert( numPoints > 0 );
-	renderer->DrawTriStrip(&(CVertexBuffer(points,VERTEX_FORMAT_P3F_TEX2F)),numPoints);
+	{ CVertexBuffer vb_(points,VERTEX_FORMAT_P3F_TEX2F); renderer->DrawTriStrip(&vb_,numPoints); }
 }
 
 //////////////////////////////////////////////////////////////////////////

@@ -3426,7 +3426,7 @@ void CD3D9TexMan::ScanEnvironmentCube(SEnvTexture *cm, int RendFlags, int Size, 
         //pRenderer->m_pd3dDevice->SetRenderTarget( 0, pTexSurf);
         // render screen aligned quad...
         r->DrawQuad(0,0,(float)tex_size,(float)tex_size,Col_White,1);
-        //gRenDev->DrawTriStrip(&(CVertexBuffer (pScreenBlur,VERTEX_FORMAT_P3F_COL4UB_TEX2F)), 4);  
+        //{ CVertexBuffer vb_(pScreenBlur,VERTEX_FORMAT_P3F_COL4UB_TEX2F); gRenDev->DrawTriStrip(&vb_, 4); }  
       }
       //vpBlur->mfSet(false, 0);
       //fpBlur->mfSet(false, 0);
@@ -5477,7 +5477,7 @@ void CFurNormalMap::Update(EShaderPassType eShPass, float dt, SShaderPassHW *slw
       Vec3(1, -1, 0), 1, 1,   
       Vec3(1, 1, 0), 1, 0,   
     }; 
-    rd->DrawTriStrip(&(CVertexBuffer (pScreen,VERTEX_FORMAT_P3F_TEX2F)), 4);  
+    { CVertexBuffer vb_(pScreen,VERTEX_FORMAT_P3F_TEX2F); rd->DrawTriStrip(&vb_, 4); }  
 
     vpNormGen->mfSet(false, 0);
     fpNormGen->mfSet(false, 0);

@@ -253,7 +253,7 @@ float CTimer::MeasureTime(LPCSTR szComment)
   if(szComment==(LPCSTR)-1)
     szComment=0;
 
-  int nRecursionLevel = (int)m_pSystem->GetIRenderer()->EF_Query(EFQ_RecurseLevel) - 1;
+  int nRecursionLevel = (int)(intptr_t)m_pSystem->GetIRenderer()->EF_Query(EFQ_RecurseLevel) - 1;
 	if(nRecursionLevel>0)
 		return 0;
 

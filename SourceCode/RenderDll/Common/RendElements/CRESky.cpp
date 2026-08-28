@@ -77,7 +77,7 @@ bool CRESky::mfDraw(SShader *ef, SShaderPass *sfm)
 
 		gRenDev->SetTexture(ef->m_Sky->m_SkyBox[2]->m_Bind);
 		gRenDev->SetTexClampMode(true);
-		gRenDev->DrawTriStrip(&(CVertexBuffer (data,VERTEX_FORMAT_P3F_TEX2F)),4);
+		{ CVertexBuffer vb_(data,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,4); }
 	}
 
 	Vec3d camera = gRenDev->GetCamera().GetPos();
@@ -110,7 +110,7 @@ bool CRESky::mfDraw(SShader *ef, SShaderPass *sfm)
 
 		gRenDev->SetTexture(ef->m_Sky->m_SkyBox[1]->m_Bind);
 		gRenDev->SetTexClampMode(true);
-		gRenDev->DrawTriStrip(&(CVertexBuffer (data,VERTEX_FORMAT_P3F_TEX2F)),6);
+		{ CVertexBuffer vb_(data,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,6); }
 	}
 	{ // e
 		struct_VERTEX_FORMAT_P3F_TEX2F data[] = 
@@ -125,7 +125,7 @@ bool CRESky::mfDraw(SShader *ef, SShaderPass *sfm)
 
 		gRenDev->SetTexture(ef->m_Sky->m_SkyBox[1]->m_Bind);
 		gRenDev->SetTexClampMode(true);
-		gRenDev->DrawTriStrip(&(CVertexBuffer (data,VERTEX_FORMAT_P3F_TEX2F)),6);
+		{ CVertexBuffer vb_(data,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,6); }
 	}
 	{ // n
 		struct_VERTEX_FORMAT_P3F_TEX2F data[] = 
@@ -140,7 +140,7 @@ bool CRESky::mfDraw(SShader *ef, SShaderPass *sfm)
 
 		gRenDev->SetTexture(ef->m_Sky->m_SkyBox[0]->m_Bind);
 		gRenDev->SetTexClampMode(true);
-		gRenDev->DrawTriStrip(&(CVertexBuffer (data,VERTEX_FORMAT_P3F_TEX2F)),6);
+		{ CVertexBuffer vb_(data,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,6); }
 	}
 	{ // w
 		struct_VERTEX_FORMAT_P3F_TEX2F data[] = 
@@ -155,7 +155,7 @@ bool CRESky::mfDraw(SShader *ef, SShaderPass *sfm)
 
 		gRenDev->SetTexture(ef->m_Sky->m_SkyBox[0]->m_Bind);
 		gRenDev->SetTexClampMode(true);
-		gRenDev->DrawTriStrip(&(CVertexBuffer (data,VERTEX_FORMAT_P3F_TEX2F)),6);
+		{ CVertexBuffer vb_(data,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,6); }
 	}
 #if !defined(PS2) && !defined (GC) && !defined (NULL_RENDERER)
   if (fpSky)
@@ -244,8 +244,8 @@ bool CRESky::DrawFogLayer()
 	gRenDev->SelectTMU(0);
   gRenDev->m_TexMan->m_Text_White->Set();
 	gRenDev->EnableTMU(true);
-	gRenDev->DrawTriStrip(&(CVertexBuffer (m_parrFogLayer->GetElements(),VERTEX_FORMAT_P3F_COL4UB)),m_parrFogLayer->Count());
-	gRenDev->DrawTriStrip(&(CVertexBuffer (m_parrFogLayer2->GetElements(),VERTEX_FORMAT_P3F_COL4UB)),m_parrFogLayer2->Count());
+	{ CVertexBuffer vb_(m_parrFogLayer->GetElements(),VERTEX_FORMAT_P3F_COL4UB); gRenDev->DrawTriStrip(&vb_,m_parrFogLayer->Count()); }
+	{ CVertexBuffer vb_(m_parrFogLayer2->GetElements(),VERTEX_FORMAT_P3F_COL4UB); gRenDev->DrawTriStrip(&vb_,m_parrFogLayer2->Count()); }
 
 #if !defined(PS2) && !defined (GC) && !defined (NULL_RENDERER)
   if (fpSky)
@@ -278,7 +278,7 @@ bool CRESky::DrawBlackPortal()
 		gRenDev->SetCullMode(R_CULL_NONE);
 		gRenDev->SelectTMU(0);
 		gRenDev->EnableTMU(false);
-		gRenDev->DrawTriStrip(&(CVertexBuffer (m_arrvPortalVerts[i],VERTEX_FORMAT_P3F_COL4UB)),4);
+		{ CVertexBuffer vb_(m_arrvPortalVerts[i],VERTEX_FORMAT_P3F_COL4UB); gRenDev->DrawTriStrip(&vb_,4); }
 	}
 	return true;
 }
@@ -321,6 +321,6 @@ void CRESky::DrawSkySphere(float fHeight)
 			lstVertData.Add(vert);
 		}
 
-		gRenDev->DrawTriStrip(&CVertexBuffer(&lstVertData[0],VERTEX_FORMAT_P3F_COL4UB),lstVertData.Count());
+		{ CVertexBuffer vb_(&lstVertData[0],VERTEX_FORMAT_P3F_COL4UB); gRenDev->DrawTriStrip(&vb_,lstVertData.Count()); }
 	}
 }

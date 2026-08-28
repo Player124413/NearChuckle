@@ -121,7 +121,7 @@ struct PropertyWriter : IScriptObjectDumpSink
 			{
 				_SmartScriptObject t(m_pScriptSystem, true);
 				_VERIFY(iskey ? table->GetValue(sName, t) : table->GetAt(nIdx, t));
-				t->Dump(&PropertyWriter(t, stm, m_pScriptSystem));
+				{ PropertyWriter pw(t, stm, m_pScriptSystem); t->Dump(&pw); }
 				stm.Write((char)TABLE_END);
 				break;
 			};
@@ -447,15 +447,15 @@ bool CXGame::SaveToStream(CStream &stm, Vec3d *pos, Vec3d *angles,string sFilena
 		stm.AlignWrite();
 
 		_SmartScriptObject props(m_pScriptSystem, true);
-		if(so->GetValue("Properties", props)) props->Dump(&PropertyWriter(props, stm, m_pScriptSystem));
+		if(so->GetValue("Properties", props)) { PropertyWriter pw(props, stm, m_pScriptSystem); props->Dump(&pw); }
 		stm.Write((char)TABLE_END);
 
 		_SmartScriptObject propsi(m_pScriptSystem, true);
-		if(so->GetValue("PropertiesInstance", propsi)) propsi->Dump(&PropertyWriter(propsi, stm, m_pScriptSystem));
+		if(so->GetValue("PropertiesInstance", propsi)) { PropertyWriter pw(propsi, stm, m_pScriptSystem); propsi->Dump(&pw); }
 		stm.Write((char)TABLE_END);
 
 		_SmartScriptObject events(m_pScriptSystem, true);
-		if(so->GetValue("Events", events)) events->Dump(&PropertyWriter(events, stm, m_pScriptSystem));
+		if(so->GetValue("Events", events)) { PropertyWriter pw(events, stm, m_pScriptSystem); events->Dump(&pw); }
 		stm.Write((char)TABLE_END);
 
 		WRITE_COOKIE_NO(stm,78);

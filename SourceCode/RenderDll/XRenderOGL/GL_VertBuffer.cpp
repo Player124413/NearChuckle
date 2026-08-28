@@ -1125,7 +1125,7 @@ BOOL CGLRenderer::ReleaseVarShunk(void * p)
 int CGLRenderer::GetPipWaterLevel()
 {
   if(m_alloc_info.Count())
-    return ((int)m_alloc_info.Last().ptr - (int)m_alloc_info[0].ptr) + m_alloc_info.Last().bytes_num;
+    return (int)((byte*)m_alloc_info.Last().ptr - (byte*)m_alloc_info[0].ptr) + m_alloc_info.Last().bytes_num;
 
   return 0;
 }

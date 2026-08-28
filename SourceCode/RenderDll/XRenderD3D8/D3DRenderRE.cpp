@@ -1394,7 +1394,7 @@ bool CRESky::mfDraw(SShader *ef, SShaderPass *sfm)
 
     gRenDev->SetTexture(ef->m_Sky->m_SkyBox[2]->m_Bind);
     gRenDev->SetTexClampMode(true);
-    gRenDev->DrawTriStrip(&(CVertexBuffer (data,VERTEX_FORMAT_P3F_TEX2F)),4);
+    { CVertexBuffer vb_(data,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,4); }
   }
 
   Vec3d camera = gRenDev->GetCamera().GetPos();
@@ -1415,7 +1415,7 @@ bool CRESky::mfDraw(SShader *ef, SShaderPass *sfm)
 
     gRenDev->SetTexture(ef->m_Sky->m_SkyBox[1]->m_Bind);
     gRenDev->SetTexClampMode(true);
-    gRenDev->DrawTriStrip(&(CVertexBuffer (data,VERTEX_FORMAT_P3F_TEX2F)),6);
+    { CVertexBuffer vb_(data,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,6); }
   }
   { // e
     struct_VERTEX_FORMAT_P3F_TEX2F data[] = 
@@ -1430,7 +1430,7 @@ bool CRESky::mfDraw(SShader *ef, SShaderPass *sfm)
 
     gRenDev->SetTexture(ef->m_Sky->m_SkyBox[1]->m_Bind);
     gRenDev->SetTexClampMode(true);
-    gRenDev->DrawTriStrip(&(CVertexBuffer (data,VERTEX_FORMAT_P3F_TEX2F)),6);
+    { CVertexBuffer vb_(data,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,6); }
   }
   { // n
     struct_VERTEX_FORMAT_P3F_TEX2F data[] = 
@@ -1445,7 +1445,7 @@ bool CRESky::mfDraw(SShader *ef, SShaderPass *sfm)
 
     gRenDev->SetTexture(ef->m_Sky->m_SkyBox[0]->m_Bind);
     gRenDev->SetTexClampMode(true);
-    gRenDev->DrawTriStrip(&(CVertexBuffer (data,VERTEX_FORMAT_P3F_TEX2F)),6);
+    { CVertexBuffer vb_(data,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,6); }
   }
   { // w
     struct_VERTEX_FORMAT_P3F_TEX2F data[] = 
@@ -1460,7 +1460,7 @@ bool CRESky::mfDraw(SShader *ef, SShaderPass *sfm)
 
     gRenDev->SetTexture(ef->m_Sky->m_SkyBox[0]->m_Bind);
     gRenDev->SetTexClampMode(true);
-    gRenDev->DrawTriStrip(&(CVertexBuffer (data,VERTEX_FORMAT_P3F_TEX2F)),6);
+    { CVertexBuffer vb_(data,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,6); }
   }
   
   gRenDev->ResetToDefault();
@@ -1517,7 +1517,7 @@ void CRESky::DrawSkySphere()
       lstVertData.Add(vert);
     }
 
-    gRenDev->DrawTriStrip(&CVertexBuffer(&lstVertData[0],VERTEX_FORMAT_P3F_COL4UB),lstVertData.Count());
+    { CVertexBuffer vb_(&lstVertData[0],VERTEX_FORMAT_P3F_COL4UB); gRenDev->DrawTriStrip(&vb_,lstVertData.Count()); }
   }
 }
 

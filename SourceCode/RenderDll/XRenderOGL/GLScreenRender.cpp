@@ -219,7 +219,7 @@ bool BlurTextureHw(CScreenVars *pVars, CGLRenderer *pRenderer, STexPic *&pTex, i
       vpBlur->mfParameter4f("vTexCoordScale", pfScale);
 
       // render screen aligned quad...
-      gRenDev->DrawTriStrip(&(CVertexBuffer (pScreenBlur,VERTEX_FORMAT_P3F_TEX2F)), 4);             
+      { CVertexBuffer vb_(pScreenBlur,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_, 4); }             
       
       CopyScreenToTexture(pRenderer, pTex);
     } 
@@ -315,7 +315,7 @@ bool ResizeTextureHw(CScreenVars *pVars, CGLRenderer *pRenderer, STexPic *&pSrc,
   vpBlur->mfParameter4f("vTexCoordScale", pfScale);
   
   // render screen aligned quad...
-  gRenDev->DrawTriStrip(&(CVertexBuffer (pScreenBlur,VERTEX_FORMAT_P3F_TEX2F)), 4);  
+  { CVertexBuffer vb_(pScreenBlur,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_, 4); }  
 
   CopyScreenToTexture(pRenderer, pDst);
 
@@ -403,7 +403,7 @@ bool CREScreenProcess:: mfDrawLowSpec(SShader *ef, SShaderPass *sfm)
     SetTexture(pRenderer, pWhiteTex, 0, GL_LINEAR, GL_LINEAR, 0); 
 
     gRenDev->SetState(GS_BLSRC_ONE | GS_BLDST_ONE | GS_NODEPTHTEST);    
-    gRenDev->DrawTriStrip(&(CVertexBuffer(pScrQuad,VERTEX_FORMAT_P3F_TEX2F)),4);  
+    { CVertexBuffer vb_(pScrQuad,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,4); }  
 
     // set color..    
     STexPic *pScreenNoiseTex = gRenDev->m_TexMan->m_Text_ScreenNoise;
@@ -411,7 +411,7 @@ bool CREScreenProcess:: mfDrawLowSpec(SShader *ef, SShaderPass *sfm)
 
     gRenDev->SetMaterialColor(0.4f, 0.6f, 0.8f, 1.0f);
     gRenDev->SetState(GS_BLSRC_DSTCOL | GS_BLDST_SRCCOL | GS_NODEPTHTEST);     
-    gRenDev->DrawTriStrip(&(CVertexBuffer(pScrQuad,VERTEX_FORMAT_P3F_TEX2F)),4);
+    { CVertexBuffer vb_(pScrQuad,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,4); }
 
     gRenDev->Set2DMode(false, 1, 1); 
     gRenDev->ResetToDefault();    
@@ -441,7 +441,7 @@ bool CREScreenProcess:: mfDrawLowSpec(SShader *ef, SShaderPass *sfm)
     gRenDev->SetMaterialColor(fBrightness, fBrightness, fBrightness, 1);   
     STexPic *pWhiteTex = gRenDev->m_TexMan->m_Text_White;      
     SetTexture(pRenderer, pWhiteTex, 0, GL_NEAREST, GL_NEAREST, 1);
-    gRenDev->DrawTriStrip(&(CVertexBuffer (pScreenQuad,VERTEX_FORMAT_P3F_TEX2F)), 4);
+    { CVertexBuffer vb_(pScreenQuad,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_, 4); }
 
     // sincronize
     float fTimeScale=1.0f;
@@ -514,7 +514,7 @@ bool CREScreenProcess:: mfDrawLowSpec(SShader *ef, SShaderPass *sfm)
     STexPic *pWhiteTex = gRenDev->m_TexMan->m_Text_White;      
     SetTexture(pRenderer, pWhiteTex, 0, GL_LINEAR, GL_LINEAR, 1);
 
-    gRenDev->DrawTriStrip(&(CVertexBuffer(pScreenQuad,VERTEX_FORMAT_P3F_TEX2F)),4);    
+    { CVertexBuffer vb_(pScreenQuad,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,4); }    
     LOG_EFFECT("*** End screen fade process... ***\n")
   }
 
@@ -784,7 +784,7 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
 
           // use motion blur to lerp between brightness values
           gRenDev->SetState(GS_BLSRC_SRCALPHA | GS_BLDST_ONEMINUSSRCALPHA | GS_NODEPTHTEST);
-          gRenDev->DrawTriStrip(&(CVertexBuffer (pScreenQuad, VERTEX_FORMAT_P3F_TEX2F)), 4);
+          { CVertexBuffer vb_(pScreenQuad, VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_, 4); }
 
           // copy screen
           CopyScreenToTexture(pRenderer, pScreenLuminosityTex);
@@ -836,7 +836,7 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
 
         // render quad 
         gRenDev->SetState(GS_NODEPTHTEST);
-        gRenDev->DrawTriStrip(&(CVertexBuffer (pScreenQuad, VERTEX_FORMAT_P3F_TEX2F)), 4);    
+        { CVertexBuffer vb_(pScreenQuad, VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_, 4); }    
 
         fpGlare->mfSet(false, 0); 
         fpRenderModeCold->mfSet(false, 0);
@@ -985,7 +985,7 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
       SetTexture(pRenderer, pScreenLuminosityTex, 1, GL_NEAREST, GL_NEAREST, 1); 
 
       gRenDev->SetState(GS_NODEPTHTEST);
-      gRenDev->DrawTriStrip(&(CVertexBuffer(pScreenQuad,VERTEX_FORMAT_P3F_TEX2F)), 4);               
+      { CVertexBuffer vb_(pScreenQuad,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_, 4); }               
       fpGlareMap->mfSet(false, 0);
       vpGlare->mfSet(false, 0); 
 
@@ -1037,7 +1037,7 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
 
         // render quad
         gRenDev->SetState(GS_NODEPTHTEST);
-        gRenDev->DrawTriStrip(&(CVertexBuffer (pScreenQuad, VERTEX_FORMAT_P3F_TEX2F)), 4);  
+        { CVertexBuffer vb_(pScreenQuad, VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_, 4); }  
 
         if(m_pVars->m_bFlashBangActive ||  m_pVars->m_bCartoonActive || m_pVars->m_bBlurActive)
           CopyScreenToTexture(pRenderer, pScreenTex);
@@ -1128,7 +1128,7 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
         SetTexture(pRenderer, pPaleteTex, 2, GL_NEAREST, GL_NEAREST, 1);  
         // render quad (note: use alpha blending to add motion blur on heat sources )
         gRenDev->SetState(GS_NODEPTHTEST);  
-        gRenDev->DrawTriStrip(&(CVertexBuffer (pScreenQuad, VERTEX_FORMAT_P3F_TEX2F)), 4);  
+        { CVertexBuffer vb_(pScreenQuad, VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_, 4); }  
 
         // copy screen texture
         CopyScreenToTexture(pRenderer, pHeatTexture);
@@ -1173,7 +1173,7 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
 
         // render quad, use alpha blending to add motion blur on heat sources      
         gRenDev->SetState(GS_NODEPTHTEST);
-        gRenDev->DrawTriStrip(&(CVertexBuffer (pScreenQuad, VERTEX_FORMAT_P3F_TEX2F)), 4);  
+        { CVertexBuffer vb_(pScreenQuad, VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_, 4); }  
 
         // copy screen texture
         CopyScreenToTexture(pRenderer, pScreenTex);
@@ -1221,7 +1221,7 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
       SetTexture(pRenderer, pWhiteTex, 1, GL_NEAREST, GL_NEAREST, 1); 
 
       gRenDev->SetState(GS_NODEPTHTEST);
-      gRenDev->DrawTriStrip(&(CVertexBuffer(pScreenQuad,VERTEX_FORMAT_P3F_TEX2F)), 4);               
+      { CVertexBuffer vb_(pScreenQuad,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_, 4); }               
 
       // copy glare texture
       CopyScreenToTexture(pRenderer, pTex);
@@ -1288,7 +1288,7 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
 
       // render quad
       gRenDev->SetState(GS_NODEPTHTEST);
-      gRenDev->DrawTriStrip(&(CVertexBuffer (pScreenQuad, VERTEX_FORMAT_P3F_TEX2F)), 4);  
+      { CVertexBuffer vb_(pScreenQuad, VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_, 4); }  
 
       if(m_pVars->m_bFlashBangActive ||  m_pVars->m_bCartoonActive || m_pVars->m_bBlurActive)
       {
@@ -1335,7 +1335,7 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
       SetTexture(pRenderer, pScreenTex, 0, GL_NEAREST, GL_NEAREST, 1);
 
       float fOffX=0.5f/(float)pTex->m_Width, fOffY=0.5f/(float)pTex->m_Height;
-      gRenDev->DrawTriStrip(&(CVertexBuffer(pScreenSizeQuad,VERTEX_FORMAT_P3F_TEX2F)),4);   
+      { CVertexBuffer vb_(pScreenSizeQuad,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,4); }   
 
       // render flashbang flash 
       STexPic *pFlashBangFlash = gRenDev->m_TexMan->m_Text_FlashBangFlash;
@@ -1397,7 +1397,7 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
     gRenDev->SetState(GS_NODEPTHTEST);
 
     // just render..
-    gRenDev->DrawTriStrip(&(CVertexBuffer (pScreenQuad,VERTEX_FORMAT_P3F_TEX2F)), 4);
+    { CVertexBuffer vb_(pScreenQuad,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_, 4); }
 
     // check if motion blur is not active, else we must update screen texture/or get latest screen texture
     if(m_pVars->m_bCartoonActive || m_pVars->m_bBlurActive) 
@@ -1471,7 +1471,7 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
     // setup texture stages/states
     SetTexture(pRenderer, pScreenTex, 0, GL_NEAREST, GL_NEAREST, 1);
 
-    gRenDev->DrawTriStrip(&(CVertexBuffer(pScreenSizeQuad,VERTEX_FORMAT_P3F_TEX2F)),4); 
+    { CVertexBuffer vb_(pScreenSizeQuad,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,4); } 
 
     CopyScreenToTexture(pRenderer, pScreenBluredTex);
 
@@ -1497,7 +1497,7 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
     SetTexture(pRenderer, pScreenBluredTex, 0, GL_LINEAR, GL_LINEAR, 1);
     SetTexture(pRenderer, pScreenTex, 1, GL_NEAREST, GL_NEAREST, 1);
 
-    gRenDev->DrawTriStrip(&(CVertexBuffer(pScreenQuad,VERTEX_FORMAT_P3F_TEX2F)),4);
+    { CVertexBuffer vb_(pScreenQuad,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,4); }
 
     // check if motion blur is not active, else we must update screen texture/or get latest screen texture
     if(m_pVars->m_bCartoonActive) 
@@ -1551,7 +1551,7 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
     SetTexture(pRenderer, pScreenTex, 0, GL_NEAREST, GL_NEAREST, 1); 
 
     // just render
-    gRenDev->DrawTriStrip(&(CVertexBuffer(pScreenQuad, VERTEX_FORMAT_P3F_TEX2F)),4); 
+    { CVertexBuffer vb_(pScreenQuad, VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,4); } 
 
     vpCartoon->mfSet(false, NULL);
     fpCartoon->mfSet(false, NULL); 
@@ -1587,7 +1587,7 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
 
     // just render
     gRenDev->SetState(GS_BLSRC_ZERO | GS_BLDST_SRCCOL | GS_NODEPTHTEST);
-    gRenDev->DrawTriStrip(&(CVertexBuffer(pScreenQuad, VERTEX_FORMAT_P3F_TEX2F)),4); 
+    { CVertexBuffer vb_(pScreenQuad, VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,4); } 
 
     vpCartoon->mfSet(false, NULL);
     fpCartoonSilhouete->mfSet(false, NULL);
@@ -1635,7 +1635,7 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
         gRenDev->SetMaterialColor(1,1,1, 1-fAmount);
         gRenDev->SetColorOp(eCO_MODULATE, eCO_MODULATE, eCA_Texture | (eCA_Constant<<3), eCA_Texture | (eCA_Constant<<3));
         SetTexture(pRenderer, pTex, 0, GL_NEAREST, GL_NEAREST, 1);             
-        gRenDev->DrawTriStrip(&(CVertexBuffer(pScreenSizeQuad,VERTEX_FORMAT_P3F_TEX2F)),4);            
+        { CVertexBuffer vb_(pScreenSizeQuad,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,4); }            
       } 
       break; 
 
@@ -1679,7 +1679,7 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
       vpMotion->mfParameter(pTexScale, pfTexScale, 1); 
 
       // just render
-      gRenDev->DrawTriStrip(&(CVertexBuffer(pScreenQuad, VERTEX_FORMAT_P3F_TEX2F)),4);
+      { CVertexBuffer vb_(pScreenQuad, VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,4); }
 
       // disable current vertex/fragment program
       vpMotion->mfSet(false, NULL);
@@ -1740,7 +1740,7 @@ bool CREScreenProcess::mfDraw(SShader *ef, SShaderPass *sfm)
     gRenDev->SetMaterialColor(m_pVars->m_pFadeCurrColor.r, m_pVars->m_pFadeCurrColor.g, m_pVars->m_pFadeCurrColor.b, m_pVars->m_pFadeCurrColor.a);
     STexPic *pWhiteTex = gRenDev->m_TexMan->m_Text_White;      
     SetTexture(pRenderer, pWhiteTex, 0, GL_NEAREST, GL_NEAREST, 1);
-    gRenDev->DrawTriStrip(&(CVertexBuffer(pScreenQuad,VERTEX_FORMAT_P3F_TEX2F)),4);    
+    { CVertexBuffer vb_(pScreenQuad,VERTEX_FORMAT_P3F_TEX2F); gRenDev->DrawTriStrip(&vb_,4); }    
 
     LOG_EFFECT("*** End screen fade process... ***\n")
   }
