@@ -16,7 +16,9 @@
 
 #include <ISystem.h>
 
+#if defined(_MSC_VER)
 #pragma comment (lib, "xkbdd.lib")
+#endif
 
 
 #ifdef _DEBUG

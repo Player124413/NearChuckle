@@ -30,14 +30,18 @@
 
 #include "Resource.h"
 
+#if defined(_MSC_VER)
 #pragma comment(lib, "version.lib")
+#endif
 
 //! Needs one external of DLL handle.
 extern HMODULE gDLLHandle;
 
 #ifndef WIN98
 //#pragma comment( lib, "imagehlp" )
+#if defined(_MSC_VER)
 #pragma comment( lib, "dbghelp" )
+#endif
 #endif
 
 #define MAX_PATH_LENGTH 1024

@@ -12,7 +12,9 @@
 
 #import "SSAPI.DLL" no_namespace
 
+#if defined(_MSC_VER)
 #pragma comment (lib, "ole32.lib")
+#endif
 
 
 #endif	// WIN32

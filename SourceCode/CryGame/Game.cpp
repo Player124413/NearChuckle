@@ -776,7 +776,9 @@ bool CXGame::Run(bool &bRelaunch)
 #if !defined(_XBOX) && !defined(PS2) && !defined(LINUX)
 #include <Mmsystem.h>
 #include ".\game.h"
+#if defined(_MSC_VER)
 #pragma comment (lib , "Winmm.lib")
+#endif
 #else
 #define GetCurrentTime() ((unsigned int)(GetSystem()->GetITimer()->GetCurrTime() * 1000.f))
 #endif

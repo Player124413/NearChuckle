@@ -80,8 +80,12 @@ CMTSafeHeap* g_pBigHeap;
 CMTSafeHeap* g_pSmallHeap;
 
 #ifdef WIN32
+#if defined(_MSC_VER)
 #pragma comment(lib, "WINMM.lib")
+#endif
+#if defined(_MSC_VER)
 #pragma comment(lib, "dxguid.lib")
+#endif
 #endif
 
 #define DLL_GAME_ENTRANCE_FUNCTION	"CreateGameInstance"

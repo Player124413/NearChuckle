@@ -21,32 +21,70 @@
 
 // the following libs are not in the project setting because we want to have then only in if NOT_USE_UBICOM_SDK is defined
 /*#ifdef _DEBUG
+	#if defined(_MSC_VER)
 	#pragma comment(lib,"libgsclient_debug.lib")
+	#endif
+	#if defined(_MSC_VER)
 	#pragma comment(lib,"libgsconnect_debug.lib")
+	#endif
+	#if defined(_MSC_VER)
 	#pragma comment(lib,"libgscrypto_debug.lib")
+	#endif
+	#if defined(_MSC_VER)
 	#pragma comment(lib,"libgsutility_debug.lib")
+	#endif
+	#if defined(_MSC_VER)
 	#pragma comment(lib,"libgsregserver_debug.lib")
+	#endif
+	#if defined(_MSC_VER)
 	#pragma comment(lib,"libgssocket_debug.lib")
+	#endif
+	#if defined(_MSC_VER)
 	#pragma comment(lib,"libgsproxyclient_debug.lib")
+	#endif
+	#if defined(_MSC_VER)
 	#pragma comment(lib,"libgsresult_debug.lib")	
+	#endif
+	#if defined(_MSC_VER)
 	#pragma comment(lib,"libgscdkey_debug.lib")
+	#endif
 #else
 	*/
 
 
 #ifndef EXCLUDE_UBICOM_CLIENT_SDK
+	#if defined(_MSC_VER)
 	#pragma comment(lib,"libgsclient.lib")
+	#endif
+	#if defined(_MSC_VER)
 	#pragma comment(lib,"libgsmsclient.lib")
+	#endif
 #endif // EXCLUDE_UBICOM_CLIENT_SDK
 
+	#if defined(_MSC_VER)
 	#pragma comment(lib,"libgsconnect.lib")
+	#endif
+	#if defined(_MSC_VER)
 	#pragma comment(lib,"libgscrypto.lib")
+	#endif
+	#if defined(_MSC_VER)
 	#pragma comment(lib,"libgsutility.lib")
+	#endif
+	#if defined(_MSC_VER)
 	#pragma comment(lib,"libgsregserver.lib")
+	#endif
+	#if defined(_MSC_VER)
 	#pragma comment(lib,"libgssocket.lib")
+	#endif
+	#if defined(_MSC_VER)
 	#pragma comment(lib,"libgsproxyclient.lib")
+	#endif
+	#if defined(_MSC_VER)
 	#pragma comment(lib,"libgsresult.lib")
+	#endif
+	#if defined(_MSC_VER)
 	#pragma comment(lib,"libgscdkey.lib")
+	#endif
 //#endif
 
 
@@ -559,9 +597,13 @@ void NewUbisoftClient::MSClientDisconnected()
 // the following libs are excluded from the build in the project settings and here they are included
 // because only if we don't use UBI.com we need them
 #ifdef _DEBUG
+	#if defined(_MSC_VER)
 	#pragma comment(lib,"libcmtd.lib")
+	#endif
 #else
+	#if defined(_MSC_VER)
 	#pragma comment(lib,"libcmt.lib")
+	#endif
 #endif
 
 #endif // NOT_USE_UBICOM_SDK

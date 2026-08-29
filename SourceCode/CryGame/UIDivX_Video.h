@@ -15,13 +15,21 @@
 #if !defined(LINUX) && !defined(NOT_USE_DIVX_SDK)
 
 #ifdef WIN64
+#if defined(_MSC_VER)
 #pragma comment(lib, "DivXMediaLib64.lib")
+#endif
 #else
+#if defined(_MSC_VER)
 #pragma comment(lib, "DivXMediaLib32.lib")
 #endif
+#endif
 
+#if defined(_MSC_VER)
 #pragma comment(lib, "dsound.lib")
+#endif
+#if defined(_MSC_VER)
 #pragma comment(lib, "dxguid.lib")
+#endif
 
 #include <dsound.h>
 

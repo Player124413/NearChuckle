@@ -12,7 +12,9 @@
 #include <direct.h>
 #ifndef WIN64
 #include "Shlwapi.h"
+#if defined(_MSC_VER)
 #pragma comment (lib, "Shlwapi.lib")
+#endif
 #endif
 
 _TINY_DECLARE_APP();

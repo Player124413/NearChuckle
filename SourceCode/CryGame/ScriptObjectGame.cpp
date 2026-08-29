@@ -42,7 +42,9 @@
 
 #if !defined(LINUX)
 #	include <direct.h>
+#if defined(_MSC_VER)
 #	pragma comment (lib, "version.lib")
+#endif
 #else
 	#include <sys/stat.h>
 #endif

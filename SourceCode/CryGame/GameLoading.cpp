@@ -51,7 +51,9 @@
 
 #if !defined(LINUX)
 #	include <dbghelp.h>
+#if defined(_MSC_VER)
 #	pragma comment(lib, "dbghelp.lib")
+#endif
 #else
 #	include <stdio.h>
 #endif

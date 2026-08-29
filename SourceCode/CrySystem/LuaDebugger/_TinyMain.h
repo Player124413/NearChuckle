@@ -12,7 +12,9 @@ right now this code is not GPL or LGPL in any way
 #include "CryLibrary.h"
 
 #include <commctrl.h>
+#if defined(_MSC_VER)
 #pragma comment (lib , "comctl32.lib")
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Common includes

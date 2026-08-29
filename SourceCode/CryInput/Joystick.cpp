@@ -21,7 +21,9 @@
 
 #ifdef WIN32
 #include "Mmsystem.h"
+#if defined(_MSC_VER)
 #pragma comment(lib, "winmm.lib")
+#endif
 #endif
 
 

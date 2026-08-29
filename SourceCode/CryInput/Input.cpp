@@ -32,8 +32,12 @@ static char THIS_FILE[] = __FILE__;
 #endif
 
 #if defined (WIN32) || (WIN64)
+#if defined(_MSC_VER)
 #pragma comment(lib, "dinput8.lib")
+#endif
+#if defined(_MSC_VER)
 #pragma comment(lib, "dxguid.lib")
+#endif
 #endif
 
 #ifdef PS2

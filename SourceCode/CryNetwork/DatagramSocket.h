@@ -31,7 +31,9 @@
 
 #ifndef _XBOX
 #if _MSC_VER > 1000
+#if defined(_MSC_VER)
 #pragma comment(lib, "WSOCK32.LIB")
+#endif
 #endif // _MSC_VER > 1000
 #endif
 
