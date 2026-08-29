@@ -126,4 +126,6 @@ endif()
 target_link_libraries(${PROJECT_NAME} PRIVATE
     ${ARCH_LIBS}
     ${SYSTEM_DEPS}
+
+    SDL3 # Linux_Win32Wrapper.h timeGetTime() -> SDL_GetTicks
 )

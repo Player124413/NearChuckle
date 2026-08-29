@@ -65,5 +65,5 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     legacy_stdio_definitions.lib
 )
 else()
-target_link_libraries(${PROJECT_NAME} PUBLIC vorbisfile openal)
+        target_link_libraries(${PROJECT_NAME} PUBLIC vorbisfile openal SDL3)
 endif()

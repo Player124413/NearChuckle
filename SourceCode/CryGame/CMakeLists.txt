@@ -149,5 +149,6 @@ if (NOT DISABLE_FFMPEG)
 target_link_libraries(${PROJECT_NAME} PRIVATE avutil avformat swscale)
 endif()
 # Game.cpp/UIScreen.cpp use SDL directly; needed for strict linkers (--no-undefined)
-target_link_libraries(${PROJECT_NAME} PRIVATE SDL3)
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL3 CrySoundSystem)
+# CrySoundSystem: CS_Stream_* stream API is imported directly
 endif()

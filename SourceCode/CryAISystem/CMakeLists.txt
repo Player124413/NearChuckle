@@ -32,4 +32,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/SourceCode/CryCommon
 )
 
-target_link_libraries(${PROJECT_NAME})
+# CryCommon/Linux_Win32Wrapper.h implements timeGetTime() via
+# SDL_GetTicks() - every module that includes it must link SDL3
+# (on Android undefined symbols resolve ONLY through DT_NEEDED).
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL3)
