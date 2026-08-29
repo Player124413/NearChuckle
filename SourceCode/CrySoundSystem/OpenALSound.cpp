@@ -363,7 +363,11 @@ DLL_API CS_SAMPLE * F_API CS_Sample_Load(int index, const char *name_or_data, un
 	ALSample_t* samp = nullptr;
 	if (mode & CS_LOADMEMORY)
 	{
+#ifdef LINUX64
 		ret = audio_wav_from_data_MEM((void*)name_or_data, length, &thebuf);
+#else // 32-bit API names the parameter 'memlength'
+		ret = audio_wav_from_data_MEM((void*)name_or_data, memlength, &thebuf);
+#endif
 		if (ret == 0)
 		{
 			samp = new ALSample_t;
