@@ -239,7 +239,15 @@ void CGLRenderer::FindProc( void*& ProcAddress, char* Name, char* SupportName, b
   if( !ProcAddress )
     ProcAddress = GetProcAddress( (HINSTANCE)m_hLibHandleGDI, Name );
 #else
+#ifdef GFX_GLES3
+  // desktop-GL fixed-function emulation over ES3 (SourceCode/GLESCompat)
+  extern "C" void *GLESCompat_GetProcAddress(const char *name);
+  ProcAddress = GLESCompat_GetProcAddress( Name );
+  if( !ProcAddress )
+    ProcAddress = (void*)(intptr_t)SDL_GL_GetProcAddress( Name );
+#else
   ProcAddress = (void*)(intptr_t)SDL_GL_GetProcAddress( Name );
+#endif
 #endif
   if( !ProcAddress && Supports && AllowExt )
   {
@@ -1883,18 +1891,18 @@ exr:
   rc->m_Glhwnd = (HWND)Glhwnd;
 #else
 #ifdef __ANDROID__
-  // The engine is written against desktop GL 2.x (fixed function + ARB
-  // programs). On Android request a COMPATIBILITY profile context - this
-  // succeeds on desktop-GL-over-Vulkan drivers (Mesa/Zink) and cleanly
-  // fails on plain GLES drivers (the engine then falls back to NULL).
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+  // GLESCompat emulates desktop-GL fixed function on top of an ES3 context.
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 #endif
   rc->m_Window = win;
 #endif
 
   // Find functions.
+#ifndef __ANDROID__
+  // (on Android SDL_GL_GetProcAddress needs a current context - procs are
+  // resolved right after SDL_GL_MakeCurrent below)
   SUPPORTS_GL = 1;
   FindProcs( false );
   if( !SUPPORTS_GL )
@@ -1902,6 +1910,7 @@ exr:
     iLog->Log("Error: Library <%s> isn't OpenGL library\n", m_LibName);
     goto exr;
   }
+#endif
 #ifndef USE_SDL
   CreateRContext(rc, Glhdc, hGLrc, cbpp, zbpp, sbits, true);
 #else
@@ -1913,6 +1922,15 @@ exr:
       iLog->Log("%s\n", SDL_GetError());
       return NULL;
     }
+#ifdef __ANDROID__
+    SUPPORTS_GL = 1;
+    FindProcs( false );
+    if( !SUPPORTS_GL )
+    {
+      iLog->Log("Error: OpenGL ES proc resolution failed\n");
+      return NULL;
+    }
+#endif
   }
   else
   {

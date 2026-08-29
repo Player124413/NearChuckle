@@ -182,6 +182,7 @@ stays top-right - tap it to re-enable). Layout persists in
 scripts/build_native.sh     # NDK build -> android/app/src/main/jniLibs/<abi>
 android/                    # Gradle project (packages prebuilt .so files)
 ci-workflows/android-apk.yml # GitHub Actions APK build (move to .github/workflows/ to enable)
+SourceCode/GLESCompat/      # desktop-GL fixed-function emulation over ES3
 SourceCode/AndroidApp/      # libmain.so: SDL_main bootstrap + haptics
 SourceCode/CryInput/SDLTouch.*   # finger routing, look-drag, virtual keys
 SourceCode/CryGame/TouchControls.* # on-screen overlay + EDIT layout editor

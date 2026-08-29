@@ -21,6 +21,13 @@ if (DISABLE_CG)
 add_definitions(-DDISABLE_CG)
 endif()
 
+# GLES3 fixed-function emulation layer (SourceCode/GLESCompat).
+# Compiled on every platform for strict-mode validation; GFX_GLES3 (and the
+# FindProc hookup) is enabled only on Android.
+if (ANDROID)
+add_definitions(-DGFX_GLES3)
+endif()
+
 
 set(SRC_FILES
     "../Common/3DUtils.cpp"
@@ -155,6 +162,11 @@ endif()
 # bundled GLU replacement (Android has no libGLU; optional on desktop)
 list(APPEND SRC_FILES
     "GluCompat.cpp"
+)
+
+list(APPEND SRC_FILES
+    "../../GLESCompat/GLESCompat.cpp"
+    "../../GLESCompat/GLESCompatTex.cpp"
 )
 
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
