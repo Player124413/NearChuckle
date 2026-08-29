@@ -20,6 +20,7 @@
 #include <unistd.h>
 
 extern "C" void AndroidTouchVibrate(int ms);
+void DiagInit(); // AndroidApp/DiagLog.cpp
 
 namespace
 {
@@ -37,6 +38,9 @@ namespace
 
 void AndroidBootstrap()
 {
+	// diagnostics log first: everything after this point is captured
+	DiagInit();
+
 	// touch should not synthesize mouse events for the game; the engine
 	// has its own touch routing (CSDLTouch). Menus get the synthesized
 	// mouse through the same events when the overlay is disabled.

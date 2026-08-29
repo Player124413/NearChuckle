@@ -21,6 +21,11 @@
 #if !defined(_XBOX) && !defined(PS2)
 
 #include "TouchControls.h"
+
+// on-device log sharing (defined in AndroidApp/DiagLog.cpp)
+#if defined(__ANDROID__)
+extern "C" void AndroidSendLogs(void) __attribute__((weak));
+#endif
 #include "Game.h"
 
 #include <ISystem.h>
@@ -686,7 +691,15 @@ bool CTouchControls::OnTouchDown(int idFinger, float fX, float fY)
 					}
 				}
 				break;
+#if defined(__ANDROID__)
+			case 5: // LOG - share + save the diagnostics log (no PC needed)
+				if (AndroidSendLogs)
+					AndroidSendLogs();
+				break;
+			case 6: LeaveEditMode(true); return true;										// EXIT
+#else
 			case 5: LeaveEditMode(true); return true;												// EXIT
+#endif
 			}
 			m_nEditFinger = -1;
 			return true;
@@ -1216,9 +1229,12 @@ void CTouchControls::LogToConsole(const char *szFormat, ...)
 //////////////////////////////////////////////////////////////////////////
 int CTouchControls::HitTestToolbar(float fX, float fY)
 {
-	// toolbar: SAVE ADD DEL GRID TCH EXIT - top center row
-	static const char *labels[6] = { "SAVE", "ADD", "DEL", "GRID", "TCH", "EXIT" };
+	// toolbar: SAVE ADD DEL GRID TCH [LOG] EXIT - top center row
+#if defined(__ANDROID__)
+	int count = 7;
+#else
 	int count = 6;
+#endif
 	float bh = m_fScreenHeight * 0.045f;
 	float bw = m_fScreenWidth * 0.085f;
 	float gap = m_fScreenWidth * 0.012f;
@@ -1234,7 +1250,6 @@ int CTouchControls::HitTestToolbar(float fX, float fY)
 			return i;
 	}
 	return -1;
-	(void)labels;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -1281,14 +1296,20 @@ void CTouchControls::OnTouchRender()
 			m_pRenderer->Draw2dLine(0, yy, m_fScreenWidth, yy);
 
 		// toolbar
+#if defined(__ANDROID__)
+		static const char *labels[7] = { "SAVE", "ADD", "DEL", "GRID", "TCH", "LOG", "EXIT" };
+		const int nTB = 7;
+#else
 		static const char *labels[6] = { "SAVE", "ADD", "DEL", "GRID", "TCH", "EXIT" };
+		const int nTB = 6;
+#endif
 		float bh = m_fScreenHeight * 0.045f;
 		float bw = m_fScreenWidth * 0.085f;
 		float gap = m_fScreenWidth * 0.012f;
-		float total = 6 * bw + 5 * gap;
+		float total = nTB * bw + (nTB - 1) * gap;
 		float x0 = (m_fScreenWidth - total) * 0.5f;
 		float y0 = m_fScreenHeight * 0.012f;
-		for (int i = 0; i < 6; i++)
+		for (int i = 0; i < nTB; i++)
 		{
 			float bx = x0 + i * (bw + gap);
 			DrawFillRect(bx, y0, bw, bh, 0.1f, 0.1f, 0.2f, 0.35f);

@@ -4,6 +4,7 @@ project(main LANGUAGES CXX)
 set(SRC_FILES
     "../FARCRY/Main.cpp"
     "AndroidMain.cpp"
+    "DiagLog.cpp"
 )
 
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES})

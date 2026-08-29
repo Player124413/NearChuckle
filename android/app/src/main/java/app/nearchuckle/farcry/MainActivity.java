@@ -1,13 +1,22 @@
 package app.nearchuckle.farcry;
 
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.os.VibratorManager;
+import android.provider.MediaStore;
+import android.content.ContentValues;
 import android.util.Log;
 
 import org.libsdl.app.SDLActivity;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.OutputStream;
 
 /**
  * NearChuckle launcher.
@@ -66,5 +75,60 @@ public class MainActivity extends SDLActivity {
     /** Instance wrapper called through SDL_GetAndroidActivity(). */
     public void vibrate(int ms) {
         vibrateStatic(this, ms);
+    }
+
+    /** Opens the Android share sheet with the log text (no PC needed). */
+    public void offerLogShare(final String text) {
+        try {
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    try {
+                        Intent send = new Intent();
+                        send.setAction(Intent.ACTION_SEND);
+                        send.putExtra(Intent.EXTRA_TEXT, text);
+                        send.setType("text/plain");
+                        startActivity(Intent.createChooser(send, "NearChuckle log"));
+                    } catch (Throwable t) {
+                        Log.w(TAG, "share failed: " + t);
+                    }
+                }
+            });
+        } catch (Throwable t) {
+            Log.w(TAG, "share post failed: " + t);
+        }
+    }
+
+    /** Saves the log into the public Downloads folder. Returns location or null. */
+    public String saveLog(String name, String content) {
+        try {
+            if (Build.VERSION.SDK_INT >= 29) {
+                ContentValues cv = new ContentValues();
+                cv.put(MediaStore.MediaColumns.DISPLAY_NAME, name);
+                cv.put(MediaStore.MediaColumns.MIME_TYPE, "text/plain");
+                cv.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+                Uri uri = getContentResolver().insert(
+                    MediaStore.Downloads.EXTERNAL_CONTENT_URI, cv);
+                if (uri == null) return null;
+                OutputStream os = getContentResolver().openOutputStream(uri);
+                if (os == null) return null;
+                try {
+                    os.write(content.getBytes("UTF-8"));
+                } finally {
+                    os.close();
+                }
+                return uri.toString();
+            } else {
+                File dir = Environment.getExternalStoragePublicDirectory(
+                    Environment.DIRECTORY_DOWNLOADS);
+                File f = new File(dir, name);
+                FileWriter w = new FileWriter(f);
+                w.write(content);
+                w.close();
+                return f.getAbsolutePath();
+            }
+        } catch (Throwable t) {
+            Log.w(TAG, "saveLog failed: " + t);
+            return null;
+        }
     }
 }
