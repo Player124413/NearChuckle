@@ -14,7 +14,6 @@
         android:label="NearChuckle"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="true"
-        android:extractNativeLibs="true"
         android:hardwareAccelerated="true"
         android:theme="@style/AppTheme">
 
@@ -23,7 +22,7 @@
             android:exported="true"
             android:label="NearChuckle"
             android:screenOrientation="sensorLandscape"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode|density|screenSmallestScreenSize">
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode|density|smallestScreenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -36,7 +35,7 @@
             android:label="NearChuckle"
             android:alwaysRetainTaskState="true"
             android:screenOrientation="sensorLandscape"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode|density|screenSmallestScreenSize"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode|density|smallestScreenSize"
             android:resizeableActivity="false"
             android:launchMode="singleTask" />
     </application>
