@@ -19,6 +19,18 @@
         android:theme="@style/AppTheme">
 
         <activity
+            android:name=".LauncherActivity"
+            android:exported="true"
+            android:label="NearChuckle"
+            android:screenOrientation="sensorLandscape"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode|density|screenSmallestScreenSize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="NearChuckle"
@@ -26,12 +38,7 @@
             android:screenOrientation="sensorLandscape"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode|density|screenSmallestScreenSize"
             android:resizeableActivity="false"
-            android:launchMode="singleTask">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+            android:launchMode="singleTask" />
     </application>
 
 </manifest>

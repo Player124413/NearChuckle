@@ -44,18 +44,16 @@ English summary below — [Installation](#installation-en) · [Touch controls](#
    # -> android/app/build/outputs/apk/debug/app-debug.apk
    ```
 2. Установите APK (разрешите установку из неизвестных источников).
-3. **Нужны данные игры.** Скопируйте из оригинальной игры (GOG/Steam/диск)
-   папки в `/sdcard/Android/data/app.nearchuckle.farcry/files/`:
+3. **Данные игры — прямо на телефоне, без ПК.** Откройте NearChuckle:
+   - нажмите **«Выбрать ZIP игры»** (или «Выбрать папку игры» — через
+     системный файловый менеджер), укажите ZIP/папку с Far Cry;
+   - лаунчер сам найдёт вложенную папку игры, распакует и разложит всё
+     в `/Android/data/app.nearchuckle.farcry/files/` (в архиве должна
+     быть папка `FCData`);
+   - статус «Данные игры на месте ✓» → жмите **▶ PLAY**.
 
-   ```
-   files/
-   ├── FCData/          (все .pak из FCData)
-   ├── Levels/
-   ├── Profiles/        (если есть)
-   └── Shaders/         (если есть)
-   ```
-
-   Проще всего: подключите телефон по USB (MTP) или через `adb push`.
+   Вручную (через USB/MTP) тоже можно: скопируйте `FCData/`, `Levels/`,
+   `Profiles/`, `Shaders/` в `/sdcard/Android/data/app.nearchuckle.farcry/files/`.
    Игра сама создаст `system.cfg` с мобильными настройками при первом запуске.
 
 ### Про рендер (важно!)
@@ -154,8 +152,10 @@ fixed function). На Android таких драйверов нет, поэтом
    # -> android/app/build/outputs/apk/debug/app-debug.apk
    ```
 2. Install the APK.
-3. Copy the retail game data (`FCData/`, `Levels/`, `Profiles/`, `Shaders/`)
-   into `/sdcard/Android/data/app.nearchuckle.farcry/files/`.
+3. Open NearChuckle: pick the game ZIP or folder (system file picker),
+   the launcher extracts/copies it into
+   `/sdcard/Android/data/app.nearchuckle.farcry/files/` automatically
+   (a nested `FCData` folder is located on its own), then hit PLAY.
 4. First launch writes a mobile-tuned `system.cfg` automatically.
 
 ### Rendering note
