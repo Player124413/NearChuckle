@@ -107,6 +107,19 @@ static ISystem *g_pISystem=NULL;
 static bool g_bSystemRelaunch = false;
 static char szMasterCDFolder[_MAX_PATH];
 
+// unfiltered always-log (bypasses log_Verbosity): local copy of CryLogAlways,
+// because GetISystem() is not exported from libCrySystem on Linux
+static void FCLogAlways(const char *szFormat, ...)
+{
+	if (g_pISystem && g_pISystem->GetILog())
+	{
+		va_list args;
+		va_start(args, szFormat);
+		g_pISystem->GetILog()->LogV(ILog::eAlways, szFormat, args);
+		va_end(args);
+	}
+}
+
 #ifndef __linux
 static void* g_hSystemHandle=NULL;
 #else
@@ -884,12 +897,14 @@ bool RunGame(int argc, char** argv)
 			if (szLocalCmdLine[0])
 				strncpy(ip.szGameCmdLine,szLocalCmdLine,sizeof(ip.szGameCmdLine));
 			g_pISystem->GetILog()->LogToFile("=== creating game (libCryGame) ===");
+			FCLogAlways("=== creating game (libCryGame) ===");
 			if (!g_pISystem->CreateGame( ip ))
 			{
 				//Error( "CreateGame Failed" );
 				return false;
 			}
 			g_pISystem->GetILog()->LogToFile("=== game created, entering main loop ===");
+			FCLogAlways("=== game created, entering main loop ===");
 	#endif
 
 //			g_pISystem->GetIConsole()->ExecuteString(sCmdLine);

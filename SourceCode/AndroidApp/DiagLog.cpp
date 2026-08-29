@@ -224,17 +224,14 @@ static void DiagCrashHandler(int sig, siginfo_t *info, void *ctx)
   int fd = ::open(g_szDiagPath, O_WRONLY | O_CREAT | O_APPEND, 0644);
   if (fd >= 0)
   {
+    // signal info goes at the head AND at the tail: users paste the report
+    // from phones where the head of a long dump gets cut off, the tail
+    // always survives, so the backtrace must be at the very end
     char buf[512];
     int n = snprintf(buf, sizeof(buf),
-                     "\n=== CRASH: %s (%d), fault addr %p ===\n"
-                     "=== backtrace ===\n",
+                     "\n=== CRASH: %s (%d), fault addr %p ===\n",
                      DiagSigName(sig), sig, info ? info->si_addr : 0);
     ::write(fd, buf, (size_t)n);
-    DiagBtState st;
-    st.fd = fd;
-    st.count = 0;
-    _Unwind_Backtrace(&DiagBtCb, &st);
-    ::write(fd, "=== end backtrace ===\n", 22);
     // tail of /proc/self/maps: lets the dev map fault addresses to modules
     int mfd = ::open("/proc/self/maps", O_RDONLY);
     if (mfd >= 0)
@@ -249,6 +246,14 @@ static void DiagCrashHandler(int sig, siginfo_t *info, void *ctx)
       ::close(mfd);
       ::write(fd, "=== end maps ===\n", 17);
     }
+    // backtrace LAST so it always survives copy/paste truncation
+    ::write(fd, "=== backtrace ===\n", 18);
+    DiagBtState st;
+    st.fd = fd;
+    st.count = 0;
+    _Unwind_Backtrace(&DiagBtCb, &st);
+    n = snprintf(buf, sizeof(buf), "=== end backtrace (%d frames) ===\n", st.count);
+    ::write(fd, buf, (size_t)n);
     ::close(fd);
     // marker for auto-share on next launch
     char szFlag[1100];

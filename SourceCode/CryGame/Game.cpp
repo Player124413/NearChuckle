@@ -529,6 +529,7 @@ IXSystem *CXGame::GetXSystem(){return m_pServer?m_pServer->m_pISystem:m_pClient?
 //! Initialize the game. This must be called before calling other functions of this class.
 bool CXGame::Init(struct ISystem *pSystem,bool bDedicatedSrv,bool bInEditor,const char *szGameMod)
 {	
+	CryLogAlways("ginit[01] CXGame::Init entered");
 	// Setup the system and 3D Engine pointers
 	m_pSystem	= pSystem;
 
@@ -595,6 +596,7 @@ bool CXGame::Init(struct ISystem *pSystem,bool bDedicatedSrv,bool bInEditor,cons
 	m_pScriptObjectAI = new CScriptObjectAI;
 	CScriptObjectAI::InitializeTemplate(m_pScriptSystem);
 	CScriptObjectServer::InitializeTemplate(m_pScriptSystem);
+	CryLogAlways("ginit[02] script object templates OK");
 
 	CScriptObjectPlayer::InitializeTemplate(m_pScriptSystem);
 	CScriptObjectFireParam::InitializeTemplate(m_pScriptSystem);
@@ -636,6 +638,7 @@ bool CXGame::Init(struct ISystem *pSystem,bool bDedicatedSrv,bool bInEditor,cons
 	m_pScriptSystem->SetGlobalValue("CMD_BARRAGEFIRE", CMD_BARRAGEFIRE);*/
 
 	InitConsoleVars();
+	CryLogAlways("ginit[03] InitConsoleVars OK");
 
 	if (szGameMod && szGameMod[0])
 	{
@@ -646,36 +649,48 @@ bool CXGame::Init(struct ISystem *pSystem,bool bDedicatedSrv,bool bInEditor,cons
 	InitClassRegistry();
 		
 	// execute the "main"-script (to pre-load other scripts, etc.)
+	CryLogAlways("ginit[04] before scripts/main.lua");
 	m_pScriptSystem->ExecuteFile("scripts/main.lua");
 	m_pScriptSystem->BeginCall("Init");
 	m_pScriptSystem->PushFuncParam(0);
 	m_pScriptSystem->EndCall();
+	CryLogAlways("ginit[05] scripts/main.lua Init() OK");
 
 	// initialize the surface-manager
 	m_XSurfaceMgr.Init(m_pScriptSystem,m_p3DEngine,GetSystem()->GetIPhysicalWorld());
 	
 	// init key-bindings
 	if(!m_bDedicatedServer)
+	{
+		CryLogAlways("ginit[06] before InitInputMap");
 		InitInputMap();
+	}
 
 	// create various console-commands/variables
+	CryLogAlways("ginit[07] before InitConsoleCommands");
 	InitConsoleCommands();
 	
 	// loading the main language-string-table
 	if (!m_StringTableMgr.Load(GetSystem(),*m_pScriptObjectLanguage,g_language->GetString()))
 		m_pLog->Log("cannot load language file [%s]",g_language->GetString());
+	CryLogAlways("ginit[08] language strings OK");
 		
 	// creating HUD interface
 	m_pLog->Log("Initializing UI");
+	CryLogAlways("ginit[09] before CUIHud");
 	m_pUIHud = new CUIHud(this,m_pSystem);
+	CryLogAlways("ginit[10] CUIHud OK");
 
 	LoadConfiguration("","game.cfg");
+	CryLogAlways("ginit[11] game.cfg loaded");
 
 	//////////////////////////////////////////////////////////////////////////
 	// Materials
 	// load materials (once before all, this info stays till we quit the game - no need to load material later)
 	// first load normal materials
+	CryLogAlways("ginit[12] before LoadMaterials");
 	m_XSurfaceMgr.LoadMaterials("scripts/materials");
+	CryLogAlways("ginit[13] materials OK");
  
 	if(!m_bDedicatedServer)
 	{
@@ -687,7 +702,9 @@ bool CXGame::Init(struct ISystem *pSystem,bool bDedicatedSrv,bool bInEditor,cons
 
 			if (m_pUISystem)
 			{
+				CryLogAlways("ginit[14] before UISystem.lua");
 				m_pUISystem->Create(this, m_pSystem, m_pScriptSystem, "Scripts/MenuScreens/UISystem.lua", 1);
+				CryLogAlways("ginit[15] menu UISystem.lua OK");
 			}
 			else
 			{
@@ -724,6 +741,8 @@ bool CXGame::Init(struct ISystem *pSystem,bool bDedicatedSrv,bool bInEditor,cons
 			m_nUnknownIconTexId=pPic->GetTextureID();
 	}
 
+	CryLogAlways("ginit[16] minimap icons OK");
+
 	if(!bInEditor)
 		m_pEntitySystem->SetDynamicEntityIdMode(true);	
 
@@ -745,6 +764,7 @@ bool CXGame::Init(struct ISystem *pSystem,bool bDedicatedSrv,bool bInEditor,cons
 			delete pTouch;
 	}
 
+	CryLogAlways("ginit[17] CXGame::Init DONE");
 	return (true);
 }
 
@@ -753,6 +773,8 @@ bool CXGame::Init(struct ISystem *pSystem,bool bDedicatedSrv,bool bInEditor,cons
 bool CXGame::Run(bool &bRelaunch)
 {
     //_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF | _CRTDBG_LEAK_CHECK_DF);
+	CryLogAlways("grun[01] CXGame::Run entered");
+	static bool s_bFirstFrameLogged = false;
 	
 	if(m_bDedicatedServer)
 	{
@@ -764,9 +786,15 @@ bool CXGame::Run(bool &bRelaunch)
 		m_bRelaunch=false;
 		while(1) 
 		{		
+			if (!s_bFirstFrameLogged)
+			{
+				CryLogAlways("grun[02] first frame starting");
+				s_bFirstFrameLogged = true;
+			}
 			if (!Update()) 
 				break;
 		}
+		CryLogAlways("grun[03] main loop exited");
 
 		bRelaunch=m_bRelaunch;
 	}

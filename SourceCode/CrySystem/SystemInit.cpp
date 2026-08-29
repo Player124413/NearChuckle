@@ -1249,6 +1249,23 @@ bool CSystem::Init( const SSystemInitParams &params )
 	LoadConfiguration("system.cfg");
 	LoadConfiguration("SystemCfgOverride.Cfg");
 
+#ifdef __ANDROID__
+	// Android diagnostics: system.cfg ships log_Verbosity=0/log_FileVerbosity=0,
+	// and CLog::Log/LogToFile silently drop EVERYTHING when both are zero -
+	// the crash window then leaves no trace in log.txt. Force full verbosity
+	// so engine progress is always visible on-device.
+	if (m_pConsole)
+	{
+		ICVar *pLV = m_pConsole->GetCVar("log_Verbosity");
+		if (pLV)
+			pLV->ForceSet("3");
+		ICVar *pLFV = m_pConsole->GetCVar("log_FileVerbosity");
+		if (pLFV)
+			pLFV->ForceSet("3");
+		CryLogAlways("Android: full log verbosity forced (log_Verbosity=3, log_FileVerbosity=3)");
+	}
+#endif
+
 	//////////////////////////////////////////////////////////////////////////
 	// After loading configuration.
 	//////////////////////////////////////////////////////////////////////////
