@@ -233,6 +233,54 @@ static void DiagSymLine(char *dst, size_t cap, const char *label, uintptr_t addr
     snprintf(dst, cap, "  %s 0x%zx\n", label, (size_t)addr);
 }
 
+// stack-scan backtrace: Far Cry is built without frame pointers and
+// _Unwind_Backtrace from inside a signal handler usually returns just the
+// handler itself (observed on device). Instead scan the faulting stack
+// window and symbolize every value that dladdr resolves to code - the real
+// call chain is always in there among the spills.
+static void DiagStackScan(ucontext_t *uc, int fd)
+{
+  uintptr_t sp = 0;
+#if defined(__aarch64__)
+  if (uc)
+    sp = (uintptr_t)uc->uc_mcontext.sp;
+#elif defined(__arm__)
+  if (uc)
+    sp = (uintptr_t)uc->uc_mcontext.arm_sp;
+#endif
+  if (!sp)
+    return;
+  static const char szHdr[] = "=== stack scan (resolved code addrs) ===\n";
+  ::write(fd, szHdr, sizeof(szHdr) - 1);
+  char line[512];
+  int printed = 0;
+  // ~6 KB window, 16-byte stride, max 48 resolved entries
+  for (uintptr_t a = sp; a < sp + 6 * 1024 && printed < 48; a += 16)
+  {
+    uintptr_t v;
+    memcpy(&v, (const void *)a, sizeof(v)); // stack of the faulting thread: mapped
+    if (v < 0x10000 || (v & 3))
+      continue;
+    Dl_info di;
+    memset(&di, 0, sizeof(di));
+    if (!dladdr((const void *)v, &di) || !di.dli_fname)
+      continue;
+    uintptr_t base = (uintptr_t)di.dli_fbase;
+    if (di.dli_sname && di.dli_saddr && (uintptr_t)di.dli_saddr <= v)
+      snprintf(line, sizeof(line), "  *[sp+0x%03zx] 0x%08zx  %s (%s+0x%zx)\n",
+               (size_t)(a - sp), (size_t)(v - base), di.dli_fname,
+               di.dli_sname, (size_t)(v - (uintptr_t)di.dli_saddr));
+    else
+      snprintf(line, sizeof(line), "  *[sp+0x%03zx] 0x%08zx  %s\n",
+               (size_t)(a - sp), (size_t)(v - base), di.dli_fname);
+    ::write(fd, line, strlen(line));
+    printed++;
+  }
+  if (!printed)
+    ::write(fd, "  (no code addresses found in stack window)\n", 42);
+  ::write(fd, "=== end stack scan ===\n", 24);
+}
+
 static const char *DiagSigName(int sig)
 {
   switch (sig)
@@ -311,6 +359,7 @@ static void DiagCrashHandler(int sig, siginfo_t *info, void *ctx)
     _Unwind_Backtrace(&DiagBtCb, &st);
     n = snprintf(buf, sizeof(buf), "=== end backtrace (%d frames) ===\n", st.count);
     ::write(fd, buf, (size_t)n);
+    DiagStackScan(uc, fd);
     // and once more at the very bottom - the tail of the paste is what
     // always arrives
     if (g_szFaultCtx[0])

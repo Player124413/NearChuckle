@@ -703,16 +703,23 @@ void CUISystem::Update()
 void CUISystem::Draw()
 {
 	FUNCTION_PROFILER( m_pSystem, PROFILE_GAME );
+	static int s_nDrawFrame = 0;
+	++s_nDrawFrame;
+#define DIAG_UIDRAW(msg) do { if (s_nDrawFrame <= 3) CryLogAlways("uidraw f%d: " msg, s_nDrawFrame); } while(0)
+	DIAG_UIDRAW("enter");
 //	m_pRenderer->ClearDepthBuffer();
 
 	m_pRenderer->Set2DMode(1, m_pRenderer->GetWidth(), m_pRenderer->GetHeight());
   m_pRenderer->SetState(GS_BLSRC_SRCALPHA | GS_BLDST_ONEMINUSSRCALPHA | GS_NODEPTHTEST);
+	DIAG_UIDRAW("Set2DMode ok");
 
 	int iCurrentFlags = m_iFlags;
 
 	if ((iCurrentFlags & UI_BACKGROUND_VISIBLE) && (!m_pScriptObjectUI || (m_pScriptObjectUI && m_pScriptObjectUI->OnDrawBackground())))
 	{
+		DIAG_UIDRAW("before background (lua OnDrawBackground)");
 		DrawBackground();
+		DIAG_UIDRAW("background ok");
 	}
 
 	// sort the children by z
@@ -725,6 +732,7 @@ void CUISystem::Draw()
 	m_vVisibleWidgetList.resize(0);
 
 	// draw first pass and gater the visible widgets
+	DIAG_UIDRAW("before widget pass 0 (lua OnDraw)");
 	for (CUIWidgetItor pItor = m_pChildList.begin(); pItor != m_pChildList.end(); pItor++)
 	{
 		CUIWidget *pWidget = *pItor;
@@ -740,6 +748,7 @@ void CUISystem::Draw()
 		}
 	}
 
+	DIAG_UIDRAW("widget pass 0 ok");
 	// draw next passes
 	for (int i = 1; i < UI_DEFAULT_PASSES; i++)
 	{
@@ -751,10 +760,14 @@ void CUISystem::Draw()
 		}
 	}
 
+	DIAG_UIDRAW("widget passes ok");
+
 	// draw the mouse cursor
 	if ((iCurrentFlags & UI_MOUSE_VISIBLE) && (!m_pScriptObjectUI || (m_pScriptObjectUI && m_pScriptObjectUI->OnDrawMouseCursor())))
 	{
+		DIAG_UIDRAW("before mouse cursor");
 		DrawMouseCursor(m_pInput->GetIMouse()->GetVScreenX(), m_pInput->GetIMouse()->GetVScreenY());
+		DIAG_UIDRAW("mouse cursor ok");
 	}
 
 	if (ui_ToolTips->GetIVal() != 0)
@@ -762,8 +775,10 @@ void CUISystem::Draw()
 		DrawToolTip();
 	}
 
+	DIAG_UIDRAW("before Set2DMode(0)");
 	m_pRenderer->Set2DMode(0, 0, 0);
   m_pRenderer->SetState(GS_DEPTHWRITE);
+	DIAG_UIDRAW("draw complete");
 
 	m_bSortZ = 0;
 	m_bSortTabStop = 0;
