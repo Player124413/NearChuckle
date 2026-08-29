@@ -95,7 +95,8 @@ def main():
             # while libclang classifies the same diagnostics as warnings.
             is_err = d.severity >= 4 or (d.severity == 3 and (
                 "does not allow" in d.spelling
-                or "format string is not a string literal" in d.spelling))
+                or "format string is not a string literal" in d.spelling
+                or "cannot pass object of non-trivial type" in d.spelling))
             if is_err:
                 f = str(d.location.file or u["src"])
                 out.append((f"{f}:{d.location.line}", d.spelling.split("\n")[0][:160]))
