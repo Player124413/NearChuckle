@@ -1346,6 +1346,64 @@ bool CSystem::Init( const SSystemInitParams &params )
 			return false;
 	}
 
+#ifdef GLES_COMPAT_SELFTEST
+	// Headless repro harness for the on-device menu-draw crash: drives the
+	// exact renderer calls CUISystem::Draw makes (Set2DMode + Draw2dImage
+	// quads) against GLESCompat. Enabled only via NC_2D_SELFTEST=1 so normal
+	// runs are untouched.
+	{
+		const char *szST = getenv("NC_2D_SELFTEST");
+		if (szST && szST[0] == '1' && m_pRenderer)
+		{
+			CryLogAlways("2D selftest: starting");
+			const char *szTGA = "selftest.tga";
+			if (FILE *f = fxopen(szTGA, "wb"))
+			{
+				const int W = 128, H = 128;
+				unsigned char hdr[18] = {0};
+				hdr[2] = 2; hdr[12] = (unsigned char)(W & 255);
+				hdr[13] = (unsigned char)(W >> 8);
+				hdr[14] = (unsigned char)(H & 255);
+				hdr[15] = (unsigned char)(H >> 8);
+				hdr[16] = 32; hdr[17] = 0x20;
+				fwrite(hdr, 1, 18, f);
+				for (int y = 0; y < H; y++)
+					for (int x = 0; x < W; x++)
+					{
+						unsigned char px[4];
+						px[0] = (unsigned char)(x * 2);
+						px[1] = (unsigned char)(y * 2);
+						px[2] = (unsigned char)((x ^ y) & 255);
+						px[3] = 255;
+						fwrite(px, 1, 4, f);
+					}
+				fclose(f);
+			}
+			ITexPic *pPic = m_pRenderer->EF_LoadTexture(szTGA, FT_NOREMOVE, 0, eTT_Base);
+			int nTexID = pPic ? pPic->GetTextureID() : -1;
+			CryLogAlways("2D selftest: texture id %d", nTexID);
+			IRenderer *pR = m_pRenderer;
+			int nQuads = 0;
+			for (int i = 0; i < 300 && nQuads < 100000000; i++)
+			{
+				pR->SetState(GS_BLSRC_SRCALPHA | GS_BLDST_ONEMINUSSRCALPHA | GS_NODEPTHTEST);
+				pR->Set2DMode(true, 1280, 720);
+				pR->Draw2dImage(10, 10, 200, 50, nTexID, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0);
+				nQuads++;
+				pR->Draw2dImage(300, 200, 100, 100, nTexID, 0, 0, 1, 1, 45.0f, 1, 1, 1, 0.5f, 0);
+				nQuads++;
+				pR->Draw2dImage(0, 0, 1280, 720, -1, 0, 0, 0, 0, 0, 0.2f, 0.4f, 0.9f, 1, 0);
+				nQuads++;
+				pR->Draw2dLine(0, 0, 100, 100);
+				pR->Set2DMode(false, 0, 0);
+				pR->SetState(GS_DEPTHWRITE);
+			}
+			CryLogAlways("2D selftest: OK (%d quads) - exiting", nQuads);
+			exit(0);
+		}
+	}
+#endif
+
 
 	//////////////////////////////////////////////////////////////////////////
 	// SOUND

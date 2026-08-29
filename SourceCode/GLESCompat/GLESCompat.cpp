@@ -593,9 +593,11 @@ static bool CompileProgram(GLuint &progOut, const SProgCfg &cfg)
     GLog("VS compile failed: %s", log);
     return false;
   }
-  char fsrc[4096];
-  int n = 0;
-  n += snprintf(fsrc + n, sizeof(fsrc) - n,
+  // NOTE: never pass &fsrc (address of a char array) as const char** -
+  // glShaderSource would dereference the first 8 source bytes as a pointer
+  // and crash (this exact bug killed the first menu draw on Android).
+  std::string fsrc;
+  fsrc +=
     "precision mediump float;\n"
     "varying vec4 vCol;\n"
     "varying vec2 vTC0;\n"
@@ -612,15 +614,15 @@ static bool CompileProgram(GLuint &progOut, const SProgCfg &cfg)
     "uniform vec4 uEnvColor1;\n"
     "uniform vec4 uEnvColor2;\n"
     "uniform vec4 uEnvColor3;\n"
-    "uniform float uARef;\n");
-  if (cfg.texMask & 1) n += snprintf(fsrc + n, sizeof(fsrc) - n, "uniform sampler2D uTex0;\n");
-  if (cfg.texMask & 2) n += snprintf(fsrc + n, sizeof(fsrc) - n, "uniform sampler2D uTex1;\n");
-  if (cfg.texMask & 4) n += snprintf(fsrc + n, sizeof(fsrc) - n, "uniform sampler2D uTex2;\n");
-  if (cfg.texMask & 8) n += snprintf(fsrc + n, sizeof(fsrc) - n, "uniform sampler2D uTex3;\n");
-  n += snprintf(fsrc + n, sizeof(fsrc) - n,
+    "uniform float uARef;\n";
+  if (cfg.texMask & 1) fsrc += "uniform sampler2D uTex0;\n";
+  if (cfg.texMask & 2) fsrc += "uniform sampler2D uTex1;\n";
+  if (cfg.texMask & 4) fsrc += "uniform sampler2D uTex2;\n";
+  if (cfg.texMask & 8) fsrc += "uniform sampler2D uTex3;\n";
+  fsrc +=
     "void main(){\n"
     " vec4 c = vCol;\n"
-    " float af = c.a;\n");
+    " float af = c.a;\n";
   for (int u = 0; u < GC_MAX_UNITS; u++)
   {
     if (!(cfg.texMask & (1 << u)))
@@ -629,20 +631,23 @@ static bool CompileProgram(GLuint &progOut, const SProgCfg &cfg)
     snprintf(tcname, sizeof(tcname), "vTC%d", u);
     char rectname[8];
     snprintf(rectname, sizeof(rectname), "uRect%d", u);
-    n += snprintf(fsrc + n, sizeof(fsrc) - n,
-      " vec4 t%d = texture2D(uTex%d, %s * %s.xy);\n", u, u, tcname, rectname);
+    fsrc += " vec4 t" + std::to_string(u) + " = texture2D(uTex" + std::to_string(u) +
+            ", " + tcname + " * " + rectname + ".xy);\n";
     char expr[320];
     BuildCombine(expr, u, g_TexUnit[u].env.mode, g_TexUnit[u].env.combineRGB,
                  g_TexUnit[u].env.srcRGB, g_TexUnit[u].env.opRGB);
-    n += snprintf(fsrc + n, sizeof(fsrc) - n, " c = %s;\n", expr);
+    fsrc += " c = ";
+    fsrc += expr;
+    fsrc += ";\n";
     // alpha chain
     if (g_TexUnit[u].env.mode == GL_COMBINE)
     {
       char exprA[320];
       BuildCombine(exprA, u, 0, g_TexUnit[u].env.combineA,
                    g_TexUnit[u].env.srcA, g_TexUnit[u].env.opA);
-      // alpha expressions reference .a - strip by rebuilding with .a ops
-      n += snprintf(fsrc + n, sizeof(fsrc) - n, " af = (%s);\n", exprA);
+      fsrc += " af = (";
+      fsrc += exprA;
+      fsrc += ");\n";
       WarnOnce(32, "combine alpha uses simplified chain");
     }
   }
@@ -660,15 +665,20 @@ static bool CompileProgram(GLuint &progOut, const SProgCfg &cfg)
     case GL_GEQUAL: cmp = ">="; break;
     }
     if (cfg.alphaFunc == GL_NEVER)
-      n += snprintf(fsrc + n, sizeof(fsrc) - n, " if (af >= 0.0 && af < 0.0) discard;\n");
+      fsrc += " if (af >= 0.0 && af < 0.0) discard;\n";
     else
-      n += snprintf(fsrc + n, sizeof(fsrc) - n, " if (!(af %s uARef)) discard;\n", cmp);
+    {
+      fsrc += " if (!(af ";
+      fsrc += cmp;
+      fsrc += " uARef)) discard;\n";
+    }
   }
   if (cfg.fogOn)
-    n += snprintf(fsrc + n, sizeof(fsrc) - n, " c.rgb = mix(uFogColor.rgb, c.rgb, vFog);\n");
-  n += snprintf(fsrc + n, sizeof(fsrc) - n, " gl_FragColor = c;\n}\n");
+    fsrc += " c.rgb = mix(uFogColor.rgb, c.rgb, vFog);\n";
+  fsrc += " gl_FragColor = c;\n}\n";
 
-  es_glShaderSource(fs, 1, (const char **)&fsrc, 0);
+  const char *fsP = fsrc.c_str();
+  es_glShaderSource(fs, 1, &fsP, 0);
   es_glCompileShader(fs);
   ok = 0;
   es_glGetShaderiv(fs, 0x8B81, &ok);
@@ -676,7 +686,7 @@ static bool CompileProgram(GLuint &progOut, const SProgCfg &cfg)
   {
     char log[512];
     es_glGetShaderInfoLog(fs, sizeof(log), 0, log);
-    GLog("FS compile failed: %s\nsrc:\n%.1200s", log, fsrc);
+    GLog("FS compile failed: %s\nsrc:\n%.1200s", log, fsrc.c_str());
     es_glDeleteShader(vs);
     es_glDeleteShader(fs);
     return false;

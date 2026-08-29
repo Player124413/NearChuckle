@@ -90,6 +90,13 @@ endif()
 
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
 
+# host-only headless repro harness for the GLESCompat menu-draw path
+# (see NC_2D_SELFTEST in SystemInit.cpp); the Android build never sets it
+option(GLES_COMPAT_SELFTEST "compile the NC_2D_SELFTEST harness" OFF)
+if(GLES_COMPAT_SELFTEST)
+  target_compile_definitions(${PROJECT_NAME} PRIVATE GLES_COMPAT_SELFTEST)
+endif()
+
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/SourceCode/CryCommon
