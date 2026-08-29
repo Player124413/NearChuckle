@@ -883,11 +883,13 @@ bool RunGame(int argc, char** argv)
 			ip.sGameDLL = DLL_GAME;
 			if (szLocalCmdLine[0])
 				strncpy(ip.szGameCmdLine,szLocalCmdLine,sizeof(ip.szGameCmdLine));
+			g_pISystem->GetILog()->LogToFile("=== creating game (libCryGame) ===");
 			if (!g_pISystem->CreateGame( ip ))
 			{
 				//Error( "CreateGame Failed" );
 				return false;
 			}
+			g_pISystem->GetILog()->LogToFile("=== game created, entering main loop ===");
 	#endif
 
 //			g_pISystem->GetIConsole()->ExecuteString(sCmdLine);

@@ -50,8 +50,10 @@ public class MainActivity extends SDLActivity {
 
     @Override
     protected String[] getArguments() {
-        // no command line needed; the engine reads system.cfg
-        return new String[] { "NearChuckle" };
+        // SDL prepends its own argv[0]; anything returned here becomes argv[1..]
+        // and the engine executes argv as console commands (that is where the
+        // bogus "Unknown command: NearChuckle" log line came from).
+        return new String[0];
     }
 
     /** Haptic feedback for the touch controls (called via JNI). */

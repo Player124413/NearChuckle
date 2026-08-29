@@ -161,18 +161,80 @@ static void DiagSDLLog(void *userdata, int category, SDL_LogPriority priority,
 // ---------------------------------------------------------------------------
 static const int kCrashSigs[] = {SIGSEGV, SIGABRT, SIGFPE, SIGILL, SIGBUS, SIGTRAP};
 
+// unwinder: without this the report is just signal+maps and the actual
+// faulting module/function is unknown (phone dumps showed zero usable info)
+#include <unwind.h>
+#include <dlfcn.h>
+
+struct DiagBtState
+{
+  int fd;
+  int count;
+};
+
+static _Unwind_Reason_Code DiagBtCb(struct _Unwind_Context *uc, void *data)
+{
+  DiagBtState *st = (DiagBtState *)data;
+  if (st->count >= 48)
+    return _URC_END_OF_STACK;
+  uintptr_t pc = (uintptr_t)_Unwind_GetIP(uc);
+  if (pc)
+  {
+    char line[512];
+    Dl_info di;
+    memset(&di, 0, sizeof(di));
+    if (dladdr((const void *)pc, &di) && di.dli_fname)
+    {
+      uintptr_t base = (uintptr_t)di.dli_fbase;
+      if (di.dli_sname && di.dli_saddr && (uintptr_t)di.dli_saddr <= pc)
+        snprintf(line, sizeof(line), "#%02d pc 0x%08zx  %s (%s+0x%zx)\n",
+                 st->count, (size_t)(pc - base), di.dli_fname,
+                 di.dli_sname, (size_t)(pc - (uintptr_t)di.dli_saddr));
+      else
+        snprintf(line, sizeof(line), "#%02d pc 0x%08zx  %s\n",
+                 st->count, (size_t)(pc - base), di.dli_fname);
+    }
+    else
+      snprintf(line, sizeof(line), "#%02d pc 0x%zx\n", st->count, (size_t)pc);
+    ::write(st->fd, line, strlen(line));
+  }
+  st->count++;
+  return _URC_CONTINUE_UNWIND;
+}
+
+static const char *DiagSigName(int sig)
+{
+  switch (sig)
+  {
+  case SIGSEGV: return "SIGSEGV";
+  case SIGABRT: return "SIGABRT";
+  case SIGFPE:  return "SIGFPE";
+  case SIGILL:  return "SIGILL";
+  case SIGBUS:  return "SIGBUS";
+  case SIGTRAP: return "SIGTRAP";
+  default:      return "?";
+  }
+}
+
 static void DiagCrashHandler(int sig, siginfo_t *info, void *ctx)
 {
   (void)ctx;
-  // async-signal-safe code only
+  // async-signal-safe code only (dladdr/unwind are tolerated here like in
+  // most crash reporters; without them the report is useless)
   int fd = ::open(g_szDiagPath, O_WRONLY | O_CREAT | O_APPEND, 0644);
   if (fd >= 0)
   {
     char buf[512];
     int n = snprintf(buf, sizeof(buf),
-                     "\n=== CRASH: signal %d, fault addr %p ===\n", sig,
-                     info ? info->si_addr : 0);
+                     "\n=== CRASH: %s (%d), fault addr %p ===\n"
+                     "=== backtrace ===\n",
+                     DiagSigName(sig), sig, info ? info->si_addr : 0);
     ::write(fd, buf, (size_t)n);
+    DiagBtState st;
+    st.fd = fd;
+    st.count = 0;
+    _Unwind_Backtrace(&DiagBtCb, &st);
+    ::write(fd, "=== end backtrace ===\n", 22);
     // tail of /proc/self/maps: lets the dev map fault addresses to modules
     int mfd = ::open("/proc/self/maps", O_RDONLY);
     if (mfd >= 0)
