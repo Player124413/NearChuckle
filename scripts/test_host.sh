@@ -21,6 +21,9 @@ echo "==> Configuring host build"
 echo "==> Building"
 "$CMAKE_BIN" --build build/host --parallel "${JOBS:-$(nproc)}"
 
+echo "==> Link sweep (undefined symbols that would not resolve on device)"
+python3 "$ROOT/scripts/link_sweep.py" "$ROOT/bin/x64-Release"
+
 echo "==> Unit tests"
 g++ -std=c++17 -DTOUCHJSON_STANDALONE tests/TouchJsonTest.cpp -o /tmp/touchtest
 /tmp/touchtest

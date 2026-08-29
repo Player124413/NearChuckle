@@ -77,7 +77,7 @@ for ABI in $ABIS; do
     -DCMAKE_MAKE_PROGRAM="${NINJA_BIN:-ninja}" \
     -DDISABLE_CG=ON \
     -DCMAKE_EXE_LINKER_FLAGS="-Wl,--gc-sections" \
-    -DCMAKE_SHARED_LINKER_FLAGS="-Wl,--gc-sections" \
+    -DCMAKE_SHARED_LINKER_FLAGS="-Wl,--gc-sections -Wl,-z,undefs" \
     >> "$LOG" 2>&1; then
     echo "==> CONFIGURE FAILED for $ABI (full log: $LOG):"
     tail -40 "$LOG"

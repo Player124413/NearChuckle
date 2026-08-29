@@ -203,4 +203,5 @@ endif()
 target_link_libraries(${PROJECT_NAME} PRIVATE
     ${ARCH_LIBS}
     ${SYSTEM_DEPS}
+    SDL3 # GLSystem.cpp/GL_Renderer.cpp use SDL directly; needed for strict linkers
 )
