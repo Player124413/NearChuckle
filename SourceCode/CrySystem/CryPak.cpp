@@ -32,7 +32,7 @@
 #endif
 
 #ifdef LINUX
-#include <sys/dir.h>
+#include <dirent.h> // POSIX: works on glibc and bionic (sys/dir.h is glibc-only)
 #include <unistd.h>
 #else
 #	include <direct.h>
