@@ -165,6 +165,7 @@ static const int kCrashSigs[] = {SIGSEGV, SIGABRT, SIGFPE, SIGILL, SIGBUS, SIGTR
 // faulting module/function is unknown (phone dumps showed zero usable info)
 #include <unwind.h>
 #include <dlfcn.h>
+#include <ucontext.h>
 
 struct DiagBtState
 {
@@ -202,6 +203,36 @@ static _Unwind_Reason_Code DiagBtCb(struct _Unwind_Context *uc, void *data)
   return _URC_CONTINUE_UNWIND;
 }
 
+// fault context from the signal frame: _Unwind_Backtrace called from inside
+// the handler often returns only handler frames (observed: a 1-frame
+// backtrace on arm64), while ucontext keeps the EXACT faulting PC and LR -
+// that is the data which identifies the crash site
+static char g_szFaultCtx[768];
+
+static void DiagSymLine(char *dst, size_t cap, const char *label, uintptr_t addr)
+{
+  if (!addr)
+  {
+    snprintf(dst, cap, "  %s unavailable\n", label);
+    return;
+  }
+  Dl_info di;
+  memset(&di, 0, sizeof(di));
+  if (dladdr((const void *)addr, &di) && di.dli_fname)
+  {
+    uintptr_t base = (uintptr_t)di.dli_fbase;
+    if (di.dli_sname && di.dli_saddr && (uintptr_t)di.dli_saddr <= addr)
+      snprintf(dst, cap, "  %s 0x%08zx  %s (%s+0x%zx)\n", label,
+               (size_t)(addr - base), di.dli_fname, di.dli_sname,
+               (size_t)(addr - (uintptr_t)di.dli_saddr));
+    else
+      snprintf(dst, cap, "  %s 0x%08zx  %s\n", label, (size_t)(addr - base),
+               di.dli_fname);
+  }
+  else
+    snprintf(dst, cap, "  %s 0x%zx\n", label, (size_t)addr);
+}
+
 static const char *DiagSigName(int sig)
 {
   switch (sig)
@@ -218,9 +249,23 @@ static const char *DiagSigName(int sig)
 
 static void DiagCrashHandler(int sig, siginfo_t *info, void *ctx)
 {
-  (void)ctx;
   // async-signal-safe code only (dladdr/unwind are tolerated here like in
   // most crash reporters; without them the report is useless)
+  ucontext_t *uc = (ucontext_t *)ctx;
+  uintptr_t pc = 0, lr = 0;
+#if defined(__aarch64__)
+  if (uc)
+  {
+    pc = (uintptr_t)uc->uc_mcontext.pc;
+    lr = (uintptr_t)uc->uc_mcontext.regs[30];
+  }
+#elif defined(__arm__)
+  if (uc)
+  {
+    pc = (uintptr_t)uc->uc_mcontext.arm_pc;
+    lr = (uintptr_t)uc->uc_mcontext.arm_lr;
+  }
+#endif
   int fd = ::open(g_szDiagPath, O_WRONLY | O_CREAT | O_APPEND, 0644);
   if (fd >= 0)
   {
@@ -229,9 +274,21 @@ static void DiagCrashHandler(int sig, siginfo_t *info, void *ctx)
     // always survives, so the backtrace must be at the very end
     char buf[512];
     int n = snprintf(buf, sizeof(buf),
-                     "\n=== CRASH: %s (%d), fault addr %p ===\n",
-                     DiagSigName(sig), sig, info ? info->si_addr : 0);
+                     "\n=== CRASH: %s (%d), fault addr %p, si_code %d ===\n",
+                     DiagSigName(sig), sig, info ? info->si_addr : 0,
+                     info ? info->si_code : 0);
     ::write(fd, buf, (size_t)n);
+    if (pc)
+    {
+      char line1[320], line2[320];
+      DiagSymLine(line1, sizeof(line1), "fault pc", pc);
+      DiagSymLine(line2, sizeof(line2), "lr", lr);
+      n = snprintf(g_szFaultCtx, sizeof(g_szFaultCtx),
+                   "=== fault context ===\n%s%s", line1, line2);
+      ::write(fd, g_szFaultCtx, (size_t)n);
+    }
+    else
+      g_szFaultCtx[0] = 0;
     // tail of /proc/self/maps: lets the dev map fault addresses to modules
     int mfd = ::open("/proc/self/maps", O_RDONLY);
     if (mfd >= 0)
@@ -254,6 +311,13 @@ static void DiagCrashHandler(int sig, siginfo_t *info, void *ctx)
     _Unwind_Backtrace(&DiagBtCb, &st);
     n = snprintf(buf, sizeof(buf), "=== end backtrace (%d frames) ===\n", st.count);
     ::write(fd, buf, (size_t)n);
+    // and once more at the very bottom - the tail of the paste is what
+    // always arrives
+    if (g_szFaultCtx[0])
+    {
+      ::write(fd, "\n", 1);
+      ::write(fd, g_szFaultCtx, strlen(g_szFaultCtx));
+    }
     ::close(fd);
     // marker for auto-share on next launch
     char szFlag[1100];
