@@ -329,35 +329,55 @@ static bool CallJavaVoid1(const char *szMethod, const char *szSig, const char *a
   return ok;
 }
 
-// String method(String, String)
-static bool CallJavaStr2(const char *szMethod, const char *szSig, const char *a, const char *b)
+// String method(String, String) - returns the Java string (or NULL) and
+// clears any pending exception; result must be released with ReleaseStr
+static jstring CallJavaStr2Ret(const char *szMethod, const char *szSig,
+                               const char *a, const char *b)
 {
   jobject activity;
   jclass cls;
   JNIEnv *env = GetEnv(activity, cls);
-  if (!env)
-    return false;
-  bool ok = false;
-  if (cls)
+  if (!env || !cls)
   {
-    jmethodID mid = env->GetMethodID(cls, szMethod, szSig);
-    if (mid)
-    {
-      jstring ja = a ? env->NewStringUTF(a) : 0;
-      jstring jb = b ? env->NewStringUTF(b) : 0;
-      env->CallObjectMethod(activity, mid, ja, jb);
-      if (ja)
-        env->DeleteLocalRef(ja);
-      if (jb)
-        env->DeleteLocalRef(jb);
-      ok = !env->ExceptionCheck();
-      if (env->ExceptionCheck())
-        env->ExceptionClear();
-    }
-    env->DeleteLocalRef(cls);
+    if (env)
+      env->DeleteLocalRef(activity);
+    return NULL;
   }
+  jstring ret = NULL;
+  jmethodID mid = env->GetMethodID(cls, szMethod, szSig);
+  if (mid)
+  {
+    jstring ja = a ? env->NewStringUTF(a) : 0;
+    jstring jb = b ? env->NewStringUTF(b) : 0;
+    jobject res = env->CallObjectMethod(activity, mid, ja, jb);
+    if (res && !env->ExceptionCheck())
+      ret = (jstring)res;
+    else if (res)
+      env->DeleteLocalRef(res);
+    if (ja)
+      env->DeleteLocalRef(ja);
+    if (jb)
+      env->DeleteLocalRef(jb);
+    if (env->ExceptionCheck())
+      env->ExceptionClear();
+  }
+  env->DeleteLocalRef(cls);
   env->DeleteLocalRef(activity);
-  return ok;
+  return ret;
+}
+
+// copies a Java string into a fixed buffer
+static void JStrToBuf(JNIEnv *env, jstring js, char *out, size_t cap)
+{
+  out[0] = 0;
+  if (!js)
+    return;
+  const char *p = env->GetStringUTFChars(js, NULL);
+  if (p)
+  {
+    snprintf(out, cap, "%s", p);
+    env->ReleaseStringUTFChars(js, p);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -440,7 +460,8 @@ extern "C" const char *AndroidCollectLog()
   size_t o = 0;
   const size_t cap = sizeof(g_szCombined) - 64;
 
-  // engine log tail first (96 KB is plenty and keeps the report shareable)
+  // engine log tail first (16 KB keeps the whole report small enough that
+  // nothing gets truncated when the user forwards it)
   char szEngPath[1100];
   snprintf(szEngPath, sizeof(szEngPath), "%s/log.txt", g_szFilesDir);
 
@@ -450,7 +471,7 @@ extern "C" const char *AndroidCollectLog()
                         "======= NearChuckle log (user report) =======\n");
   o += (size_t)snprintf(g_szCombined + o, cap - o,
                         "\n======= engine log.txt (tail) =======\n");
-  o += FileTail(szEngPath, g_szCombined + o, 96 * 1024);
+  o += FileTail(szEngPath, g_szCombined + o, 16 * 1024);
 
   // crash backtraces go at the very END: pastes keep the tail
   o += (size_t)snprintf(g_szCombined + o, cap - o,
@@ -462,16 +483,20 @@ extern "C" const char *AndroidCollectLog()
   else
     o += nb;
 
-  // last 8 KB of raw diag (GLESCompat spam, watchdog/rotation marks)
+  // last 3 KB of raw diag (GLESCompat spam, watchdog/rotation marks)
   {
     size_t len = strlen(g_szDiagTail);
-    size_t keep = len > 8192 ? 8192 : len;
+    size_t keep = len > 3072 ? 3072 : len;
     o += (size_t)snprintf(g_szCombined + o, cap - o,
                           "\n======= diag.txt (tail) =======\n");
     const char *tail = g_szDiagTail + (len - keep);
     size_t n = (size_t)snprintf(g_szCombined + o, cap - o, "%s", tail);
     o += n;
   }
+  // copy/paste completeness check: the report is only complete if this
+  // exact line is present at the very end of what was sent
+  o += (size_t)snprintf(g_szCombined + o, cap - o,
+                        "\n======= END OF REPORT =======\n");
   return g_szCombined;
 }
 
@@ -479,14 +504,39 @@ extern "C" const char *AndroidCollectLog()
 static void DoSendLogs(bool bAuto)
 {
   const char *szLog = AndroidCollectLog();
-  char title[160];
-  snprintf(title, sizeof(title), "%s\n%s", bAuto ? "[AUTO after crash]" : "NearChuckle log",
-           szLog);
-  // best effort: public copy in Downloads (visible in any file manager)
-  CallJavaStr2("saveLog", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
-               "nearchuckle_log.txt", title);
-  // share sheet: user sends it to any chat/email directly from the phone
-  CallJavaVoid1("offerLogShare", "(Ljava/lang/String;)V", title);
+  const char *szPrefix = bAuto ? "[AUTO after crash] NearChuckle log" : "NearChuckle log";
+  // best effort: public copy in Downloads (visible in any file manager);
+  // saveLog returns the MediaStore URI of the saved file
+  jstring jsUri = CallJavaStr2Ret(
+      "saveLog", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
+      "nearchuckle_log.txt", szLog);
+  jobject activity;
+  jclass cls;
+  JNIEnv *env = GetEnv(activity, cls);
+  char szUri[512] = "";
+  if (env)
+  {
+    JStrToBuf(env, jsUri, szUri, sizeof(szUri));
+    if (jsUri)
+      env->DeleteLocalRef(jsUri);
+    if (cls)
+      env->DeleteLocalRef(cls);
+    env->DeleteLocalRef(activity);
+  }
+  if (szUri[0])
+  {
+    // share the FILE: long pasted text gets truncated by viewers and
+    // messengers, a file attachment survives intact
+    CallJavaVoid1("offerLogFile", "(Ljava/lang/String;Ljava/lang/String;)V",
+                  szUri, szPrefix);
+  }
+  else
+  {
+    // fallback (pre-API29 devices): text share like before
+    char title[160];
+    snprintf(title, sizeof(title), "%s\n%s", szPrefix, szLog);
+    CallJavaVoid1("offerLogShare", "(Ljava/lang/String;)V", title);
+  }
 }
 
 // ---------------------------------------------------------------------------

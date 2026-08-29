@@ -143,6 +143,31 @@ public class MainActivity extends SDLActivity {
         }
     }
 
+    /** Opens the Android share sheet with the log FILE (content URI from
+        MediaStore) - text shares get truncated on the way, files don't. */
+    public void offerLogFile(final String uri, final String title) {
+        try {
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    try {
+                        Intent send = new Intent();
+                        send.setAction(Intent.ACTION_SEND);
+                        send.setType("text/plain");
+                        send.putExtra(Intent.EXTRA_SUBJECT, title);
+                        send.putExtra(Intent.EXTRA_TEXT, title + " (attach the file below)");
+                        send.putExtra(Intent.EXTRA_STREAM, Uri.parse(uri));
+                        send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        startActivity(Intent.createChooser(send, "NearChuckle log"));
+                    } catch (Throwable t) {
+                        Log.w(TAG, "share file failed: " + t);
+                    }
+                }
+            });
+        } catch (Throwable t) {
+            Log.w(TAG, "share file post failed: " + t);
+        }
+    }
+
     /** Saves the log into the public Downloads folder. Returns location or null. */
     public String saveLog(String name, String content) {
         try {

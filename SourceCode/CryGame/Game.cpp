@@ -1078,6 +1078,7 @@ bool CXGame::Update()
     pTimer->MeasureTime("HUD Up");
 	}
 
+	DIAG_GUPT("before menu UI update");
 	if (m_pUISystem && m_pUISystem->IsEnabled())
 	{
 		FRAME_PROFILER("GameUpdate:UI", m_pSystem, PROFILE_GAME);
@@ -1085,9 +1086,12 @@ bool CXGame::Update()
 		if (m_bMenuOverlay || m_bUIOverlay)
 		{
 			m_pUISystem->Update();			
+			DIAG_GUPT("menu UI update done");
 			m_pUISystem->Draw();
+			DIAG_GUPT("menu UI draw done");
 		}
 	}
+	DIAG_GUPT("menu UI stage passed");
 
 	if(a_DrawArea->GetIVal())
   {
@@ -1123,7 +1127,9 @@ bool CXGame::Update()
 		if (m_pTimeDemoRecorder)
 			m_pTimeDemoRecorder->RenderInfo();
 
+		DIAG_GUPT("before RenderEnd (buffer swap)");
 		m_pSystem->RenderEnd();
+		DIAG_GUPT("RenderEnd done");
 	}
   pTimer->MeasureTime("3Rend Up");
 	
@@ -1186,9 +1192,11 @@ bool CXGame::Update()
 	//////////////////////////////////////////////////////////////////////////
 
 	// draw the on-screen touch overlay last (topmost 2D layer)
+	DIAG_GUPT("before touch overlay draw");
 	CTouchControls *pTouchOverlay = GetTouchControls();
 	if (pTouchOverlay)
 		pTouchOverlay->OnTouchRender();
+	DIAG_GUPT("frame update complete, returning");
 
 	return (m_bUpdateRet);
 }
