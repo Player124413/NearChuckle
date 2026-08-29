@@ -118,6 +118,11 @@ static SDL_SharedObject* g_hSystemHandle=NULL; // SDL3: LoadObject/LoadFunction 
 #else
 #define DLL_SYSTEM "libCrySystem.so"
 #define DLL_GAME	 "libCryGame.so"
+#ifdef __ANDROID__
+// nativeLibraryDir of the app (trailing '/'), derived at runtime from the
+// absolute path of libmain.so itself; used for all module dlopen()s.
+static char g_sAndroidLibDir[_MAX_PATH] = {0};
+#endif
 #endif
 
 #ifndef PS2
@@ -199,13 +204,32 @@ void SetMasterCDFolder()
 		SetModulePath(dll_path);
 	}
 
-#ifndef __ANDROID__
+#ifdef __ANDROID__
+	// The engine modules are installed into the APK's nativeLibraryDir, not
+	// the game data dir we chdir'ed into. Derive the lib dir from the absolute
+	// path of our own shared object (libmain.so) - robust regardless of cwd.
+	{
+		Dl_info info;
+		if (dladdr((void*)&SetMasterCDFolder, &info) && info.dli_fname)
+		{
+			const char* szLib = info.dli_fname;
+			const char* cut = strrchr(szLib, '/');
+			if (cut && (size_t)(cut - szLib + 1) < sizeof(g_sAndroidLibDir))
+			{
+				size_t n = cut - szLib + 1;
+				memcpy(g_sAndroidLibDir, szLib, n);
+				g_sAndroidLibDir[n] = 0;
+				SetModulePath(g_sAndroidLibDir);
+			}
+		}
+	}
+	// Android: keep cwd at the game data dir (AndroidBootstrap chdir'ed there);
+	// module loading uses nativeLibraryDir, not the cwd.
+#else
 	// Desktop: the binary lives in <gamedir>/bin, data is one level up.
 	chdir("../");
 #endif
-	// Android: AndroidBootstrap() already changed into the game folder
-	// (external app storage); module path is handled by the system linker.
-#endif
+#endif // _XBOX (Linux branch of SetMasterCDFolder)
 }
 
 #ifdef FARCRY_CD_CHECK_RUSSIAN
@@ -706,14 +730,17 @@ bool RunGame(int argc, char** argv)
 #ifdef __linux
 	int i;
 #endif
+	SDL_Init(SDL_INIT_VIDEO);
 #ifdef __ANDROID__
 	{
-		// bootstrap the game directory & config before any engine init
+		// MUST run after SDL_Init: SDL_GetAndroid*StoragePath() need the
+		// initialized Android state and return NULL before it (which used to
+		// leave cwd at "/" and broke all module loading with
+		// "Failed loading //libCrySystem.so").
 		extern void AndroidBootstrap();
 		AndroidBootstrap();
 	}
 #endif
-	SDL_Init(SDL_INIT_VIDEO);
 #ifndef __ANDROID__
 	setlocale(LC_ALL, "en_US.utf8");
 #endif
@@ -772,7 +799,13 @@ bool RunGame(int argc, char** argv)
 		//		return false;
 		//	}
 		//}
+#ifdef __ANDROID__
+		// App modules are NOT on the dlopen search path by bare name; load
+		// libCrySystem.so by absolute path from nativeLibraryDir.
+		g_hSystemHandle = SDL_LoadObject((string(g_sAndroidLibDir) + DLL_SYSTEM).c_str());
+#else
 		g_hSystemHandle = SDL_LoadObject((string(szMasterCDFolder) + "/" + DLL_SYSTEM).c_str());
+#endif
 		if (!g_hSystemHandle)
 		{
 			string errorStr = "CrySystem.dll Loading Failed:\n";

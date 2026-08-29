@@ -24,7 +24,11 @@ fi
 
 # 2. SwiftShader: the last branch that still ships libEGL/libGLESv2.
 echo "==> Cloning SwiftShader (legacy-gles1)"
-git clone --depth 1 -b legacy-gles1 https://github.com/google/swiftshader /tmp/ss-gles
+# clone only if missing (recovers from runs that died mid-build)
+if [ ! -f /tmp/ss-gles/CMakeLists.txt ]; then
+  [ -d /tmp/ss-gles ] && rm -rf /tmp/ss-gles
+  git clone --depth 1 -b legacy-gles1 https://github.com/google/swiftshader /tmp/ss-gles
+fi
 
 # 3. Minimal X11 headers (SwiftShader compiles an X11 framebuffer backend we
 #    don't use; provide just enough types to compile).
