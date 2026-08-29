@@ -139,15 +139,15 @@ bool CSystem::OpenRenderLibrary(const char *t_rend)
 	if (stricmp(t_rend, "OpenGL") == 0)
   {
 #ifdef __ANDROID__
-		// On Android a desktop-GL context (e.g. Zink/Mesa) is required for
-		// the OpenGL renderer. If it is unavailable, fall back to the NULL
+		// On Android the desktop-GL renderer talks to GLES through the
+		// GLESCompat layer. If that still fails, fall back to the NULL
 		// renderer so the game still starts and the console/touch UI work.
-		if (!OpenRenderLibrary(R_GL_RENDERER))
-		{
-			GetILog()->Log("OpenGL renderer init failed on Android - falling back to NULL renderer.");
-			GetILog()->Log("For real rendering, install a desktop-GL driver (e.g. Mesa Zink) or use a device/driver with GL support.");
-			return OpenRenderLibrary(R_NULL_RENDERER);
-		}
+			if (!OpenRenderLibrary(R_GL_RENDERER))
+			{
+				GetILog()->Log("OpenGL renderer init failed on Android - falling back to NULL renderer.");
+				GetILog()->Log("Please report the log: rendering goes through GLESCompat (ES3) and must work on stock drivers.");
+				return OpenRenderLibrary(R_NULL_RENDERER);
+			}
 		return true;
 #else
     return OpenRenderLibrary(R_GL_RENDERER);
@@ -1265,9 +1265,14 @@ bool CSystem::Init( const SSystemInitParams &params )
 	if (!params.bPreview)
 	{
 		CryLogAlways("Network initialization");
-		InitNetwork();
-
-		m_pNetwork->SetLocalIP((char *)(CmdlineSink.m_sLocalIP.c_str()));
+		bool bNetworkOK = InitNetwork();
+		if (!bNetworkOK || !m_pNetwork)
+			CryLogAlways("WARNING: network init failed, continuing without network (single-player)");
+		else
+		{
+			CryLogAlways("Network initialized");
+			m_pNetwork->SetLocalIP((char *)(CmdlineSink.m_sLocalIP.c_str()));
+		}
 	}
 	//////////////////////////////////////////////////////////////////////////
 	// PHYSICS

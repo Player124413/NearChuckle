@@ -802,7 +802,7 @@ void CSystem::CreateRendererVars()
 	m_rStencilBits = GetIConsole()->CreateVariable("r_StencilBits", "8", VF_DUMPTODISK);	
 	m_rDriver= GetIConsole()->CreateVariable("r_Driver",
 #ifdef __ANDROID__
-		"OpenGL",	// Android has no D3D9/DXVK; desktop GL (e.g. Zink) or NULL
+		"OpenGL",	// Android renders desktop-GL through the GLESCompat layer (ES3)
 #else
 		"Direct3D9",
 #endif

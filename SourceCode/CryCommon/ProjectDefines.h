@@ -20,9 +20,10 @@
 
 #if defined(LINUX)
 
-#if defined(LINUX64)
-	#define NOT_USE_PUNKBUSTER_SDK
-#endif
+// PunkBuster SDK is Windows-only here (no Linux/Android build of it ships
+// with the sources); instantiating it on ARM/Linux is a runtime landmine.
+// Single-player Android needs no anti-cheat anyway.
+#define NOT_USE_PUNKBUSTER_SDK
 	#define _DATAPROBE
 	#define NOT_USE_BINK_SDK					// mainly needed for licencees to compile without the Bink integration
 	#define NOT_USE_DIVX_SDK					// mainly needed for licencees to compile without the DivX integration

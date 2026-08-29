@@ -68,6 +68,24 @@ English summary below — [Installation](#installation-en) · [Rendering](#rende
    `Profiles/`, `Shaders/` в `/sdcard/Android/data/app.nearchuckle.farcry/files/`.
    Игра сама создаст `system.cfg` с мобильными настройками при первом запуске.
 
+## Обновление без переустановки (RU)
+
+Все сборки (начиная с versionCode 2) подписаны **одним проектным ключом**
+(`android/signing/nearchuckle.keystore`), поэтому новый APK ставится
+**поверх** старого: скачали → открыли → «Обновить» → играть. Данные игры
+(`Android/data/app.nearchuckle.farcry/files/`) при обновлении сохраняются.
+
+⚠️ **Один раз придётся переустановить**: старые APK подписывались случайным
+debug-ключом CI-раннера, и Android не даст поставить поверх них APK с новым
+ключом («Приложение не установлено»). Порядок перехода:
+1. заранее сохраните куда-нибудь папку
+   `Android/data/app.nearchuckle.farcry/files/FCData` (если файловый
+   менеджер пускает внутрь `Android/data`) — или просто импортируйте игру
+   заново из ZIP/папки после переустановки;
+2. удалите приложение, поставьте новый APK, верните данные — и всё,
+   все следующие обновления встанут поверх без потери данных.
+
+
 ## Про рендер (важно!)
 
 Оригинальный рендер Far Cry написан против **настольного OpenGL** (fixed
@@ -154,37 +172,7 @@ function + ARB-программы). На телефонах таких драй�
 Файл раскладки: `/sdcard/Android/data/app.nearchuckle.farcry/files/touch_layout.json`
 — можно править руками.
 
-## Turnip / Vulkan (RU)
 
-**Коротко о Vulkan:** родной Vulkan-рендерер у движка Far Cry не существует
-(рендер 2004 года написан против desktop-GL) — писать его с нуля не входит
-в текущие планы. Порт рисует через GLES3 (слой GLESCompat), и на подавляющем
-большинстве телефонов этого достаточно.
-
-**Зачем тогда Turnip:** Turnip — открытый Vulkan-драйвер Mesa для Adreno.
-Сам по себе он нашему GL-движку не нужен, но в связке **Zink** (GL поверх
-Vulkan из Mesa) даёт альтернативный **EGL/GLES-драйвер** — выручает, если
-заводской GLES-драйвер твоего Adreno глючит (артефакты, падения драйвера).
-
-**Как это работает в лаунчере (экспериментально):**
-1. Найди/собери ZIP с драйвером: нужна **Mesa-Zink сборка под Android**
-   (файлы вида `libEGL_mesa.so` / `libglesv2.so` / `libvulkan_adreno.so`).
-   ZIP-ы «под эмуляторы» только с `libvulkan.adreno.so` наш GL-путь
-   не изменят (они для Vulkan-приложений) — но приняться и запомниться могут.
-2. В лаунчере: **«Поставить драйвер ZIP»** → выбери ZIP. Статус покажет,
-   что найдено: `EGL ✓ GL ✓ Vulkan ✓`.
-3. Кнопка **PLAY** — перед стартом графики игра подхватит драйвер
-   (`SDL_VIDEO_EGL_DRIVER` / `SDL_VIDEO_GL_DRIVER` / `VK_DRIVER_FILES`),
-   запись об этом попадёт в лог.
-4. Вернуть как было: **«Убрать драйвер»** (или удалить папку
-   `Android/data/app.nearchuckle.farcry/files/turnip`).
-
-⚠️ Это тонкая настройка «на всякий случай»: на исправных драйверах она
-ничего не улучшит. Работоспособность конкретных Mesa/Turnip сборок зависит
-от версии Android, чипа и самой сборки — гарантий нет; если после установки
-драйвера игра не стартует, уберите драйвер и отправьте лог.
-
-## Логи (RU)
 
 Всё diagnóstico работает **прямо на телефоне, без ПК**:
 
@@ -259,18 +247,7 @@ the diagnostics log. Layout persists in `touch_layout.json`. CVars:
 `touch_enabled`, `touch_edit`, `touch_opacity`, `touch_scale`,
 `touch_look_sens`, `touch_vibrate`, `touch_stick_dynamic`.
 
-### Turnip / Vulkan (EN)
 
-The engine has no native Vulkan backend (it is a desktop-GL 2004 renderer);
-the port renders through ES3 via GLESCompat. Turnip matters only through
-**Mesa-Zink bundles** (GL-over-Vulkan EGL driver) as a fallback for buggy
-stock Adreno GLES drivers. The launcher has an experimental **driver ZIP**
-import: it extracts into `files/turnip/`, shows what was found
-(EGL/GL/Vulkan), and MainActivity points SDL at it before video init
-(`SDL_VIDEO_EGL_DRIVER`, `SDL_VIDEO_GL_DRIVER`, `VK_DRIVER_FILES`) with a
-note in the log. Use «Убрать драйвер» to revert to the system driver.
-
-### Logs (EN)
 
 No PC needed: EDIT → **LOG** (or the launcher's «Поделиться логом» button)
 opens the Android share sheet with the combined log and saves a copy to

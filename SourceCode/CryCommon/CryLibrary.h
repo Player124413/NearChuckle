@@ -71,7 +71,10 @@
 
 	static HMODULE CryLoadLibrary(const char* libName, const bool cAppend = true, const bool cLoadLazy = false)
 	{
-		string newLibName(GetModulePath());
+		// MODULE_PATH may legitimately be unset (getenv returns NULL on bionic
+		// too) - std::string(NULL) would be UB/crash, fall back to plain name.
+		const char* pModulePath = GetModulePath();
+		string newLibName(pModulePath ? pModulePath : "");
 		newLibName += libName;
 		return ::dlopen(newLibName.c_str(), cLoadLazy?(RTLD_LAZY | RTLD_GLOBAL):(RTLD_NOW | RTLD_GLOBAL));
 	}

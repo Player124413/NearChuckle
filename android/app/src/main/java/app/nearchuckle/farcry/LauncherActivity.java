@@ -45,7 +45,6 @@ public class LauncherActivity extends Activity {
 
     private static final int REQ_PICK_ZIP = 41;
     private static final int REQ_PICK_DIR = 42;
-    private static final int REQ_PICK_DRIVER = 43;
 
     private TextView mStatus;
     private TextView mProgress;
@@ -124,50 +123,6 @@ public class LauncherActivity extends Activity {
         root.addView(row, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        // --- Turnip / Vulkan (Zink) driver section ---
-        TextView drvTitle = new TextView(this);
-        drvTitle.setText("Экспериментально: Turnip / Vulkan (Zink)");
-        drvTitle.setTextColor(Color.rgb(170, 140, 255));
-        drvTitle.setTextSize(13);
-        drvTitle.setPadding(0, dp(10), 0, dp(2));
-        root.addView(drvTitle, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        LinearLayout row2 = new LinearLayout(this);
-        row2.setOrientation(LinearLayout.HORIZONTAL);
-        row2.setGravity(Gravity.CENTER);
-
-        Button drvBtn = new Button(this);
-        drvBtn.setText("Поставить драйвер ZIP");
-        drvBtn.setTextSize(13);
-        drvBtn.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) { pickDriver(); }
-        });
-        row2.addView(drvBtn, new LinearLayout.LayoutParams(0,
-                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-
-        Button drvDel = new Button(this);
-        drvDel.setText("Убрать драйвер");
-        drvDel.setTextSize(13);
-        drvDel.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) { removeDriver(); }
-        });
-        row2.addView(drvDel, new LinearLayout.LayoutParams(0,
-                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-
-        root.addView(row2, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        TextView drvHelp = new TextView(this);
-        drvHelp.setText("Для Adreno: если системный GLES глючит, можно подложить\n"
-                + "свой драйвер (Zink+Turnip или Mesa-сборка EGL). Нужен ZIP\n"
-                + "с .so файлами (libEGL*, libGLESv2*, libvulkan*).");
-        drvHelp.setTextColor(Color.rgb(140, 150, 165));
-        drvHelp.setTextSize(11);
-        drvHelp.setGravity(Gravity.CENTER);
-        root.addView(drvHelp, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-
         TextView help = new TextView(this);
         help.setText("В архиве/папке нужен Far Cry с папкой FCData.\n"
                 + "Данные установятся автоматически, вложенная папка\n"
@@ -226,128 +181,13 @@ public class LauncherActivity extends Activity {
     private void refreshStatus() {
         boolean ok = gameDataValid(filesDir());
         mPlay.setEnabled(ok);
-        String drv = driverSummary();
         String txt = ok ? "Данные игры на месте ✓" : "Данные игры не найдены — выбери ZIP или папку";
         int color = ok ? Color.rgb(120, 230, 140) : Color.rgb(255, 190, 90);
-        if (drv != null) {
-            txt += "\nДрайвер: " + drv;
-        }
         mStatus.setText(txt);
         mStatus.setTextColor(color);
     }
 
-    // ------------------------------------------------- Turnip/Vulkan driver
-    private File driverDir() {
-        return new File(filesDir(), "turnip");
-    }
 
-    /** Scans the driver dir; returns a summary like "EGL ✓, Vulkan ✓" or null. */
-    private String driverSummary() {
-        File d = driverDir();
-        if (!d.isDirectory())
-            return null;
-        boolean egl = false, gl = false, vk = false;
-        ArrayList<String> all = findSoFiles(d, new ArrayList<String>());
-        for (String p : all) {
-            String n = p.substring(p.lastIndexOf('/') + 1).toLowerCase();
-            if (n.startsWith("libegl"))
-                egl = true;
-            if (n.startsWith("libglesv2") || n.startsWith("libgl1") || n.startsWith("libosmesa"))
-                gl = true;
-            if (n.startsWith("libvulkan"))
-                vk = true;
-        }
-        if (!egl && !gl && !vk)
-            return null;
-        StringBuilder sb = new StringBuilder();
-        if (egl) sb.append("EGL ✓ ");
-        if (gl) sb.append("GL ✓ ");
-        if (vk) sb.append("Vulkan ✓");
-        return sb.toString().trim();
-    }
-
-    private ArrayList<String> findSoFiles(File dir, ArrayList<String> out) {
-        File[] kids = dir.listFiles();
-        if (kids != null)
-            for (File k : kids) {
-                if (k.isDirectory())
-                    findSoFiles(k, out);
-                else if (k.getName().toLowerCase().endsWith(".so"))
-                    out.add(k.getAbsolutePath());
-            }
-        return out;
-    }
-
-    private void pickDriver() {
-        if (mImporting) return;
-        Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        i.addCategory(Intent.CATEGORY_OPENABLE);
-        i.setType("*/*");
-        try {
-            startActivityForResult(
-                    Intent.createChooser(i, "Выбери ZIP с драйвером"), REQ_PICK_DRIVER);
-        } catch (Throwable t) {
-            toast("Файл выбран не был: " + t);
-        }
-    }
-
-    private void removeDriver() {
-        deleteR(driverDir());
-        refreshStatus();
-        toast("Драйвер удалён — используется системный GLES");
-    }
-
-    private void startDriverImport(final Uri uri) {
-        if (mImporting) return;
-        setBusy(true);
-        progress("Ставлю драйвер…");
-        new Thread(new Runnable() {
-            public void run() {
-                String err = null;
-                try {
-                    File files = filesDir();
-                    File tmp = new File(files, ".drv_tmp");
-                    deleteR(tmp);
-                    if (!tmp.mkdirs() && !tmp.isDirectory())
-                        throw new IOException("нет временной папки");
-                    try {
-                        extractZip(uri, tmp);
-                        File dst = driverDir();
-                        deleteR(dst);
-                        if (!dst.mkdirs() && !dst.isDirectory())
-                            throw new IOException("не могу создать папку драйвера");
-                        File[] kids = tmp.listFiles();
-                        if (kids != null)
-                            for (File k : kids) {
-                                File to = new File(dst, k.getName());
-                                if (!k.renameTo(to)) {
-                                    copyR(k, to);
-                                    deleteR(k);
-                                }
-                            }
-                    } finally {
-                        deleteR(tmp);
-                    }
-                } catch (Throwable t) {
-                    err = t.toString();
-                }
-                final String error = err;
-                runOnUiThread(new Runnable() {
-                    public void run() {
-                        setBusy(false);
-                        refreshStatus();
-                        if (error == null)
-                            toast("Драйвер установлен (см. статус)");
-                        else
-                            progress("Ошибка драйвера: " + error);
-                    }
-                });
-            }
-        }).start();
-    }
-
-    @Override
-    protected void onResume() {
         super.onResume();
         refreshStatus();
     }
@@ -393,8 +233,6 @@ public class LauncherActivity extends Activity {
             startImport(data.getData(), true);
         } else if (requestCode == REQ_PICK_DIR) {
             startImport(data.getData(), false);
-        } else if (requestCode == REQ_PICK_DRIVER) {
-            startDriverImport(data.getData());
         }
     }
 
