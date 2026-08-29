@@ -259,7 +259,14 @@ const char *CSystem::GetUserName()
 #ifndef __linux
 	::GetUserName(szNameBuffer, &dwSize);
 #else
-	strncpy(szNameBuffer, getenv("USER"), dwSize);
+	// bionic (Android) does not set USER - getenv returns NULL there and
+	// strncpy(NULL) would crash (this killed the engine right after the
+	// version lines in the log).
+	const char *szUser = getenv("USER");
+	if (!szUser || !szUser[0])
+		szUser = "android";
+	strncpy(szNameBuffer, szUser, dwSize - 1);
+	szNameBuffer[dwSize - 1] = 0;
 #endif
 	return szNameBuffer;
 }
