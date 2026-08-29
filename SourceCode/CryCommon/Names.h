@@ -18,7 +18,7 @@ enum EFindName
 };
 
 
-extern long gHashTable[];
+extern unsigned long gHashTable[];
 
 struct SNameEntry
 {
