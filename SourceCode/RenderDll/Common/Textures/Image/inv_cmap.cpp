@@ -337,12 +337,12 @@ static int greenloop (int restart)
 static int blueloop (int restart)
 {
   int detect;
-  register unsigned long *dp;
-  register unsigned char *rgbp;
-  register unsigned long bdist, bxx;
-  register int b, i = cindex;
-  register long txsqr = bxsqr + bxsqr;
-  register int lim;
+  unsigned long *dp;
+  unsigned char *rgbp;
+  unsigned long bdist, bxx;
+  int b, i = cindex;
+  long txsqr = bxsqr + bxsqr;
+  int lim;
   static int here, min, max;
   static long binc;
 
@@ -445,9 +445,9 @@ static int blueloop (int restart)
 
 static void maxfill (unsigned long *buffer, long rside, long gside, long bside)
 {
-  register unsigned long maxv = ~0UL;
-  register long i;
-  register unsigned long *bp;
+  unsigned long maxv = ~0UL;
+  long i;
+  unsigned long *bp;
 
   for (i = rside * gside * bside, bp = buffer; i > 0; i--, bp++)
     *bp = maxv;

@@ -88,7 +88,10 @@ def main():
             return (u["src"], [(0, f"parse exception: {e}")])
         out = []
         for d in tu.diagnostics:
-            if d.severity >= 4:  # 4=Error, 5=Fatal (3=Warning)
+            # NDK clang emits some C++17 rejections ('register', ...) as errors
+            # while libclang classifies the same diagnostics as warnings.
+            is_err = d.severity >= 4 or (d.severity == 3 and "does not allow" in d.spelling)
+            if is_err:
                 f = str(d.location.file or u["src"])
                 out.append((f"{f}:{d.location.line}", d.spelling.split("\n")[0][:160]))
         return (u["src"], out)

@@ -781,10 +781,10 @@ void CREOcean::mfDrawOceanScreenLod()
       float fY = p.y * fiScale;
       long nX = QInt(fX);
       long nY = QInt(fY);
-      register float dx = fX - (float)nX;
-      register float dy = fY - (float)nY;
-      register float dix = 1.0f - dx;
-      register float diy = 1.0f - dy;
+      float dx = fX - (float)nX;
+      float dy = fY - (float)nY;
+      float dix = 1.0f - dx;
+      float diy = 1.0f - dy;
       nX &= OCEANGRID-1;
       nY &= OCEANGRID-1;
       fX = (float)QInt(p.x * fiSize);
@@ -792,7 +792,7 @@ void CREOcean::mfDrawOceanScreenLod()
       long nX1 = (nX+1);// & (OCEANGRID-1);
       long nY1 = (nY+1);// & (OCEANGRID-1);
       
-      register float d0, d1;
+      float d0, d1;
       Vec3d Pos, Nor;
       d0 = dix * m_Pos[nY][nX][0]  + dx * m_Pos[nY][nX1][0];
       d1 = dix * m_Pos[nY1][nX][0] + dx * m_Pos[nY1][nX1][0];
