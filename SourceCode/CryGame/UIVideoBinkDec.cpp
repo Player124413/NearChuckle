@@ -82,9 +82,13 @@ CUIVideoBinkDecoder::CUIVideoBinkDecoder(const char* aliasName)
 	m_aliasName = aliasName;
 }
 
+#if defined(CS_VERSION_372) // 64-bit CrySound API: stream userdata is void*
 signed char BinkDecAudioCallback(CS_STREAM* pStream, void* pBuffer, int nLength, void* nParam)
+#else // 32-bit API passes userdata as int
+signed char BinkDecAudioCallback(CS_STREAM* pStream, void* pBuffer, int nLength, int nParam)
+#endif
 {
-	MoviePlayerData* player = (MoviePlayerData*)nParam;
+	MoviePlayerData* player = (MoviePlayerData*)(uintptr_t)nParam;
 	int16_t* audioBuffer = (int16_t*)pBuffer;
 	memset(audioBuffer, -1, nLength);
 	if (!player)
@@ -132,9 +136,15 @@ bool CUIVideoBinkDecoder::Init(const char* pathToVideo, bool needSound)
 			{
 				m_player->trackIndex = 0;
 				m_player->binkInfo = Bink_GetAudioTrackDetails(m_player->binkHandle, m_player->trackIndex);
+#if defined(CS_VERSION_372)
 				m_audioStream = CS_Stream_Create(BinkDecAudioCallback,
 					m_player->binkInfo.idealBufferSize, 0,
 					m_player->binkInfo.sampleRate, m_player);
+#else
+				m_audioStream = CS_Stream_Create(BinkDecAudioCallback,
+					m_player->binkInfo.idealBufferSize, 0,
+					m_player->binkInfo.sampleRate, (int)(intptr_t)m_player);
+#endif
 			}
 		}
 	}
