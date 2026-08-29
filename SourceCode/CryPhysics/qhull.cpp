@@ -357,7 +357,7 @@ int qhull(strided_pointer<vectorf> pts, int npts, index_t*& pTris)
 				if (tmparr_idx!=tmparr_idx_buf) delete tmparr_idx;
 				if (tmparr_ptr!=tmparr_ptr_buf) delete tmparr_ptr;
 				tmparr_idx = new int[n];
-				tmparr_ptr = new(qhtritem*[n]);
+				tmparr_ptr = new qhtritem*[n];
 			}
 			for(tr=trnew,i=0;tr<trend;tr++,i++) { tmparr_idx[i]=tr->idx[2]; tmparr_ptr[i]=tr; }
 			qsort(tmparr_idx,(void**)tmparr_ptr, 0,trend-trnew-1);
