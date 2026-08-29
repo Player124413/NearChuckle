@@ -29,10 +29,47 @@ import java.io.OutputStream;
 public class MainActivity extends SDLActivity {
 
     private static final String TAG = "NearChuckle";
+    private long m_startTimeMs = 0;
+
+    /** Marks appended to the engine log so "closed by user / killed by
+        system" can be told apart from a real crash (a crash writes its own
+        dump section into the report). Uses O_APPEND so it can't corrupt
+        the engine's own writes. */
+    private void appendLogMark(String mark) {
+        try {
+            File dir = getExternalFilesDir(null);
+            if (dir == null) return;
+            long t = m_startTimeMs > 0 ? (System.currentTimeMillis() - m_startTimeMs) / 1000 : -1;
+            FileWriter w = new FileWriter(new File(dir, "log.txt"), true);
+            w.write("\n[java " + t + "s] " + mark + "\n");
+            w.close();
+        } catch (Throwable t) {
+            Log.w(TAG, "log mark failed: " + t);
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        m_startTimeMs = System.currentTimeMillis();
         super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public void onTrimMemory(int level) {
+        super.onTrimMemory(level);
+        appendLogMark("=== low memory event, trim level " + level + " ===");
+    }
+
+    @Override
+    protected void onPause() {
+        appendLogMark("=== activity paused (leaving foreground) ===");
+        super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        appendLogMark("=== activity destroyed (no crash signal before this) ===");
+        super.onDestroy();
     }
 
     @Override

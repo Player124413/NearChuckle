@@ -774,7 +774,7 @@ bool CXGame::Run(bool &bRelaunch)
 {
     //_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF | _CRTDBG_LEAK_CHECK_DF);
 	CryLogAlways("grun[01] CXGame::Run entered");
-	static bool s_bFirstFrameLogged = false;
+	static int s_nRunFrames = 0;
 	
 	if(m_bDedicatedServer)
 	{
@@ -784,17 +784,18 @@ bool CXGame::Run(bool &bRelaunch)
 	{
 		//static float fLastFrame=0;
 		m_bRelaunch=false;
+		CryLogAlways("grun[02] first frame starting");
 		while(1) 
 		{		
-			if (!s_bFirstFrameLogged)
-			{
-				CryLogAlways("grun[02] first frame starting");
-				s_bFirstFrameLogged = true;
-			}
 			if (!Update()) 
 				break;
+			++s_nRunFrames;
+			if (s_nRunFrames <= 5)
+				CryLogAlways("grun: frame %d done", s_nRunFrames);
+			else if ((s_nRunFrames % 50) == 0)
+				CryLogAlways("grun: %d frames done", s_nRunFrames);
 		}
-		CryLogAlways("grun[03] main loop exited");
+		CryLogAlways("grun[03] main loop exited after %d frames", s_nRunFrames);
 
 		bRelaunch=m_bRelaunch;
 	}
@@ -826,6 +827,10 @@ bool CXGame::IsInPause(IProcess *pProcess)
 //! update all game and children
 bool CXGame::Update()
 {
+	static int s_nDiagFrameNo = 0;
+	++s_nDiagFrameNo;
+#define DIAG_GUPT(msg) do { if (s_nDiagFrameNo <= 3) CryLogAlways("gupt f%d: " msg, s_nDiagFrameNo); } while(0)
+	DIAG_GUPT("update enter");
 	if (!m_nDEBUG_TIMING)
 	{
 		m_fDEBUG_STARTTIMER = m_pSystem->GetITimer()->GetAsyncCurTime();
@@ -942,6 +947,7 @@ bool CXGame::Update()
 		fov = pVarFOV->GetFVal();
 	}
 	
+	DIAG_GUPT("before system update");
 	if (!m_pSystem->Update(
 #if 1
 		ESYSUPDATE_MULTIPLAYER,
@@ -950,6 +956,7 @@ bool CXGame::Update()
 #endif
 		nPauseMode)) //Update returns false when quitting
 		return (false);
+	DIAG_GUPT("system update done");
 
 	if (pVarFOV)
 	{
@@ -1045,9 +1052,13 @@ bool CXGame::Update()
 	{	
 		// render begin must be always called anyway to clear buffer, draw buttons etc.
 		// even in menu mode
+		DIAG_GUPT("before RenderBegin");
 		m_pSystem->RenderBegin();
+		DIAG_GUPT("RenderBegin done");
 		
+		DIAG_GUPT("before Render (first draw)");
 		m_pSystem->Render();
+		DIAG_GUPT("Render done");
 		pTimer->MeasureTime("3SysRend");
 	}
 		

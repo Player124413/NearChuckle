@@ -379,7 +379,60 @@ static size_t FileTail(const char *szPath, char *out, size_t maxOut)
   return n;
 }
 
-static char g_szCombined[DIAG_MAX_COLLECT + DIAG_MAX_COLLECT + 4096];
+static char g_szCombined[DIAG_MAX_COLLECT + 64 * 1024];
+static char g_szDiagTail[DIAG_MAX_COLLECT];
+
+// copy "=== CRASH: ... ===" blocks from the diag tail, eliding the bulky
+// maps section (the backtrace is what matters); blocks are appended LAST
+// because phone pastes reliably keep the end of the report and cut the head
+static size_t AppendCrashBlocks(const char *src, char *dst, size_t cap)
+{
+  size_t o = 0;
+  const char *p = src;
+  while (cap > 16 && (p = strstr(p, "=== CRASH:")) != NULL)
+  {
+    const char *start = p;
+    const char *end;
+    const char *q = strstr(start, "=== end backtrace");
+    if (q)
+    {
+      end = strchr(q, '\n');
+      if (!end)
+        end = start + strlen(start);
+      else
+        end++;
+    }
+    else
+    {
+      // unterminated block (crash mid-write): take up to 2 KB
+      end = start + strlen(start);
+      if ((size_t)(end - start) > 2048)
+        end = start + 2048;
+    }
+    // elide "=== maps ===" .. "=== end maps ===" (keeps fault addr context)
+    const char *m1 = strstr(start, "=== maps ===");
+    const char *m2 = strstr(start, "=== end maps ===");
+    if (m1 && m2 && m1 < end && m2 < end)
+    {
+      size_t n1 = (size_t)(m1 - start);
+      if (n1 > cap - o - 1) n1 = cap - o - 1;
+      memcpy(dst + o, start, n1); o += n1; dst[o] = 0;
+      const char *after = m2 + strlen("=== end maps ===");
+      size_t n2 = (size_t)(end - after);
+      if (n2 > cap - o - 1) n2 = cap - o - 1;
+      memcpy(dst + o, "[maps elided]\n", 14); o += 14;
+      memcpy(dst + o, after, n2); o += n2; dst[o] = 0;
+    }
+    else
+    {
+      size_t len = (size_t)(end - start);
+      if (len > cap - o - 1) len = cap - o - 1;
+      memcpy(dst + o, start, len); o += len; dst[o] = 0;
+    }
+    p = end;
+  }
+  return o;
+}
 
 extern "C" const char *AndroidCollectLog()
 {
@@ -387,17 +440,37 @@ extern "C" const char *AndroidCollectLog()
   size_t o = 0;
   const size_t cap = sizeof(g_szCombined) - 64;
 
+  // engine log tail first (96 KB is plenty and keeps the report shareable)
+  char szEngPath[1100];
+  snprintf(szEngPath, sizeof(szEngPath), "%s/log.txt", g_szFilesDir);
+
+  FileTail(g_szDiagPath, g_szDiagTail, sizeof(g_szDiagTail));
+
   o += (size_t)snprintf(g_szCombined + o, cap - o,
                         "======= NearChuckle log (user report) =======\n");
-  o += FileTail(g_szDiagPath, g_szCombined + o, DIAG_MAX_COLLECT);
   o += (size_t)snprintf(g_szCombined + o, cap - o,
-                        "\n======= engine log.txt =======\n");
-  char szEng[1100];
-  snprintf(szEng, sizeof(szEng), "%s/log.txt", g_szFilesDir);
-  o += FileTail(szEng, g_szCombined + o, DIAG_MAX_COLLECT);
-  if (!strstr(g_szCombined, "NearChuckle run started"))
+                        "\n======= engine log.txt (tail) =======\n");
+  o += FileTail(szEngPath, g_szCombined + o, 96 * 1024);
+
+  // crash backtraces go at the very END: pastes keep the tail
+  o += (size_t)snprintf(g_szCombined + o, cap - o,
+                        "\n======= crash report =======\n");
+  size_t nb = AppendCrashBlocks(g_szDiagTail, g_szCombined + o, cap - o);
+  if (nb == 0)
+    o += (size_t)snprintf(g_szCombined + o, cap - o,
+                          "(no crash signal was caught this run)\n");
+  else
+    o += nb;
+
+  // last 8 KB of raw diag (GLESCompat spam, watchdog/rotation marks)
   {
-    o += (size_t)snprintf(g_szCombined + o, cap - o, "(diag log empty)\n");
+    size_t len = strlen(g_szDiagTail);
+    size_t keep = len > 8192 ? 8192 : len;
+    o += (size_t)snprintf(g_szCombined + o, cap - o,
+                          "\n======= diag.txt (tail) =======\n");
+    const char *tail = g_szDiagTail + (len - keep);
+    size_t n = (size_t)snprintf(g_szCombined + o, cap - o, "%s", tail);
+    o += n;
   }
   return g_szCombined;
 }
