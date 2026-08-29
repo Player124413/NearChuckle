@@ -20,6 +20,7 @@ NDK_PREFIXES = (
     "SourceCode/CryInput/", "SourceCode/CryMovie/", "SourceCode/CryNetwork/",
     "SourceCode/CryPhysics/", "SourceCode/CryScriptSystem/", "SourceCode/CrySoundSystem/",
     "SourceCode/CrySystem/", "SourceCode/RenderDll/XRenderOGL/", "SourceCode/RenderDll/XRenderNULL/",
+    "SourceCode/RenderDll/Common/",
     "SourceCode/AndroidApp/", "SourceCode/FARCRY/Main.cpp",
 )
 
@@ -52,7 +53,9 @@ def parse_ninja():
 def clang_args(u):
     args = u["FLAGS"].split() + u["DEFINES"].split() + u["INCLUDES"].split()
     args += ["-DANDROID", "-D__ANDROID__", "-DDISABLE_CG"]
-    args += (["-x", "c", "-std=gnu11"] if u["is_c"] else ["-x", "c++", "-std=gnu++17"]) + ["-ferror-limit=0"]
+    args += (["-x", "c", "-std=gnu11"] if u["is_c"] else ["-x", "c++", "-std=gnu++17"])
+    # replicate NDK toolchain hardening defaults (they are -Werror there)
+    args += ["-Werror=format-security", "-ferror-limit=0"]
     return args
 
 def system_includes():
@@ -90,7 +93,9 @@ def main():
         for d in tu.diagnostics:
             # NDK clang emits some C++17 rejections ('register', ...) as errors
             # while libclang classifies the same diagnostics as warnings.
-            is_err = d.severity >= 4 or (d.severity == 3 and "does not allow" in d.spelling)
+            is_err = d.severity >= 4 or (d.severity == 3 and (
+                "does not allow" in d.spelling
+                or "format string is not a string literal" in d.spelling))
             if is_err:
                 f = str(d.location.file or u["src"])
                 out.append((f"{f}:{d.location.line}", d.spelling.split("\n")[0][:160]))
