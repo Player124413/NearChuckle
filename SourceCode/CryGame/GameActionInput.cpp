@@ -57,23 +57,16 @@ void CXGame::SetConfigToActionMap(const char *pszActionName, ...)
 		return;
 	ActionInfo &Info=It->second;
 	va_list v;
-	va_start(v, pszActionName);            
-#if defined(LINUX64)
+	va_start(v, pszActionName);
+	// Portable va_arg walk: works on every ABI. (The old 32-bit x86 hack
+	// '*(char**)v / v += sizeof(char*)' cannot compile on ARM - va_list is
+	// a struct there and clang rejects the pointer casts.)
 	char *sActionMapName=va_arg(v, char*);
 	while (*sActionMapName)
 	{
 		Info.vecSetToActionMap.push_back(string(sActionMapName));
 		sActionMapName=va_arg(v, char*);
 	}
-#else
-	char *sActionMapName=*(char**)v;
-
-	while (*sActionMapName)
-	{
-		Info.vecSetToActionMap.push_back(string(sActionMapName));
-		sActionMapName=*(char**)(v+=sizeof(char*));
-	}
-#endif
 	va_end(v);
 }
 
