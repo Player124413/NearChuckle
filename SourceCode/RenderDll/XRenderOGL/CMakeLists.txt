@@ -23,8 +23,9 @@ endif()
 
 # GLES3 fixed-function emulation layer (SourceCode/GLESCompat).
 # Compiled on every platform for strict-mode validation; GFX_GLES3 (and the
-# FindProc hookup) is enabled only on Android.
-if (ANDROID)
+# FindProc hookup) is enabled on Android and on Unix hosts, where the host
+# smoke test runs the exact code path of the phone over a software EGL.
+if (ANDROID OR (UNIX AND NOT APPLE))
 add_definitions(-DGFX_GLES3)
 endif()
 

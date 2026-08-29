@@ -23,6 +23,11 @@ static char THIS_FILE[] = __FILE__;
 #endif
 #endif
 
+#ifdef GFX_GLES3
+// desktop-GL fixed-function emulation over ES3 (SourceCode/GLESCompat)
+extern "C" void *GLESCompat_GetProcAddress(const char *name);
+#endif
+
 #ifdef USE_3DC
 #include "../Common/3Dc/CompressorLib.h"
 void (*DeleteDataATI)(void *pData);
@@ -241,7 +246,6 @@ void CGLRenderer::FindProc( void*& ProcAddress, char* Name, char* SupportName, b
 #else
 #ifdef GFX_GLES3
   // desktop-GL fixed-function emulation over ES3 (SourceCode/GLESCompat)
-  extern "C" void *GLESCompat_GetProcAddress(const char *name);
   ProcAddress = GLESCompat_GetProcAddress( Name );
   if( !ProcAddress )
     ProcAddress = (void*)(intptr_t)SDL_GL_GetProcAddress( Name );
@@ -262,6 +266,12 @@ void CGLRenderer::FindProc( void*& ProcAddress, char* Name, char* SupportName, b
   {
     if( Supports )
       iLog->Log("Warning:   Missing function '%s' for '%s' support\n", Name, SupportName );
+#ifdef GFX_GLES3
+    // GLESCompat: a missing desktop-only proc (glAccum etc.) means the engine
+    // takes its fallback path - it must not disable the whole GL support.
+    if( !strcmp(SupportName, "_GL") )
+      return;
+#endif
     Supports = 0;
   }
 }
@@ -1890,7 +1900,7 @@ exr:
 #ifndef USE_SDL
   rc->m_Glhwnd = (HWND)Glhwnd;
 #else
-#ifdef __ANDROID__
+#ifdef GFX_GLES3
   // GLESCompat emulates desktop-GL fixed function on top of an ES3 context.
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
@@ -1900,9 +1910,8 @@ exr:
 #endif
 
   // Find functions.
-#ifndef __ANDROID__
-  // (on Android SDL_GL_GetProcAddress needs a current context - procs are
-  // resolved right after SDL_GL_MakeCurrent below)
+#if !defined(__ANDROID__) && !defined(GFX_GLES3)
+  // (desktop-GL path: procs resolve from the driver library without a context)
   SUPPORTS_GL = 1;
   FindProcs( false );
   if( !SUPPORTS_GL )
@@ -1915,6 +1924,17 @@ exr:
   CreateRContext(rc, Glhdc, hGLrc, cbpp, zbpp, sbits, true);
 #else
   rc->m_Context = SDL_GL_CreateContext(win);
+#ifdef GFX_GLES3
+  if (!rc->m_Context)
+  {
+    // ES2 fallback: GLESCompat uses only ES2-era API/GLSL, so very old
+    // GPUs that lack ES3 still work.
+    iLog->Log("ES3 context failed (%s), retrying with ES2\n", SDL_GetError());
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+    rc->m_Context = SDL_GL_CreateContext(win);
+  }
+#endif
   if (rc->m_Context)
   {
     if (!SDL_GL_MakeCurrent(win, rc->m_Context))
@@ -1922,7 +1942,7 @@ exr:
       iLog->Log("%s\n", SDL_GetError());
       return NULL;
     }
-#ifdef __ANDROID__
+#ifdef GFX_GLES3
     SUPPORTS_GL = 1;
     FindProcs( false );
     if( !SUPPORTS_GL )

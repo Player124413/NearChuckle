@@ -1,0 +1,32 @@
+diff --git a/src/video/SDL_egl.c b/src/video/SDL_egl.c
+index 1538f6ea4..78dfa18ba 100644
+--- a/src/video/SDL_egl.c
++++ b/src/video/SDL_egl.c
+@@ -591,13 +591,20 @@ bool SDL_EGL_InitializeOffscreen(SDL_VideoDevice *_this, int device)
+         return SDL_SetError("SDL_EGL_LoadLibraryOnly() has not been called or has failed.");
+     }
+ 
+-    // Check for all extensions that are optional until used and fail if any is missing
+-    if (!_this->egl_data->eglQueryDevicesEXT) {
+-        return SDL_SetError("eglQueryDevicesEXT is missing (EXT_device_enumeration not supported by the drivers?)");
+-    }
+-
+-    if (!_this->egl_data->eglGetPlatformDisplayEXT) {
+-        return SDL_SetError("eglGetPlatformDisplayEXT is missing (EXT_platform_base not supported by the drivers?)");
++    // Check for all extensions that are optional until used and fail if any is missing.
++    // Drivers without EGL_EXT_device_enumeration (software stacks such as
++    // SwiftShader's EGL) are still usable through the default display.
++    if (!_this->egl_data->eglQueryDevicesEXT || !_this->egl_data->eglGetPlatformDisplayEXT) {
++        _this->egl_data->egl_display = _this->egl_data->eglGetDisplay(EGL_DEFAULT_DISPLAY);
++        if (_this->egl_data->egl_display == EGL_NO_DISPLAY) {
++            return SDL_SetError("eglGetDisplay(EGL_DEFAULT_DISPLAY) failed.");
++        }
++        if (_this->egl_data->eglInitialize(_this->egl_data->egl_display, NULL, NULL) != EGL_TRUE) {
++            return SDL_SetError("Could not initialize EGL (default display)");
++        }
++        SDL_EGL_GetVersion(_this);
++        _this->egl_data->is_offscreen = true;
++        return true;
+     }
+ 
+     if (_this->egl_data->eglQueryDevicesEXT(SDL_EGL_MAX_DEVICES, egl_devices, &num_egl_devices) != EGL_TRUE) {

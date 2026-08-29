@@ -18,6 +18,7 @@ ESDEF(glBlendEquationSeparate) ESDEF(glBlendFunc) ESDEF(glBlendFuncSeparate)
 ESDEF(glBufferData) ESDEF(glBufferSubData) ESDEF(glCheckFramebufferStatus)
 ESDEF(glClear) ESDEF(glClearColor) ESDEF(glClearDepthf) ESDEF(glClearStencil)
 ESDEF(glColorMask) ESDEF(glCompileShader) ESDEF(glCompressedTexImage2D)
+ESDEF(glFramebufferTexture2D)
 ESDEF(glCopyTexImage2D) ESDEF(glCopyTexSubImage2D) ESDEF(glCreateProgram)
 ESDEF(glCreateShader) ESDEF(glCullFace) ESDEF(glDeleteBuffers)
 ESDEF(glDeleteProgram) ESDEF(glDeleteShader) ESDEF(glDeleteTextures)
@@ -88,6 +89,7 @@ bool LoadESProcs(void)
   ELOAD(glBufferData); ELOAD(glBufferSubData); ELOAD(glCheckFramebufferStatus);
   ELOAD(glClear); ELOAD(glClearColor); ELOAD(glClearDepthf); ELOAD(glClearStencil);
   ELOAD(glColorMask); ELOAD(glCompileShader); ELOAD(glCompressedTexImage2D);
+  ELOAD(glFramebufferTexture2D);
   ELOAD(glCopyTexImage2D); ELOAD(glCopyTexSubImage2D); ELOAD(glCreateProgram);
   ELOAD(glCreateShader); ELOAD(glCullFace); ELOAD(glDeleteBuffers);
   ELOAD(glDeleteProgram); ELOAD(glDeleteShader); ELOAD(glDeleteTextures);
@@ -2463,7 +2465,13 @@ GLboolean APIENTRY glAreTexturesResident(GLsizei n, const GLuint *tex, GLboolean
 // =============================================================================
 using namespace glescompat;
 
-// texture module exports (defined in GLESCompatTex.cpp)
+// generic no-op proc handed out for unimplemented desktop-only functions
+static void APIENTRY glescompat_stub_generic(void) {}
+
+// texture module exports (defined in GLESCompatTex.cpp).
+// Must have C linkage: GLESCompatTex.cpp defines them inside extern "C",
+// and GLESCompat_GetProcAddress hands the addresses out by C name.
+extern "C" {
 void APIENTRY glGenTextures(GLsizei, const GLuint *);
 void APIENTRY glDeleteTextures(GLsizei, const GLuint *);
 GLboolean APIENTRY glIsTexture(GLuint);
@@ -2486,6 +2494,7 @@ void APIENTRY glActiveTextureARB(GLenum);
 void APIENTRY glActiveTexture(GLenum);
 void APIENTRY glGetTexImage(GLenum, GLint, GLenum, GLenum, void *);
 void APIENTRY glGetTexLevelParameteriv(GLenum, GLint, GLenum, GLint *);
+} // extern "C"
 
 static const SNameProc g_CoreProcs[] = {
 #define E(fn) {#fn, (void *)&fn}
@@ -2638,5 +2647,22 @@ extern "C" void *GLESCompat_GetProcAddress(const char *name)
   for (int i = 0; i < n; i++)
     if (!strcmp(tp[i].name, name))
       return tp[i].fn;
-  return 0; // FindProc will flag the extension unsupported -> engine fallback
+  // Never hand out NULL: some desktop-only entry points are called by the
+  // engine unconditionally (e.g. glPolygonMode) and a NULL proc is an
+  // instant crash. Hand out a logged no-op stub instead - the missing
+  // desktop-only feature degrades gracefully. The stub names are logged
+  // so the on-device diag log shows exactly what is not implemented.
+  {
+    static const char *seen[96];
+    static int seen_n = 0;
+    for (int i = 0; i < seen_n; i++)
+      if (!strcmp(seen[i], name))
+        return (void *)&glescompat_stub_generic;
+    if (seen_n < 96)
+    {
+      seen[seen_n++] = name;
+      GLog("no implementation for '%s' - using a no-op stub", name);
+    }
+  }
+  return (void *)&glescompat_stub_generic;
 }

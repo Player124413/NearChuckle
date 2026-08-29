@@ -14,6 +14,7 @@ namespace glescompat {
 
 int g_nActiveUnit = 0;
 int g_nClientUnit = 0;
+STexUnit g_TexUnit[GC_MAX_UNITS];
 static std::map<GLuint, STexObj> g_TexObjs;
 static bool g_bTexInit = false;
 

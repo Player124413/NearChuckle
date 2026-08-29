@@ -199,9 +199,9 @@ typedef struct in_addr_windows
 //#define __TIMESTAMP__ __DATE__" "__TIME__
 
 // function renaming
-#define _finite __finite
+#define _finite(x) __builtin_isfinite(x)
 #define _snprintf snprintf
-#define _isnan isnan
+#define _isnan(x) __builtin_isnan(x)
 #define stricmp strcasecmp
 #define _stricmp strcasecmp
 #define strnicmp strncasecmp
