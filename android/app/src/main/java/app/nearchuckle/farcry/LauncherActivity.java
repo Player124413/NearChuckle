@@ -187,7 +187,8 @@ public class LauncherActivity extends Activity {
         mStatus.setTextColor(color);
     }
 
-
+    @Override
+    protected void onResume() {
         super.onResume();
         refreshStatus();
     }

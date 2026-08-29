@@ -30,7 +30,8 @@ public class MainActivity extends SDLActivity {
 
     private static final String TAG = "NearChuckle";
 
-
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
     }
 

@@ -24,6 +24,9 @@ echo "==> Building"
 echo "==> Link sweep (undefined symbols that would not resolve on device)"
 python3 "$ROOT/scripts/link_sweep.py" "$ROOT/bin/x64-Release"
 
+echo "==> Java structural check (android sources)"
+python3 "$ROOT/scripts/javacheck.py"
+
 echo "==> Unit tests"
 g++ -std=c++17 -DTOUCHJSON_STANDALONE tests/TouchJsonTest.cpp -o /tmp/touchtest
 /tmp/touchtest
