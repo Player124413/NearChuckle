@@ -204,6 +204,10 @@ struct STexEnv {
 struct STexUnit {
   bool bEnabled2D;
   GLuint id2D;
+  GLuint nLastBind;   // last NONZERO engine bind (0-binds ignored: the
+                      // engine's virtual stage cache binds 0 on units that
+                      // desktop-GL semantics never touched)
+  GLuint idCube;      // engine cube-map bind (normalize/light maps)
   STexEnv env;
 };
 

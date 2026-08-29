@@ -8,6 +8,39 @@
 #include <string>
 #include <stdarg.h>
 
+static int g_nDiagLogs = 0;
+static int g_nDrainLogs = 0;
+static bool g_bGlCallDiag = false; // per-call GL error drains cost a roundtrip per call
+extern "C" void GLESCompat_Drain(const char *tag);
+extern "C" void GLESCompat_Drain(const char *tag)
+{
+  if (!g_bGlCallDiag)
+    return;
+  GLenum e = es_glGetError ? es_glGetError() : 0;
+  if (e && g_nDrainLogs < 40)
+  {
+    g_nDrainLogs++;
+    glescompat::GLog("drain[%s]: err %x", tag, (unsigned)e);
+  }
+  while (e)
+    e = es_glGetError ? es_glGetError() : 0;
+}
+static void GCDrain(const char *tag)
+{
+  if (!g_bGlCallDiag)
+    return;
+  GLenum e = es_glGetError ? es_glGetError() : 0;
+  if (e && g_nDrainLogs < 40)
+  {
+    g_nDrainLogs++;
+    glescompat::GLog("drain[%s]: err %x", tag, (unsigned)e);
+  }
+  while (e)
+    e = es_glGetError ? es_glGetError() : 0;
+}
+
+
+
 // ---------------------------------------------------------------------------
 // ES procedure pointer storage (file scope - matches the header's externs)
 // ---------------------------------------------------------------------------
@@ -46,6 +79,16 @@ typedef void (APIENTRY *PFN_glSampleCoverage)(GLfloat, GLboolean);
 static PFN_glSampleCoverage p_glSampleCoverage = 0;
 
 namespace glescompat {
+bool DiagEnabled()
+{
+  static int n = -1;
+  if (n < 0)
+  {
+    const char *e = getenv("NC_GLES_DIAG");
+    n = (e && e[0] == '1') ? 1 : 0;
+  }
+  return n == 1;
+}
 
 // ---------------------------------------------------------------------------
 // logging
@@ -70,7 +113,7 @@ void WarnOnce(int id, const char *what)
       return;
     mask |= bit;
   }
-  GLog("[once] %s", what);
+  glescompat::GLog("[once] %s", what);
 }
 
 static GLenum g_lastError = GL_NO_ERROR;
@@ -513,68 +556,70 @@ static const char *VS_SRC =
 // texel expressions: q = previous color, t = texel, k = env color, c = vertex color
 static void BuildCombine(char *dst, int unit, int mode, int combine, int srcRGB[3], int opRGB[3])
 {
-  // returns a GLSL vec4 expression into dst
-  const char *t = "t";
-  const char *p = "c";
+  // GLSL vec4 expression for one texture-env combine stage.
+  // The sampled texel variable for this unit is t<unit> (declared as
+  // "vec4 t0 = texture2D(...)" right before the expression), so a bare "t"
+  // or a double ".rgb" here made EVERY textured program fail to compile
+  // (the "white rectangle with noise" bug on device).
+  char tn[8];
+  snprintf(tn, sizeof(tn), "t%d", unit);
+  const char *t = tn;
   const char *k = "uEnvColor0";
   if (unit == 1) k = "uEnvColor1";
   else if (unit == 2) k = "uEnvColor2";
   else if (unit == 3) k = "uEnvColor3";
-  char op[3][12];
-  char sr[3][12];
+
+  char sr[3][40]; // vec4 expression per operand
   for (int i = 0; i < 3; i++)
   {
-    switch (srcRGB[i])
-    {
-    case 0x8576: strcpy(sr[i], k); break;       // CONSTANT
-    case 0x8577: strcpy(sr[i], "vCol"); break;  // PRIMARY_COLOR
-    case 0x8578: strcpy(sr[i], "c"); break;     // PREVIOUS
-    default: strcpy(sr[i], t); break;           // TEXTURE
-    }
-    if (opRGB[i] == 0x8591) // ONE_MINUS_SRC_COLOR
-    {
-      static char buf[3][40];
-      snprintf(buf[i], sizeof(buf[i]), "(vec4(1.0)-%s)", sr[i]);
-      strcpy(sr[i], buf[i]);
-    }
-    strcpy(op[i], ".rgb");
+    const char *base = t;
+    if (srcRGB[i] == 0x8576)       // CONSTANT
+      base = k;
+    else if (srcRGB[i] == 0x8577)  // PRIMARY_COLOR
+      base = "vCol";
+    else if (srcRGB[i] == 0x8578)  // PREVIOUS
+      base = "c";
+    if (opRGB[i] == 0x8591)        // ONE_MINUS_SRC_COLOR
+      snprintf(sr[i], sizeof(sr[i]), "(vec4(1.0)-%s)", base);
+    else
+      snprintf(sr[i], sizeof(sr[i]), "%s", base);
   }
+  (void)mode;
   switch (combine)
   {
-  case 0x8576: // CONSTANT -> glTexEnvf GL_*_SCALE etc: just texture
-    strcpy(dst, t);
+  case 0x8576: // CONSTANT (quirk in the stored state) -> plain texture
+    snprintf(dst, 192, "%s", sr[0]);
+    break;
+  case 0x2101: // REPLACE
+    snprintf(dst, 192, "vec4(%s.rgb,%s.a)", sr[0], sr[0]);
     break;
   case 0x8574: // ADD_SIGNED
-    snprintf(dst, 192, "vec4(%s.rgb%s+%s.rgb%s-vec3(0.5),%s.a%s*%s.a%s)",
-             sr[0], op[0], sr[1], op[1], sr[0], op[0], sr[1], op[1]);
+    snprintf(dst, 192, "vec4(%s.rgb+%s.rgb-vec3(0.5),%s.a*%s.a)",
+             sr[0], sr[1], sr[0], sr[1]);
     break;
   case 0x84E7: // SUBTRACT
-    snprintf(dst, 192, "vec4(%s.rgb%s-%s.rgb%s,%s.a%s*%s.a%s)",
-             sr[0], op[0], sr[1], op[1], sr[0], op[0], sr[1], op[1]);
+    snprintf(dst, 192, "vec4(%s.rgb-%s.rgb,%s.a*%s.a)",
+             sr[0], sr[1], sr[0], sr[1]);
     break;
   case 0x8575: // INTERPOLATE
-    snprintf(dst, 256, "mix(%s.rgb%s,%s.rgb%s,%s.a%s),vec4(0,0,0,%s.a%s*%s.a%s)",
-             sr[0], op[0], sr[1], op[1], sr[2], op[2], sr[0], op[0], sr[1], op[1]);
+    snprintf(dst, 224, "vec4(mix(%s.rgb,%s.rgb,%s.a),%s.a*%s.a)",
+             sr[0], sr[1], sr[2], sr[0], sr[1]);
     break;
   case 0x8006: // DOT3 unsupported -> modulate
     WarnOnce(31, "texenv DOT3 not implemented, using modulate");
     // fallthrough
   case 0x2100: // MODULATE
-    snprintf(dst, 192, "vec4(%s.rgb%s*%s.rgb%s,%s.a%s*%s.a%s)",
-             sr[0], op[0], sr[1], op[1], sr[0], op[0], sr[1], op[1]);
+    snprintf(dst, 192, "vec4(%s.rgb*%s.rgb,%s.a*%s.a)",
+             sr[0], sr[1], sr[0], sr[1]);
     break;
   case 0x0104: // ADD
-    snprintf(dst, 192, "vec4(%s.rgb%s+%s.rgb%s,%s.a%s*%s.a%s)",
-             sr[0], op[0], sr[1], op[1], sr[0], op[0], sr[1], op[1]);
-    break;
-  case 0x2101: // REPLACE
-    snprintf(dst, 128, "vec4(%s.rgb%s,%s.a%s)", sr[0], op[0], sr[0], op[0]);
+    snprintf(dst, 192, "vec4(%s.rgb+%s.rgb,%s.a*%s.a)",
+             sr[0], sr[1], sr[0], sr[1]);
     break;
   default:
-    strcpy(dst, p);
+    snprintf(dst, 192, "c");
     break;
   }
-  (void)mode;
 }
 
 static bool CompileProgram(GLuint &progOut, const SProgCfg &cfg)
@@ -590,7 +635,7 @@ static bool CompileProgram(GLuint &progOut, const SProgCfg &cfg)
   {
     char log[512];
     es_glGetShaderInfoLog(vs, sizeof(log), 0, log);
-    GLog("VS compile failed: %s", log);
+    glescompat::GLog("VS compile failed: %s", log);
     return false;
   }
   // NOTE: never pass &fsrc (address of a char array) as const char** -
@@ -686,7 +731,7 @@ static bool CompileProgram(GLuint &progOut, const SProgCfg &cfg)
   {
     char log[512];
     es_glGetShaderInfoLog(fs, sizeof(log), 0, log);
-    GLog("FS compile failed: %s\nsrc:\n%.1200s", log, fsrc.c_str());
+    glescompat::GLog("FS compile failed: %s\nsrc:\n%.1200s", log, fsrc.c_str());
     es_glDeleteShader(vs);
     es_glDeleteShader(fs);
     return false;
@@ -708,7 +753,7 @@ static bool CompileProgram(GLuint &progOut, const SProgCfg &cfg)
   {
     char log[512];
     es_glGetProgramInfoLog(pr, sizeof(log), 0, log);
-    GLog("link failed: %s", log);
+    glescompat::GLog("link failed: %s", log);
     return false;
   }
   es_glDeleteShader(vs);
@@ -876,6 +921,10 @@ static void BuildConvertedIndices(GLenum mode, int n, std::vector<GLuint> &idx)
 // stream draw: verts are ready; mode may need conversion
 static void StreamDraw(GLenum mode, int n)
 {
+  static int s_nChk = 0;
+#define GCCHK(tag) do { GLenum e_ = es_glGetError(); if (e_ && s_nChk < 8) glescompat::GLog("glerr %x after %s", (unsigned)e_, tag); } while(0)
+  { GLenum drain_ = es_glGetError(); if (s_nChk < 8 && drain_) glescompat::GLog("pre-drain err %x", (unsigned)drain_);
+    while (drain_) drain_ = es_glGetError(); }
   if (n <= 0 || g_Stream.empty())
     return;
   EnsureScratch();
@@ -886,7 +935,13 @@ static void StreamDraw(GLenum mode, int n)
     return;
   }
   es_glUseProgram(p->prog);
-  es_glUniformMatrix4fv(p->uMVP, 1, 0, g_mv.cur.m);
+  {
+    // desktop GL: clip = P * MV * pos; uploading MV alone ignored
+    // glOrtho/glLoadMatrixf(PROJECTION) and misplaced every 2D element
+    Mat4 g_mvp;
+    MatMul(g_mvp, g_pj.cur, g_mv.cur);
+    es_glUniformMatrix4fv(p->uMVP, 1, 0, g_mvp.m);
+  }
   es_glUniform1f(p->uPSize, g_fPointSize);
   if (p->uARef >= 0)
     es_glUniform1f(p->uARef, g_fAlphaRef);
@@ -938,6 +993,13 @@ static void StreamDraw(GLenum mode, int n)
     if (cfg->texMask & (1 << u))
     {
       es_glActiveTexture(GL_TEXTURE0 + u);
+      // re-hang the unit's last real texture: 0-binds from the engine's
+      // virtual stage cache must not blank the sampler
+      {
+        STexObj *tb = TexGet(g_TexUnit[u].nLastBind);
+        if (tb && tb->es)
+          es_glBindTexture(GL_TEXTURE_2D, tb->es);
+      }
       GLint loc = es_glGetUniformLocation(p->prog, u == 0 ? "uTex0" : u == 1 ? "uTex1" : u == 2 ? "uTex2" : "uTex3");
       if (loc >= 0)
         es_glUniform1i(loc, u);
@@ -959,6 +1021,65 @@ static void StreamDraw(GLenum mode, int n)
     es_glDrawArrays(mode, 0, n);
   }
   es_glBindBuffer(0x8892, 0);
+  // one-shot per-config draw validation: GL error + center-pixel readback
+  {
+    static int s_nValidated = 0;
+    if (s_nValidated < 20 && DiagEnabled())
+    {
+      s_nValidated++;
+      GLenum err = es_glGetError();
+      unsigned char px[4] = {0, 0, 0, 0};
+      GLint vp[4] = {0, 0, 0, 0};
+      es_glGetIntegerv(0x0BA2 /*VIEWPORT*/, vp);
+      es_glReadPixels(vp[0] + vp[2] / 2, vp[1] + vp[3] / 2, 1, 1,
+                      0x1908 /*RGBA*/, 0x1401 /*UNSIGNED_BYTE*/, px);
+      char sErr[32] = "ok";
+      if (err) snprintf(sErr, sizeof(sErr), "%x", (unsigned)err);
+      unsigned char tp[4] = {0, 0, 0, 0};
+      es_glReadPixels(vp[2] / 10, vp[3] / 10, 1, 1, 0x1908, 0x1401, tp); // inside the textured quad
+      STexObj *bt = BoundTex(0);
+      unsigned char txp[4] = {0, 0, 0, 0};
+      static int s_nProbeDone = 0;
+      if (bt && bt->es && es_glBindFramebuffer && es_glFramebufferTexture2D && es_glCheckFramebufferStatus && es_glReadPixels)
+      {
+        GLint prevFbo = 0;
+        es_glGetIntegerv(0x8CA6, &prevFbo);
+        es_glBindFramebuffer(0x8D40, g_nFBO);
+        es_glFramebufferTexture2D(0x8D40, 0x8CE0, GL_TEXTURE_2D, bt->es, 0);
+        GLenum fst = es_glCheckFramebufferStatus(0x8D40);
+        if (fst == 0x8CD5)
+          es_glReadPixels(bt->width / 2, bt->height / 2, 1, 1, 0x1908, 0x1401, txp);
+        // probe self-test: red 2x2 texture must read back red
+        GLuint rt = 0;
+        es_glGenTextures(1, &rt);
+        es_glBindTexture(GL_TEXTURE_2D, rt);
+        unsigned char red[16] = {255,0,0,255, 255,0,0,255, 255,0,0,255, 255,0,0,255};
+        es_glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 2, 2, 0, GL_RGBA, 0x1401, red);
+        es_glFramebufferTexture2D(0x8D40, 0x8CE0, GL_TEXTURE_2D, rt, 0);
+        if (es_glCheckFramebufferStatus(0x8D40) == 0x8CD5)
+        {
+          unsigned char rp[4] = {0, 0, 0, 0};
+          es_glReadPixels(0, 0, 1, 1, 0x1908, 0x1401, rp);
+          glescompat::GLog("drawcheck3: fst=%x fboerr=%x selftest=%02x%02x%02x%02x",
+                           (unsigned)fst, (unsigned)es_glGetError(),
+                           rp[0], rp[1], rp[2], rp[3]);
+        }
+        else
+          glescompat::GLog("drawcheck3: fst=%x (selftest skipped)", (unsigned)fst);
+        es_glFramebufferTexture2D(0x8D40, 0x8CE0, GL_TEXTURE_2D, 0, 0);
+        es_glBindTexture(GL_TEXTURE_2D, bt ? bt->es : 0);
+        es_glBindFramebuffer(0x8D40, (GLuint)prevFbo);
+        s_nProbeDone++;
+      }
+      glescompat::GLog("drawcheck: cfg=%x mode=%x n=%d vp=%dx%d err=%s px=%02x%02x%02x%02x texpx=%02x%02x%02x%02x tex=%p es=%u %dx%d maxLvl=%d",
+           (unsigned)KeyHash(*CurrentCfg()), (unsigned)mode, n, vp[2], vp[3],
+           sErr, px[0], px[1], px[2], px[3], tp[0], tp[1], tp[2], tp[3],
+           (void *)bt, bt ? bt->es : 0, bt ? bt->width : 0, bt ? bt->height : 0,
+           bt ? bt->maxLevelUploaded : -2);
+      if (bt)
+        glescompat::GLog("drawcheck2: texcenter=%02x%02x%02x%02x", txp[0], txp[1], txp[2], txp[3]);
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1090,6 +1211,7 @@ void APIENTRY glOrtho(GLdouble, GLdouble, GLdouble, GLdouble, GLdouble, GLdouble
 // ---- immediate ----
 void APIENTRY glBegin(GLenum mode)
 {
+  GLESCompat_Drain("glBegin");
   if (g_bInBegin)
     return;
   RecI(LC_BEGIN, (int)mode);
@@ -1099,6 +1221,7 @@ void APIENTRY glBegin(GLenum mode)
 }
 void APIENTRY glEnd(void)
 {
+  GLESCompat_Drain("glEnd");
   if (!g_bInBegin)
     return;
   RecI(LC_END);
@@ -1111,7 +1234,7 @@ void APIENTRY glEnd(void)
   ImplEnd();
 }
 void APIENTRY glVertex2f(GLfloat x, GLfloat y) { Rec3(LC_VERTEX3F, x, y, 0); if (!g_bListRecording) ImplVertex(x, y, 0); }
-void APIENTRY glVertex3f(GLfloat x, GLfloat y, GLfloat z) { Rec3(LC_VERTEX3F, x, y, z); if (!g_bListRecording) ImplVertex(x, y, z); }
+void APIENTRY glVertex3f(GLfloat x, GLfloat y, GLfloat z) {  GLESCompat_Drain("glVertex3f");Rec3(LC_VERTEX3F, x, y, z); if (!g_bListRecording) ImplVertex(x, y, z); }
 void APIENTRY glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
   Rec4(LC_VERTEX3F, x, y, z, 0);
@@ -1139,6 +1262,7 @@ void APIENTRY glColor3f(GLfloat r, GLfloat g, GLfloat b)
 }
 void APIENTRY glColor4f(GLfloat r, GLfloat g, GLfloat b, GLfloat a)
 {
+  GLESCompat_Drain("glColor4f");
   Rec4(LC_COLOR4F, r, g, b, a);
   g_CurColor[0] = r; g_CurColor[1] = g; g_CurColor[2] = b; g_CurColor[3] = a;
 }
@@ -1342,11 +1466,13 @@ static SMatrixSet *CurSet(void)
 }
 void APIENTRY glMatrixMode(GLenum mode)
 {
+  GLESCompat_Drain("glMatrixMode");
   RecI(LC_MATRIXMODE, (int)mode);
   g_nMatrixMode = mode;
 }
 void APIENTRY glPushMatrix(void)
 {
+  GLESCompat_Drain("glPushMatrix");
   RecI(LC_PUSHMATRIX);
   SMatrixSet *s = CurSet();
   if (s->depth < s->maxDepth - 1)
@@ -1360,6 +1486,7 @@ void APIENTRY glPushMatrix(void)
 }
 void APIENTRY glPopMatrix(void)
 {
+  GLESCompat_Drain("glPopMatrix");
   RecI(LC_POPMATRIX);
   SMatrixSet *s = CurSet();
   if (s->depth > 0)
@@ -1374,6 +1501,7 @@ void APIENTRY glPopMatrix(void)
 }
 void APIENTRY glLoadIdentity(void)
 {
+  GLESCompat_Drain("glLoadIdentity");
   RecI(LC_IDENTITY);
   MatIdentity(CurSet()->cur);
   if (g_nMatrixMode == GL_MODELVIEW)
@@ -1381,6 +1509,7 @@ void APIENTRY glLoadIdentity(void)
 }
 void APIENTRY glLoadMatrixf(const GLfloat *m)
 {
+  GLESCompat_Drain("glLoadMatrixf");
   RecMat(LC_LOADMATRIX, *(const Mat4 *)m);
   memcpy(CurSet()->cur.m, m, sizeof(Mat4));
   if (g_nMatrixMode == GL_MODELVIEW)
@@ -1411,6 +1540,7 @@ void APIENTRY glMultMatrixd(const GLdouble *m)
 }
 void APIENTRY glTranslatef(GLfloat x, GLfloat y, GLfloat z)
 {
+  GLESCompat_Drain("glTranslatef");
   Rec3(LC_TRANSLATE, x, y, z);
   Mat4 t;
   MatIdentity(t);
@@ -1478,6 +1608,7 @@ void APIENTRY glFrustum(GLdouble l, GLdouble r, GLdouble b, GLdouble t, GLdouble
 }
 void APIENTRY glOrtho(GLdouble l, GLdouble r, GLdouble b, GLdouble t, GLdouble n, GLdouble f)
 {
+  GCDrain("glOrtho");
   SListCmd c;
   memset(&c, 0, sizeof(c));
   c.op = LC_ORTHO;
@@ -1506,6 +1637,7 @@ void APIENTRY glDepthRange(GLclampd n, GLclampd f)
 // ---- enables ----
 void APIENTRY glEnable(GLenum cap)
 {
+  GCDrain("glEnable");
   RecI(LC_ENABLE, (int)cap);
   switch (cap)
   {
@@ -1537,6 +1669,7 @@ void APIENTRY glEnable(GLenum cap)
 }
 void APIENTRY glDisable(GLenum cap)
 {
+  GCDrain("glDisable");
   RecI(LC_DISABLE, (int)cap);
   switch (cap)
   {
@@ -1582,6 +1715,7 @@ GLboolean APIENTRY glIsEnabled(GLenum cap)
 // ---- state setters ----
 void APIENTRY glAlphaFunc(GLenum func, GLclampf ref)
 {
+  GCDrain("glAlphaFunc");
   g_nAlphaFunc = func;
   g_fAlphaRef = (GLfloat)ref;
 }
@@ -1608,7 +1742,7 @@ void APIENTRY glFogfv(GLenum pname, const GLfloat *params)
   else if (pname == GL_FOG_DENSITY || pname == GL_FOG_START || pname == GL_FOG_END)
     glFogf(pname, params[0]);
 }
-void APIENTRY glShadeModel(GLenum mode) { g_nShadeModel = mode; }
+void APIENTRY glShadeModel(GLenum mode) {  GLESCompat_Drain("glShadeModel");g_nShadeModel = mode; }
 void APIENTRY glLightModelf(GLenum pname, GLfloat param) { (void)pname; (void)param; }
 void APIENTRY glLightModelfv(GLenum pname, const GLfloat *params)
 {
@@ -1737,21 +1871,22 @@ void APIENTRY glClearStencil(GLint s)
 }
 void APIENTRY glClear(GLbitfield mask)
 {
+  GCDrain("glClear");
   if (mask & ~(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT))
     mask &= (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
   if (es_glClear)
     es_glClear(mask);
 }
-void APIENTRY glViewport(GLint x, GLint y, GLsizei w, GLsizei h) { if (es_glViewport) es_glViewport(x, y, w, h); }
-void APIENTRY glScissor(GLint x, GLint y, GLsizei w, GLsizei h) { if (es_glScissor) es_glScissor(x, y, w, h); }
-void APIENTRY glDepthFunc(GLenum f) { if (es_glDepthFunc) es_glDepthFunc(f); }
-void APIENTRY glDepthMask(GLboolean f) { if (es_glDepthMask) es_glDepthMask(f); }
-void APIENTRY glCullFace(GLenum m) { if (es_glCullFace) es_glCullFace(m); }
+void APIENTRY glViewport(GLint x, GLint y, GLsizei w, GLsizei h) {  GLESCompat_Drain("glViewport");if (es_glViewport) es_glViewport(x, y, w, h); }
+void APIENTRY glScissor(GLint x, GLint y, GLsizei w, GLsizei h) {  GLESCompat_Drain("glScissor");if (es_glScissor) es_glScissor(x, y, w, h); }
+void APIENTRY glDepthFunc(GLenum f) {  GLESCompat_Drain("glDepthFunc");if (es_glDepthFunc) es_glDepthFunc(f); }
+void APIENTRY glDepthMask(GLboolean f) {  GLESCompat_Drain("glDepthMask");if (es_glDepthMask) es_glDepthMask(f); }
+void APIENTRY glCullFace(GLenum m) {  GLESCompat_Drain("glCullFace");if (es_glCullFace) es_glCullFace(m); }
 void APIENTRY glFrontFace(GLenum m) { if (es_glFrontFace) es_glFrontFace(m); }
 void APIENTRY glStencilFunc(GLenum f, GLint r, GLuint m) { if (es_glStencilFunc) es_glStencilFunc(f, r, m); }
-void APIENTRY glStencilOp(GLenum fail, GLenum zfail, GLenum zpass) { if (es_glStencilOp) es_glStencilOp(fail, zfail, zpass); }
+void APIENTRY glStencilOp(GLenum fail, GLenum zfail, GLenum zpass) {  GLESCompat_Drain("glStencilOp");if (es_glStencilOp) es_glStencilOp(fail, zfail, zpass); }
 void APIENTRY glStencilMask(GLuint m) { if (es_glStencilMask) es_glStencilMask(m); }
-void APIENTRY glBlendFunc(GLenum s, GLenum d) { if (es_glBlendFunc) es_glBlendFunc(s, d); }
+void APIENTRY glBlendFunc(GLenum s, GLenum d) {  GLESCompat_Drain("glBlendFunc");if (es_glBlendFunc) es_glBlendFunc(s, d); }
 void APIENTRY glBlendColor(GLclampf r, GLclampf g, GLclampf b, GLclampf a) { if (es_glBlendColor) es_glBlendColor(r, g, b, a); }
 void APIENTRY glPolygonOffset(GLfloat factor, GLfloat units)
 {
@@ -1770,7 +1905,33 @@ void APIENTRY glPixelStorei(GLenum pname, GLint param)
 }
 void APIENTRY glPixelTransferf(GLenum pname, GLfloat param) { (void)pname; (void)param; }
 void APIENTRY glPixelTransferi(GLenum pname, GLint param) { (void)pname; (void)param; }
-void APIENTRY glFinish(void) { if (es_glFinish) es_glFinish(); }
+void APIENTRY glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
+                           GLenum format, GLenum type, void *pixels)
+{
+  if (es_glReadPixels)
+    es_glReadPixels(x, y, width, height, format, type, pixels);
+}
+
+void APIENTRY glFinish(void)
+{
+  if (es_glFinish)
+    es_glFinish();
+  {
+    static int s_nFinLog = 0;
+    if (s_nFinLog < 2 && es_glReadPixels && DiagEnabled())
+    {
+      s_nFinLog++;
+      unsigned char px[4] = {0, 0, 0, 0};
+      GLint vp[4] = {0, 0, 0, 0};
+      es_glGetIntegerv(0x0BA2, vp);
+      GLint fb = -1;
+      es_glGetIntegerv(0x8CA6, &fb);
+      es_glReadPixels(vp[0] + vp[2] / 2, vp[1] + vp[3] / 2, 1, 1, 0x1908, 0x1401, px);
+      glescompat::GLog("finishdiag: vp=%dx%d fbbind=%d px=%02x%02x%02x%02x",
+                       vp[2], vp[3], fb, px[0], px[1], px[2], px[3]);
+    }
+  }
+}
 void APIENTRY glFlush(void) { if (es_glFlush) es_glFlush(); }
 void APIENTRY glHint(GLenum target, GLenum mode) { if (es_glHint) es_glHint(target, mode); }
 void APIENTRY glClipPlane(GLenum plane, const GLdouble *eq)
@@ -2005,21 +2166,25 @@ void APIENTRY glClientActiveTextureARB(GLenum tex)
 }
 void APIENTRY glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
 {
+  GLESCompat_Drain("glVertexPointer");
   g_arrVertex.size = size; g_arrVertex.type = type; g_arrVertex.stride = stride;
   g_arrVertex.ptr = ptr; g_arrVertex.vbo = g_nArrayBuffer;
 }
 void APIENTRY glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
 {
+  GLESCompat_Drain("glColorPointer");
   g_arrColor.size = size; g_arrColor.type = type; g_arrColor.stride = stride;
   g_arrColor.ptr = ptr; g_arrColor.vbo = g_nArrayBuffer;
 }
 void APIENTRY glNormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
 {
+  GLESCompat_Drain("glNormalPointer");
   g_arrNormal.size = 3; g_arrNormal.type = type; g_arrNormal.stride = stride;
   g_arrNormal.ptr = ptr; g_arrNormal.vbo = g_nArrayBuffer;
 }
 void APIENTRY glTexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
 {
+  GLESCompat_Drain("glTexCoordPointer");
   if (g_nClientUnit >= GC_MAX_UNITS)
     return;
   g_arrTexCoord[g_nClientUnit].size = size; g_arrTexCoord[g_nClientUnit].type = type;
@@ -2039,6 +2204,7 @@ void APIENTRY glFogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid *pt
 }
 void APIENTRY glEnableClientState(GLenum cap)
 {
+  GLESCompat_Drain("glEnableClientState");
   switch (cap)
   {
   case GL_VERTEX_ARRAY: g_arrVertex.enabled = true; break;
@@ -2055,6 +2221,7 @@ void APIENTRY glEnableClientState(GLenum cap)
 }
 void APIENTRY glDisableClientState(GLenum cap)
 {
+  GLESCompat_Drain("glDisableClientState");
   switch (cap)
   {
   case GL_VERTEX_ARRAY: g_arrVertex.enabled = false; break;
@@ -2359,7 +2526,13 @@ void APIENTRY glDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvo
   if (!p)
     return;
   es_glUseProgram(p->prog);
-  es_glUniformMatrix4fv(p->uMVP, 1, 0, g_mv.cur.m);
+  {
+    // desktop GL: clip = P * MV * pos; uploading MV alone ignored
+    // glOrtho/glLoadMatrixf(PROJECTION) and misplaced every 2D element
+    Mat4 g_mvp;
+    MatMul(g_mvp, g_pj.cur, g_mv.cur);
+    es_glUniformMatrix4fv(p->uMVP, 1, 0, g_mvp.m);
+  }
   es_glUniform1f(p->uPSize, g_fPointSize);
   if (p->uARef >= 0)
     es_glUniform1f(p->uARef, g_fAlphaRef);
@@ -2398,6 +2571,13 @@ void APIENTRY glDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvo
       es_glEnableVertexAttribArray(a);
       es_glVertexAttribPointer(a, 2, GL_FLOAT, 0, kStreamStride, (const void *)(size_t)(16 + u * 8));
       es_glActiveTexture(GL_TEXTURE0 + u);
+      // re-hang the unit's last real texture: 0-binds from the engine's
+      // virtual stage cache must not blank the sampler
+      {
+        STexObj *tb = TexGet(g_TexUnit[u].nLastBind);
+        if (tb && tb->es)
+          es_glBindTexture(GL_TEXTURE_2D, tb->es);
+      }
       GLint loc = es_glGetUniformLocation(p->prog, u == 0 ? "uTex0" : u == 1 ? "uTex1" : u == 2 ? "uTex2" : "uTex3");
       if (loc >= 0)
         es_glUniform1i(loc, u);
@@ -2544,6 +2724,7 @@ static const SNameProc g_CoreProcs[] = {
   E(glStencilMask), E(glBlendFunc), E(glBlendColor), E(glPolygonOffset),
   E(glDrawBuffer), E(glReadBuffer), E(glPixelStorei), E(glPixelTransferf),
   E(glPixelTransferi), E(glFinish), E(glFlush), E(glHint), E(glClipPlane),
+  E(glReadPixels),
   E(glGetClipPlane), E(glEdgeFlag), E(glEdgeFlagv), E(glIndexi), E(glIndexf),
   E(glLogicOp), E(glGetError), E(glGetString), E(glGetFloatv), E(glGetIntegerv),
   E(glGetBooleanv), E(glGetMaterialfv), E(glGetLightfv), E(glBindBufferARB),
@@ -2563,6 +2744,9 @@ static const SNameProc g_CoreProcs[] = {
 #undef E
 };
 namespace glescompat {
+int g_nEsMajor = 3; // detected runtime ES version (1/2/3); texture upload
+                    // formats and swizzles adapt to it (ES2 rejects sized
+                    // internal formats and has no texture swizzles)
 const SNameProc *CoreProcs(int &count)
 {
   count = (int)(sizeof(g_CoreProcs) / sizeof(g_CoreProcs[0]));
@@ -2600,6 +2784,18 @@ void GLESCompat_Init(void)
   {
     GLog("FATAL: ES procs not resolvable");
     return;
+  }
+  if (es_glGetString)
+  {
+    const char *v = (const char *)es_glGetString(0x1F02 /*GL_VERSION*/);
+    // "OpenGL ES 3.2 ..." or bare "2.0 ..."; find the "ES <major>." part
+    const char *es = v ? strstr(v, "ES ") : 0;
+    const char *d = es ? es + 3 : v;
+    if (d && d[0] >= '1' && d[0] <= '9')
+    {
+      g_nEsMajor = d[0] - '0';
+      GLog("ES context version: %s (major %d)", v ? v : "?", g_nEsMajor);
+    }
   }
   TexInit();
   g_mv.stack = s_mvStack; g_mv.depth = 0; g_mv.maxDepth = MAX_MV;

@@ -1371,9 +1371,18 @@ bool CSystem::Init( const SSystemInitParams &params )
 					for (int x = 0; x < W; x++)
 					{
 						unsigned char px[4];
-						px[0] = (unsigned char)(x * 2);
-						px[1] = (unsigned char)(y * 2);
-						px[2] = (unsigned char)((x ^ y) & 255);
+						if (getenv("NC_2D_FLATTEX"))
+						{
+							// flat magenta: magenta quads = UVs collapse to one texel
+							px[0] = 255; px[1] = 0; px[2] = 255; px[3] = 255;
+						}
+						else
+						{
+							px[0] = (unsigned char)(x * 2);
+							px[1] = (unsigned char)(y * 2);
+							px[2] = (unsigned char)((x ^ y) & 255);
+							px[3] = 255;
+						}
 						px[3] = 255;
 						fwrite(px, 1, 4, f);
 					}
@@ -1384,20 +1393,45 @@ bool CSystem::Init( const SSystemInitParams &params )
 			CryLogAlways("2D selftest: texture id %d", nTexID);
 			IRenderer *pR = m_pRenderer;
 			int nQuads = 0;
-			for (int i = 0; i < 300 && nQuads < 100000000; i++)
+			int nStage = 9;
+			{
+				const char *szStage = getenv("NC_2D_STAGE");
+				if (szStage && szStage[0])
+					nStage = atoi(szStage);
+			}
+			CryLogAlways("2D selftest: stage %d", nStage);
+			for (int i = 0; i < 6 && nQuads < 100000000; i++)
 			{
 				pR->SetState(GS_BLSRC_SRCALPHA | GS_BLDST_ONEMINUSSRCALPHA | GS_NODEPTHTEST);
 				pR->Set2DMode(true, 1280, 720);
-				pR->Draw2dImage(10, 10, 200, 50, nTexID, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0);
-				nQuads++;
-				pR->Draw2dImage(300, 200, 100, 100, nTexID, 0, 0, 1, 1, 45.0f, 1, 1, 1, 0.5f, 0);
-				nQuads++;
-				pR->Draw2dImage(0, 0, 1280, 720, -1, 0, 0, 0, 0, 0, 0.2f, 0.4f, 0.9f, 1, 0);
-				nQuads++;
+				if (nStage >= 0)
+				{
+					pR->Draw2dImage(0, 0, 1280, 720, -1, 0, 0, 0, 0, 0, 0.2f, 0.4f, 0.9f, 1, 0);
+					nQuads++;
+				}
+				if (nStage >= 1)
+				{
+					pR->Draw2dImage(10, 10, 200, 50, nTexID, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0);
+					nQuads++;
+				}
+				if (nStage >= 2)
+				{
+					pR->Draw2dImage(300, 200, 100, 100, nTexID, 0, 0, 1, 1, 45.0f, 1, 1, 1, 0.5f, 0);
+					nQuads++;
+				}
 				pR->Draw2dLine(0, 0, 100, 100);
 				pR->Set2DMode(false, 0, 0);
 				pR->SetState(GS_DEPTHWRITE);
 			}
+			// capture one diagnostic frame: white base, textured quad,
+			// rotated textured quad - lets the dev SEE the texture path
+			pR->SetState(GS_BLSRC_SRCALPHA | GS_BLDST_ONEMINUSSRCALPHA | GS_NODEPTHTEST);
+			pR->Set2DMode(true, 1280, 720);
+			pR->Draw2dImage(0, 0, 1280, 720, -1, 0, 0, 0, 0, 0, 0.25f, 0.45f, 0.85f, 1, 0);
+			pR->Draw2dImage(20, 20, 400, 200, nTexID, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0);
+			pR->Draw2dImage(500, 100, 200, 200, nTexID, 0, 0, 1, 1, 30.0f, 1, 1, 1, 1, 0);
+			pR->Draw2dImage(800, 400, 120, 120, nTexID, 0.25f, 0.25f, 0.75f, 0.75f, 0, 1, 1, 1, 1, 0);
+			pR->ScreenShot("selftest_frame");
 			CryLogAlways("2D selftest: OK (%d quads) - exiting", nQuads);
 			exit(0);
 		}

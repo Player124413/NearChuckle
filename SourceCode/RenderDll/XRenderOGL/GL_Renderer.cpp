@@ -2540,7 +2540,15 @@ void CGLRenderer::ScreenShot(const char *filename)
 
   iLog->Log("ScreenShot %s\n",scname);
   unsigned char *pic=new unsigned char [m_width*m_height*4];
+  glFinish();
   glReadPixels(0, 0, m_width, m_height, GL_RGBA, GL_UNSIGNED_BYTE, pic);
+  if (getenv("NC_GLES_DIAG"))
+  {
+    int cx = (m_width / 2) * 4 + (m_height / 2) * m_width * 4;
+    iLog->Log("screendiag: %dx%d center=%02x%02x%02x%02x corner=%02x%02x%02x%02x",
+              m_width, m_height, pic[cx], pic[cx+1], pic[cx+2], pic[cx+3],
+              pic[0], pic[1], pic[2], pic[3]);
+  }
   byte *src = pic;
   byte *dst = new byte[m_width*m_height*4];
   for (i=0; i<m_height; i++)

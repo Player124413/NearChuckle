@@ -4,6 +4,8 @@
 //   emulation via swizzle, RECT/1D target emulation, FBO-based readback.
 // =============================================================================
 #include "GLESCompat_Impl.h"
+namespace glescompat { bool DiagEnabled(); }
+static inline bool DiagOn() { return glescompat::DiagEnabled(); }
 
 namespace glescompat {
 
@@ -65,10 +67,19 @@ STexObj *TexGet(GLuint name)
 
 void TexDelete(GLsizei n, const GLuint *names)
 {
+  // engine names may map to different real ES names (create-on-bind)
+  if (es_glDeleteTextures)
+  {
+    for (int i = 0; i < n; i++)
+    {
+      std::map<GLuint, STexObj>::iterator it = g_TexObjs.find(names[i]);
+      if (it != g_TexObjs.end() && it->second.es != names[i])
+        es_glDeleteTextures(1, &it->second.es);
+    }
+    es_glDeleteTextures(n, names); // passthrough names (es == engine name)
+  }
   for (int i = 0; i < n; i++)
     g_TexObjs.erase(names[i]);
-  if (es_glDeleteTextures)
-    es_glDeleteTextures(n, names);
 }
 
 // swizzle modes for emulated desktop formats
@@ -348,54 +359,131 @@ void TexUploadLevel(GLenum target, GLint level, GLint internalFormat,
   GLenum fmt2 = format;
   const void *d2 = ConvertPixels(w, h, fmt2, type, data, swiz);
   GLint ifmt2 = internalFormat;
-  if (swiz == SW_LUM || swiz == SW_INT || swiz == SW_ALPHA)
-    ifmt2 = 0x822B; // GL_R8
-  else if (swiz == SW_LA)
-    ifmt2 = 0x822F; // GL_RG8
-  else if (ifmt2 == GL_LUMINANCE || ifmt2 == GL_LUMINANCE8 || ifmt2 == GL_LUMINANCE4)
+  extern int g_nEsMajor;
+  if (g_nEsMajor >= 3)
   {
-    ifmt2 = 0x822B;
-    if (swiz == SW_NONE)
+    // ES3: sized formats + swizzles are available
+    if (swiz == SW_LUM || swiz == SW_INT || swiz == SW_ALPHA)
+      ifmt2 = 0x822B; // GL_R8
+    else if (swiz == SW_LA)
+      ifmt2 = 0x822F; // GL_RG8
+    else if (ifmt2 == GL_LUMINANCE || ifmt2 == GL_LUMINANCE8 || ifmt2 == GL_LUMINANCE4)
     {
-      // raw luminance data arrives as GL_LUMINANCE format
-      if (fmt2 == GL_LUMINANCE)
+      ifmt2 = 0x822B;
+      if (swiz == SW_NONE && fmt2 == GL_LUMINANCE)
       {
         fmt2 = 0x1903;
         swiz = SW_LUM;
       }
     }
-  }
-  else if (ifmt2 == GL_LUMINANCE_ALPHA || ifmt2 == GL_LUMINANCE8_ALPHA8)
-  {
-    ifmt2 = 0x822F;
-    if (fmt2 == GL_LUMINANCE_ALPHA)
+    else if (ifmt2 == GL_LUMINANCE_ALPHA || ifmt2 == GL_LUMINANCE8_ALPHA8)
     {
-      fmt2 = 0x8227;
-      swiz = SW_LA;
+      ifmt2 = 0x822F;
+      if (fmt2 == GL_LUMINANCE_ALPHA)
+      {
+        fmt2 = 0x8227;
+        swiz = SW_LA;
+      }
+    }
+    else if (ifmt2 == GL_ALPHA8 || ifmt2 == GL_ALPHA)
+    {
+      ifmt2 = 0x822B;
+      if (fmt2 == GL_ALPHA)
+      {
+        fmt2 = 0x1903;
+        swiz = SW_ALPHA;
+      }
+    }
+    else if (ifmt2 == GL_RGB || ifmt2 == GL_RGB8 || ifmt2 == GL_RGB5 || ifmt2 == GL_RGB4 || ifmt2 == GL_R3_G3_B2)
+      ifmt2 = GL_RGB8;
+    else if (ifmt2 == GL_RGBA || ifmt2 == GL_RGBA8 || ifmt2 == GL_RGBA4 || ifmt2 == GL_RGB5_A1 || ifmt2 == GL_ABGR_EXT_E)
+      ifmt2 = GL_RGBA8;
+    // ES3 requires internalformat to MATCH the pixel format exactly
+    // (desktop GL accepts compatible subsets: RGB8+RGBA data is fine there,
+    // INVALID_ENUM in ES3); the data format is the authority
+    if (swiz == SW_NONE)
+    {
+      if (fmt2 == GL_RGBA)
+        ifmt2 = GL_RGBA8;
+      else if (fmt2 == GL_RGB)
+        ifmt2 = GL_RGB8;
+      else if (fmt2 == 0x1903 /*GL_RED*/ || fmt2 == GL_LUMINANCE)
+        ifmt2 = 0x822B /*GL_R8*/;
+      else if (fmt2 == 0x8227 /*GL_RG*/ || fmt2 == GL_LUMINANCE_ALPHA)
+        ifmt2 = 0x822F /*GL_RG8*/;
+      else if (fmt2 == GL_ALPHA)
+        ifmt2 = 0x822B;
     }
   }
-  else if (ifmt2 == GL_ALPHA8 || ifmt2 == GL_ALPHA)
+  else
   {
-    ifmt2 = 0x822B;
-    if (fmt2 == GL_ALPHA)
+    // ES1/ES2: sized internal formats are REJECTED (INVALID_ENUM) and there
+    // are no swizzles - pass the native desktop formats straight through
+    // (GL_LUMINANCE/GL_LUMINANCE_ALPHA/GL_ALPHA/GL_RGB/GL_RGBA all exist)
+    if (ifmt2 == 1) ifmt2 = GL_LUMINANCE;
+    else if (ifmt2 == 2) ifmt2 = GL_LUMINANCE_ALPHA;
+    else if (ifmt2 == 3) ifmt2 = GL_RGB;
+    else if (ifmt2 == 4) ifmt2 = GL_RGBA;
+    else
     {
-      fmt2 = 0x1903;
-      swiz = SW_ALPHA;
+      switch (ifmt2)
+      {
+      case GL_LUMINANCE8: ifmt2 = GL_LUMINANCE; break;
+      case GL_LUMINANCE4: ifmt2 = GL_LUMINANCE; break;
+      case GL_LUMINANCE8_ALPHA8: ifmt2 = GL_LUMINANCE_ALPHA; break;
+      case GL_ALPHA8: ifmt2 = GL_ALPHA; break;
+      case GL_RGB8: case GL_RGB5: case GL_RGB4: case GL_R3_G3_B2: ifmt2 = GL_RGB; break;
+      case GL_RGBA8: case GL_RGBA4: case GL_RGB5_A1: ifmt2 = GL_RGBA; break;
+      default: break;
+      }
     }
   }
-  else if (ifmt2 == GL_RGB || ifmt2 == GL_RGB8 || ifmt2 == GL_RGB5 || ifmt2 == GL_RGB4 || ifmt2 == GL_R3_G3_B2)
-    ifmt2 = GL_RGB8;
-  else if (ifmt2 == GL_RGBA || ifmt2 == GL_RGBA8 || ifmt2 == GL_RGBA4 || ifmt2 == GL_RGB5_A1 || ifmt2 == GL_ABGR_EXT_E)
-    ifmt2 = GL_RGBA8;
 
-  es_glTexImage2D(esT, level, ifmt2, w, h, 0, fmt2, type, d2);
-  if (swiz != SW_NONE)
-    ApplySwizzle(esT, swiz);
-  // keep our object metadata fresh
+  // keep our object metadata fresh and rebind the target object: the engine
+  // interleaves binds (its own cache binds 0 between uploads), so the ES
+  // "currently bound" texture is NOT guaranteed to be the upload target -
+  // desktop semantics demand the pixels land in the object bound at
+  // glTexImage2D time, which our tracking knows precisely
+  bool bCubeFace = (target >= 0x8515 && target <= 0x851C); // GL_TEXTURE_CUBE_MAP_POSITIVE_X.._NEGATIVE_Z
   GLuint bound = 0;
   if (g_nActiveUnit < GC_MAX_UNITS)
-    bound = g_TexUnit[g_nActiveUnit].id2D;
+  {
+    bound = bCubeFace ? g_TexUnit[g_nActiveUnit].idCube
+                      : (g_TexUnit[g_nActiveUnit].id2D
+                         ? g_TexUnit[g_nActiveUnit].id2D
+                         : g_TexUnit[g_nActiveUnit].nLastBind);
+  }
   STexObj *t = TexGet(bound);
+  {
+    static int s_nUploadLog = 0;
+    if (s_nUploadLog < 400 && DiagOn())
+    {
+      s_nUploadLog++;
+      GLog("upload: unit=%d id2D=%u found=%d es=%u lvl=%d ifmt=%x fmt=%x type=%x %dx%d",
+           (int)g_nActiveUnit, (unsigned)bound, t ? 1 : 0, t ? t->es : 0,
+           (int)level, (unsigned)ifmt2, (unsigned)fmt2, (unsigned)type,
+           (int)w, (int)h);
+    }
+  }
+  if (t && t->es)
+    es_glBindTexture(esT, t->es);
+  es_glTexImage2D(esT, level, ifmt2, w, h, 0, fmt2, type, d2);
+  {
+    static int s_nUploadErr = 0;
+    if (s_nUploadErr < 8 && DiagOn())
+    {
+      GLenum e2 = es_glGetError();
+      if (e2)
+      {
+        s_nUploadErr++;
+        GLog("upload err %x after TexImage2D", (unsigned)e2);
+      }
+      while (e2)
+        e2 = es_glGetError();
+    }
+  }
+  if (swiz != SW_NONE)
+    ApplySwizzle(esT, swiz);
   if (t)
   {
     if (level > t->maxLevelUploaded)
@@ -404,6 +492,19 @@ void TexUploadLevel(GLenum target, GLint level, GLint internalFormat,
     {
       t->width = w;
       t->height = h;
+      // ES completeness: the engine usually binds BEFORE uploading and never
+      // rebinds (its own bind cache), so the mip-filter downgrade in TexBind
+      // never fires - do it right here or every texture samples black
+      switch (t->minFilter)
+      {
+      case GL_NEAREST_MIPMAP_NEAREST:
+      case GL_LINEAR_MIPMAP_NEAREST:
+      case GL_NEAREST_MIPMAP_LINEAR:
+      case GL_LINEAR_MIPMAP_LINEAR:
+        if (es_glTexParameteri)
+          es_glTexParameteri(esT, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        break;
+      }
     }
   }
 }
@@ -509,17 +610,76 @@ GLboolean TexGetImage(GLenum target, GLint level, GLenum format, GLenum type, vo
   return ok;
 }
 
+static int g_nBindTrace = 0;
 void TexBind(GLenum target, GLuint name)
 {
+  if (DiagOn() && g_nBindTrace < 40)
+  {
+    g_nBindTrace++;
+    STexObj *tt = TexGet(name);
+    GLog("texbind: unit=%d tgt=%x name=%u found=%d es=%u %dx%d", (int)g_nActiveUnit, (unsigned)target, (unsigned)name, tt?1:0, tt?tt->es:0, tt?tt->width:0, tt?tt->height:0);
+  }
   GLenum esT = EsTarget(target);
-  if (es_glBindTexture)
-    es_glBindTexture(esT, name);
   if (g_nActiveUnit >= GC_MAX_UNITS)
     return;
   if (target == GL_TEXTURE_CUBE_MAP)
-    return; // cube tracked natively only
-  g_TexUnit[g_nActiveUnit].id2D = name;
+  {
+    // track cube maps too (normalize/light cube maps are uploaded by the
+    // engine right after binding - the upload needs the object)
+    STexObj *tc = TexGet(name);
+    GLuint esCube = name;
+    if (!tc && name != 0)
+    {
+      STexObj nt;
+      if (es_glGenTextures == 0)
+        return;
+      es_glGenTextures(1, &nt.es);
+      nt.target = GL_TEXTURE_CUBE_MAP;
+      g_TexObjs[name] = nt;
+      tc = &g_TexObjs[name];
+      esCube = tc->es;
+    }
+    if (tc)
+      esCube = tc->es;
+    if (es_glBindTexture)
+      es_glBindTexture(GL_TEXTURE_CUBE_MAP, esCube);
+    g_TexUnit[g_nActiveUnit].idCube = name;
+    return;
+  }
+  // Desktop GL silently creates a new texture object when an unused name is
+  // bound; ES3 REJECTS unknown names (INVALID_OPERATION) and binds nothing.
+  // Far Cry allocates its own names, so unknown binds are normal here:
+  // auto-create a real ES texture and map engine name -> real ES name.
   STexObj *t = TexGet(name);
+  GLuint esName = name;
+  if (!t && name != 0)
+  {
+    STexObj nt;
+    if (es_glGenTextures == 0)
+      return;
+    es_glGenTextures(1, &nt.es);
+    nt.target = GL_TEXTURE_2D;
+    nt.bRectangle = (target == GL_TEXTURE_RECTANGLE_ARB_E ||
+                     target == GL_TEXTURE_RECTANGLE_NV_E);
+    g_TexObjs[name] = nt;
+    t = &g_TexObjs[name];
+    esName = t->es;
+  }
+  if (t)
+    esName = t->es;
+  if (es_glBindTexture)
+    es_glBindTexture(esT, esName);
+  g_TexUnit[g_nActiveUnit].id2D = name;
+  if (name != 0)
+    g_TexUnit[g_nActiveUnit].nLastBind = name;
+  else if (g_TexUnit[g_nActiveUnit].nLastBind)
+  {
+    // never let a 0-bind unbind the ES unit - re-hang the last real texture
+    STexObj *tl = TexGet(g_TexUnit[g_nActiveUnit].nLastBind);
+    if (tl && tl->es && es_glBindTexture)
+      es_glBindTexture(GL_TEXTURE_2D, tl->es);
+    g_TexUnit[g_nActiveUnit].id2D = g_TexUnit[g_nActiveUnit].nLastBind;
+  }
   if (t)
   {
     // ES completeness: a mipmapped min filter with no mips renders black
@@ -532,7 +692,7 @@ void TexBind(GLenum target, GLuint name)
       case GL_NEAREST_MIPMAP_LINEAR:
       case GL_LINEAR_MIPMAP_LINEAR:
         if (es_glTexParameteri)
-          es_glTexParameteri(esT, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+          es_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         break;
       }
     }
@@ -545,6 +705,11 @@ void TexEnableDisable(GLenum cap, bool bOn)
   {
     if (g_nActiveUnit < GC_MAX_UNITS)
       g_TexUnit[g_nActiveUnit].bEnabled2D = bOn;
+    if (DiagOn() && g_nBindTrace < 24)
+    {
+      g_nBindTrace++;
+      GLog("texendbg: unit=%d on=%d", (int)g_nActiveUnit, (int)bOn);
+    }
     if (es_glEnable && bOn)
       es_glEnable(GL_TEXTURE_2D);
     if (es_glDisable && !bOn)
@@ -575,9 +740,14 @@ void APIENTRY glGenTextures(GLsizei n, const GLuint *names)
 void APIENTRY glDeleteTextures(GLsizei n, const GLuint *names) { TexDelete(n, names); }
 GLboolean APIENTRY glIsTexture(GLuint name) { return TexGet(name) ? GL_TRUE : GL_FALSE; }
 
+extern "C" void GLESCompat_Drain(const char *tag);
+// glescompat::DiagEnabled declared at the top of this file
+
 void APIENTRY glBindTexture(GLenum target, GLuint name)
 {
+  GLESCompat_Drain("glBindTexture");
   TexBind(target, name);
+  GLESCompat_Drain("glBindTexture*end");
 }
 
 void APIENTRY glTexImage2D(GLenum target, GLint level, GLint internalFormat,
@@ -600,6 +770,7 @@ void APIENTRY glTexSubImage2D(GLenum target, GLint level, GLint xo, GLint yo,
                               GLsizei w, GLsizei h, GLenum format, GLenum type,
                               const void *data)
 {
+  GLESCompat_Drain("glTexSubImage2D");
   if (target == GL_TEXTURE_1D)
   {
     target = GL_TEXTURE_2D;
@@ -618,6 +789,7 @@ void APIENTRY glCompressedTexImage2DARB(GLenum target, GLint level, GLint intern
                                         GLsizei w, GLsizei h, GLint border,
                                         GLsizei imageSize, const void *data)
 {
+  GLESCompat_Drain("glCompressedTexImage2DARB");
   if (target == GL_TEXTURE_1D)
   {
     target = GL_TEXTURE_2D;
@@ -664,6 +836,7 @@ void APIENTRY glCopyTexSubImage2D(GLenum target, GLint level, GLint xo, GLint yo
 
 void APIENTRY glTexParameteri(GLenum target, GLenum pname, GLint param)
 {
+  GLESCompat_Drain("glTexParameteri");
   GLenum esT = EsTarget(target);
   switch (pname)
   {
@@ -681,11 +854,16 @@ void APIENTRY glTexParameteri(GLenum target, GLenum pname, GLint param)
         t->minFilter = param;
     }
     break;
+  case GL_TEXTURE_BORDER_COLOR:   // desktop/ES3.2-only: silently ignored
+  case 0x8016:                    // GL_TEXTURE_PRIORITY (desktop only)
+  case 0x8136:                    // GL_TEXTURE_LOD_BIAS (desktop only)
+  case 0x2500:                    // GL_TEXTURE_ENV_* leftovers
+    break;
   default:
-    if (es_glTexParameteri)
-      es_glTexParameteri(esT, pname, param);
+    WarnOnce(61, "glTexParameteri: desktop-only pname ignored");
     break;
   }
+  GLESCompat_Drain("glTexParameteri*end");
 }
 void APIENTRY glTexParameterf(GLenum target, GLenum pname, GLfloat param)
 {
@@ -704,6 +882,7 @@ void APIENTRY glTexParameteriv(GLenum target, GLenum pname, const GLint *params)
 
 void APIENTRY glTexEnvi(GLenum target, GLenum pname, GLint param)
 {
+  GLESCompat_Drain("glTexEnvi");
   if (target != GL_TEXTURE_ENV)
   {
     if (es_glTexParameteri)
@@ -760,6 +939,7 @@ void APIENTRY glTexEnviv(GLenum target, GLenum pname, const GLint *params)
 
 void APIENTRY glActiveTextureARB(GLenum tex)
 {
+  GLESCompat_Drain("glActiveTextureARB");
   int u = tex - GL_TEXTURE0;
   if (u >= 0 && u < GC_MAX_UNITS)
     g_nActiveUnit = u;
