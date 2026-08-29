@@ -62,7 +62,12 @@ for ABI in $ABIS; do
     CMAKE_BUILD_TYPE=Release
   fi
 
-  "$CMAKE_BIN" -S "$ROOT" -B "$BUILD_DIR" \
+  # full configure+build log goes to a file (uploaded on CI failure);
+  # console keeps short tails so failures are visible at a glance
+  LOG="$ROOT/android/build/native-$ABI.log"
+  : > "$LOG"
+
+  if ! "$CMAKE_BIN" -S "$ROOT" -B "$BUILD_DIR" \
     -G Ninja \
     -DCMAKE_TOOLCHAIN_FILE="$CMAKE_TOOLCHAIN" \
     -DANDROID_ABI="$ABI" \
@@ -73,9 +78,19 @@ for ABI in $ABIS; do
     -DDISABLE_CG=ON \
     -DCMAKE_EXE_LINKER_FLAGS="-Wl,--gc-sections" \
     -DCMAKE_SHARED_LINKER_FLAGS="-Wl,--gc-sections" \
-    2>&1 | tail -5
+    >> "$LOG" 2>&1; then
+    echo "==> CONFIGURE FAILED for $ABI (full log: $LOG):"
+    tail -40 "$LOG"
+    exit 1
+  fi
+  tail -3 "$LOG"
 
-  "$CMAKE_BIN" --build "$BUILD_DIR" --parallel "$JOBS" 2>&1 | tail -30
+  if ! "$CMAKE_BIN" --build "$BUILD_DIR" --parallel "$JOBS" >> "$LOG" 2>&1; then
+    echo "==> BUILD FAILED for $ABI (full log: $LOG):"
+    grep -m 12 -E "error:" "$LOG" || tail -40 "$LOG"
+    exit 1
+  fi
+  tail -4 "$LOG"
 
   echo "==> Collecting libs for $ABI"
   # engine modules land in bin/<arch>-<type> (per-config outputs)
