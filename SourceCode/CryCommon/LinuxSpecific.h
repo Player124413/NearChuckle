@@ -86,8 +86,12 @@ inline int IsHeapValid ()
 
 #ifndef __cplusplus
 #ifndef _WCHAR_T_DEFINED
+/* bionic (Android) defines wchar_t as 'unsigned int' in <stddef.h>; redefining
+   it as 'unsigned short' breaks C sources. Use the system wchar_t there. */
+#if !defined(__ANDROID__)
 typedef unsigned short wchar_t;
 #define TCHAR wchar_t;
+#endif // !__ANDROID__
 #define _WCHAR_T_DEFINED
 #endif
 #endif
