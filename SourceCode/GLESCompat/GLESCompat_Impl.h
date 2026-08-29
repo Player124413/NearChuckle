@@ -125,6 +125,7 @@ struct STexObj {
   GLenum target;         // GL_TEXTURE_2D or GL_TEXTURE_CUBE_MAP
   GLint minFilter, magFilter, wrapS, wrapT;
   int maxLevelUploaded;
+  unsigned short nAllocMask; // levels actually allocated on the ES object
   int width, height;
   bool bRectangle;       // GL_TEXTURE_RECTANGLE_NV emulation
   bool bProxyTracked;
@@ -132,7 +133,7 @@ struct STexObj {
   void Reset() {
     es = 0; target = GL_TEXTURE_2D; minFilter = GL_NEAREST_MIPMAP_LINEAR;
     magFilter = GL_LINEAR; wrapS = wrapT = GL_REPEAT;
-    maxLevelUploaded = -1; width = height = 0; bRectangle = false; bProxyTracked = false;
+    maxLevelUploaded = -1; nAllocMask = 0; width = height = 0; bRectangle = false; bProxyTracked = false;
   }
 };
 void TexInit(void);

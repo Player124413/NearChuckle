@@ -4,7 +4,7 @@
 //   emulation via swizzle, RECT/1D target emulation, FBO-based readback.
 // =============================================================================
 #include "GLESCompat_Impl.h"
-namespace glescompat { bool DiagEnabled(); }
+namespace glescompat { bool DiagEnabled(); extern int g_nEsMajor; }
 static inline bool DiagOn() { return glescompat::DiagEnabled(); }
 
 namespace glescompat {
@@ -488,6 +488,8 @@ void TexUploadLevel(GLenum target, GLint level, GLint internalFormat,
   {
     if (level > t->maxLevelUploaded)
       t->maxLevelUploaded = level;
+    if (level < 16)
+      t->nAllocMask |= (unsigned short)(1u << level);
     if (level == 0)
     {
       t->width = w;
@@ -502,7 +504,7 @@ void TexUploadLevel(GLenum target, GLint level, GLint internalFormat,
       case GL_NEAREST_MIPMAP_LINEAR:
       case GL_LINEAR_MIPMAP_LINEAR:
         if (es_glTexParameteri)
-          es_glTexParameteri(esT, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+          es_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         break;
       }
     }
@@ -535,11 +537,21 @@ void TexUploadCompressed(GLenum target, GLint level, GLint internalFormat,
     DecodeDXT5((const unsigned char *)data, w, h, &rgba[0]);
     break;
   }
-  es_glTexImage2D(esT, level, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, &rgba[0]);
-  GLuint bound = g_nActiveUnit < GC_MAX_UNITS ? g_TexUnit[g_nActiveUnit].id2D : 0;
+  bool bCubeFace2 = (target >= 0x8515 && target <= 0x851C);
+  GLuint bound = 0;
+  if (g_nActiveUnit < GC_MAX_UNITS)
+    bound = bCubeFace2 ? g_TexUnit[g_nActiveUnit].idCube
+                       : (g_TexUnit[g_nActiveUnit].id2D
+                          ? g_TexUnit[g_nActiveUnit].id2D
+                          : g_TexUnit[g_nActiveUnit].nLastBind);
   STexObj *t = TexGet(bound);
+  if (t && t->es)
+    es_glBindTexture(GL_TEXTURE_2D, t->es); // pixels MUST land in the tracked object
+  es_glTexImage2D(esT, level, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, &rgba[0]);
   if (t)
   {
+    if (level < 16)
+      t->nAllocMask |= (unsigned short)(1u << level);
     if (level > t->maxLevelUploaded)
       t->maxLevelUploaded = level;
     if (level == 0)
@@ -781,8 +793,57 @@ void APIENTRY glTexSubImage2D(GLenum target, GLint level, GLint xo, GLint yo,
   int swiz = SW_NONE;
   GLenum fmt2 = format;
   const void *d2 = ConvertPixels(w, h, fmt2, type, data, swiz);
+  // resolve the REAL upload target: the engine interleave-binds (even 0)
+  // through its own virtual stage cache, so the ES "current" texture is not
+  // the one the desktop call refers to - dynamically updated textures (menu
+  // video, fonts, console) otherwise land on nothing and stay black
+  bool bCubeFace3 = (target >= 0x8515 && target <= 0x851C);
+  GLuint bound = 0;
+  if (g_nActiveUnit < GC_MAX_UNITS)
+    bound = bCubeFace3 ? g_TexUnit[g_nActiveUnit].idCube
+                       : (g_TexUnit[g_nActiveUnit].id2D
+                          ? g_TexUnit[g_nActiveUnit].id2D
+                          : g_TexUnit[g_nActiveUnit].nLastBind);
+  STexObj *t = TexGet(bound);
+  if (t && t->es)
+    es_glBindTexture(GL_TEXTURE_2D, t->es);
+  if (t && level < 16 && !(t->nAllocMask & (1u << level)))
+  {
+    // streamed sub-update for a level that was never allocated: ES3 has no
+    // implicit allocation - allocate first or the update is INVALID_OPERATION
+    GLenum esT2 = GL_TEXTURE_2D;
+    GLint ifmt3 = GL_RGBA8;
+    if (g_nEsMajor < 3)
+      ifmt3 = (fmt2 == GL_RGB) ? GL_RGB : (fmt2 == GL_RGBA ? GL_RGBA : GL_LUMINANCE);
+    else
+    {
+      if (fmt2 == GL_RGB) ifmt3 = GL_RGB8;
+      else if (fmt2 == GL_RGBA) ifmt3 = GL_RGBA8;
+      else if (fmt2 == 0x1903 || fmt2 == GL_LUMINANCE) ifmt3 = 0x822B;
+      else if (fmt2 == 0x8227 || fmt2 == GL_LUMINANCE_ALPHA) ifmt3 = 0x822F;
+      else if (fmt2 == GL_ALPHA) ifmt3 = 0x822B;
+    }
+    if (es_glTexImage2D)
+      es_glTexImage2D(esT2, level, ifmt3, w, h, 0, fmt2, type, 0);
+    if (level < 16)
+      t->nAllocMask |= (unsigned short)(1u << level);
+  }
   if (es_glTexSubImage2D)
-    es_glTexSubImage2D(EsTarget(target), level, xo, yo, w, h, fmt2, type, d2);
+    es_glTexSubImage2D(GL_TEXTURE_2D, level, xo, yo, w, h, fmt2, type, d2);
+  if (DiagOn())
+  {
+    static int s_nSubLog = 0;
+    if (s_nSubLog < 6)
+    {
+      s_nSubLog++;
+      GLenum e3 = es_glGetError();
+      GLog("subimg: bound=%u t=%p es=%u lvl=%d %dx%d fmt=%x err=%x",
+           (unsigned)bound, (void *)t, t ? t->es : 0, (int)level,
+           (int)w, (int)h, (unsigned)fmt2, (unsigned)e3);
+      while (e3)
+        e3 = es_glGetError();
+    }
+  }
 }
 
 void APIENTRY glCompressedTexImage2DARB(GLenum target, GLint level, GLint internalFormat,

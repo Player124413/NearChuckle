@@ -1431,6 +1431,28 @@ bool CSystem::Init( const SSystemInitParams &params )
 			pR->Draw2dImage(20, 20, 400, 200, nTexID, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0);
 			pR->Draw2dImage(500, 100, 200, 200, nTexID, 0, 0, 1, 1, 30.0f, 1, 1, 1, 1, 0);
 			pR->Draw2dImage(800, 400, 120, 120, nTexID, 0.25f, 0.25f, 0.75f, 0.75f, 0, 1, 1, 1, 1, 0);
+			// exercise the video-player path: update the texture via
+			// UpdateTextureInVideoMemory (TexSubImage2D underneath), then
+			// draw the updated texture again - the right half must change
+			if (nTexID > 0)
+			{
+				// update the WHOLE texture (video-player style). The engine
+				// reinterprets these RGBA bytes as BGRA (eTF_8888 ->
+				// GL_BGRA), so the quad shows as flat yellow - that proves
+				// the streamed update landed (before the fix it stayed a
+				// gradient = stale texture data)
+				static unsigned char upd[128 * 128 * 4];
+				for (int y = 0; y < 128; y++)
+					for (int x = 0; x < 128; x++)
+					{
+						upd[(y * 128 + x) * 4 + 0] = 0;
+						upd[(y * 128 + x) * 4 + 1] = 255;
+						upd[(y * 128 + x) * 4 + 2] = 255;
+						upd[(y * 128 + x) * 4 + 3] = 255;
+					}
+				pR->UpdateTextureInVideoMemory(nTexID, upd, 0, 0, 128, 128, eTF_8888);
+				pR->Draw2dImage(620, 20, 200, 200, nTexID, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0);
+			}
 			pR->ScreenShot("selftest_frame");
 			CryLogAlways("2D selftest: OK (%d quads) - exiting", nQuads);
 			exit(0);

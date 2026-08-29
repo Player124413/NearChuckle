@@ -1076,8 +1076,21 @@ static void StreamDraw(GLenum mode, int n)
            sErr, px[0], px[1], px[2], px[3], tp[0], tp[1], tp[2], tp[3],
            (void *)bt, bt ? bt->es : 0, bt ? bt->width : 0, bt ? bt->height : 0,
            bt ? bt->maxLevelUploaded : -2);
+      unsigned char txq[4] = {0, 0, 0, 0};
+      if (bt && bt->es && es_glBindFramebuffer && es_glFramebufferTexture2D && es_glCheckFramebufferStatus && es_glReadPixels)
+      {
+        GLint prevFbo2 = 0;
+        es_glGetIntegerv(0x8CA6, &prevFbo2);
+        es_glBindFramebuffer(0x8D40, g_nFBO);
+        es_glFramebufferTexture2D(0x8D40, 0x8CE0, GL_TEXTURE_2D, bt->es, 0);
+        if (es_glCheckFramebufferStatus(0x8D40) == 0x8CD5)
+          es_glReadPixels(10, 10, 1, 1, 0x1908, 0x1401, txq); // inside the SubImage-updated corner
+        es_glFramebufferTexture2D(0x8D40, 0x8CE0, GL_TEXTURE_2D, 0, 0);
+        es_glBindFramebuffer(0x8D40, (GLuint)prevFbo2);
+      }
       if (bt)
-        glescompat::GLog("drawcheck2: texcenter=%02x%02x%02x%02x", txp[0], txp[1], txp[2], txp[3]);
+        glescompat::GLog("drawcheck2: texcenter=%02x%02x%02x%02x corner=%02x%02x%02x%02x",
+                         txp[0], txp[1], txp[2], txp[3], txq[0], txq[1], txq[2], txq[3]);
     }
   }
 }
