@@ -29,6 +29,73 @@ public class MainActivity extends SDLActivity {
 
     private static final String TAG = "NearChuckle";
 
+    /** Recursively collect .so paths under dir. */
+    private static void collectSo(File dir, java.util.ArrayList<String> out) {
+        File[] kids = dir.listFiles();
+        if (kids != null)
+            for (File k : kids) {
+                if (k.isDirectory())
+                    collectSo(k, out);
+                else if (k.getName().toLowerCase().endsWith(".so"))
+                    out.add(k.getAbsolutePath());
+            }
+    }
+
+    /**
+     * If the user installed a custom GL/Vulkan driver through the launcher
+     * (files/turnip/), point SDL at it before the video subsystem starts.
+     * Zink/Mesa bundles provide libEGL* (EGL driver, renders over Vulkan -
+     * Turnip on Adreno); raw Turnip zips provide libvulkan* only.
+     */
+    private void applyTurnipEnv() {
+        try {
+            File base = getExternalFilesDir(null);
+            if (base == null) return;
+            File dir = new File(base, "turnip");
+            if (!dir.isDirectory()) return;
+            java.util.ArrayList<String> sos = new java.util.ArrayList<String>();
+            collectSo(dir, sos);
+            String egl = null, gl = null, vk = null;
+            java.util.ArrayList<String> vks = new java.util.ArrayList<String>();
+            for (String p : sos) {
+                String n = p.substring(p.lastIndexOf('/') + 1).toLowerCase();
+                if (egl == null && n.startsWith("libegl")) egl = p;
+                if (gl == null && (n.startsWith("libglesv2") || n.startsWith("libgl1")
+                        || n.startsWith("libgl.") || n.startsWith("libosmesa"))) gl = p;
+                if (n.startsWith("libvulkan")) vks.add(p);
+            }
+            if (egl == null && gl == null && vks.isEmpty()) return;
+            android.system.Os.setenv("SDL_VIDEO_EGL_DRIVER", egl != null ? egl : "", true);
+            android.system.Os.setenv("SDL_VIDEO_GL_DRIVER", gl != null ? gl : "", true);
+            if (!vks.isEmpty()) {
+                StringBuilder sb = new StringBuilder();
+                for (String p : vks) {
+                    if (sb.length() > 0) sb.append(":");
+                    sb.append(p);
+                }
+                android.system.Os.setenv("VK_DRIVER_FILES", sb.toString(), true);
+                android.system.Os.setenv("VK_ICD_FILENAMES", sb.toString(), true);
+            }
+            String note = "turnip: EGL=" + egl + " GL=" + gl + " VK=" + vks.size()
+                    + " (SDL_VIDEO_EGL_DRIVER set)";
+            Log.i(TAG, note);
+            try {
+                FileWriter dw = new FileWriter(new File(base, "diag.txt"), true);
+                dw.write(note + "\n");
+                dw.close();
+            } catch (Throwable ignored) {
+            }
+        } catch (Throwable t) {
+            Log.w(TAG, "turnip env failed: " + t);
+        }
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        applyTurnipEnv(); // must run before SDL video init (super.onCreate)
+        super.onCreate(savedInstanceState);
+    }
+
     @Override
     protected String[] getLibraries() {
         return new String[] {
