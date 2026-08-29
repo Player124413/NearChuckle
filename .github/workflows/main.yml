@@ -47,11 +47,6 @@ jobs:
           ndk-version: r27c
           add-to-path: false
 
-      - name: Set up Gradle 8.9
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.9'
-
       # pinned cmake 3.x + ninja: reproducible, immune to runner image drift
       - name: Install pinned cmake & ninja
         run: |
@@ -74,6 +69,17 @@ jobs:
           name: NearChuckle-native-build-logs
           path: android/build/*.log
           if-no-files-found: ignore
+
+      # Gradle is installed AFTER the native build on purpose: the engine
+      # compile is the long/fragile part and gradle setup must not block it.
+      # validate-wrappers is off: SDL's submodule ships an example
+      # gradle-wrapper.jar that is not in the official checksum list and we
+      # never use wrappers anyway (gradle is invoked directly).
+      - name: Set up Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+          validate-wrappers: false
 
       - name: Assemble debug APK
         run: |
