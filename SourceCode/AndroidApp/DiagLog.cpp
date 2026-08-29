@@ -329,6 +329,38 @@ static bool CallJavaVoid1(const char *szMethod, const char *szSig, const char *a
   return ok;
 }
 
+// void method(String, String)
+static bool CallJavaVoid2(const char *szMethod, const char *szSig,
+                          const char *a, const char *b)
+{
+  jobject activity;
+  jclass cls;
+  JNIEnv *env = GetEnv(activity, cls);
+  if (!env)
+    return false;
+  bool ok = false;
+  if (cls)
+  {
+    jmethodID mid = env->GetMethodID(cls, szMethod, szSig);
+    if (mid)
+    {
+      jstring ja = a ? env->NewStringUTF(a) : 0;
+      jstring jb = b ? env->NewStringUTF(b) : 0;
+      env->CallVoidMethod(activity, mid, ja, jb);
+      if (ja)
+        env->DeleteLocalRef(ja);
+      if (jb)
+        env->DeleteLocalRef(jb);
+      ok = !env->ExceptionCheck();
+      if (env->ExceptionCheck())
+        env->ExceptionClear();
+    }
+    env->DeleteLocalRef(cls);
+  }
+  env->DeleteLocalRef(activity);
+  return ok;
+}
+
 // String method(String, String) - returns the Java string (or NULL) and
 // clears any pending exception; result must be released with ReleaseStr
 static jstring CallJavaStr2Ret(const char *szMethod, const char *szSig,
@@ -527,7 +559,7 @@ static void DoSendLogs(bool bAuto)
   {
     // share the FILE: long pasted text gets truncated by viewers and
     // messengers, a file attachment survives intact
-    CallJavaVoid1("offerLogFile", "(Ljava/lang/String;Ljava/lang/String;)V",
+    CallJavaVoid2("offerLogFile", "(Ljava/lang/String;Ljava/lang/String;)V",
                   szUri, szPrefix);
   }
   else
