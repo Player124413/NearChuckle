@@ -67,6 +67,7 @@ public:
 	virtual bool IsTouchEditMode() const { return m_bEditMode; }
 	virtual bool IsTouchEnabled() const;
 	virtual bool OnDisabledTap(float fX, float fY);
+	virtual bool IsUiActive() const;
 
 	bool LoadLayout(const char *szFile);
 	bool SaveLayout(const char *szFile);

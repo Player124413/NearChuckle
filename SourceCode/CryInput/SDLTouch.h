@@ -36,6 +36,17 @@ public:
 	float ConsumeLookDeltaX();
 	float ConsumeLookDeltaY();
 
+	// UI (menu) cursor state written by this device when the engine UI owns
+	// the screen; the mouse device consumes it at the right point of its
+	// Update (after the old/new event copy) so click edges are generated.
+	bool ConsumeUiCursor(float &fNX, float &fNY, bool &bDown)
+	{
+		fNX = m_fUiX; fNY = m_fUiY; bDown = m_bUiDown;
+		bool active = m_bUiActive;
+		m_bUiActive = false;
+		return active;
+	}
+
 private:
 	struct SFinger
 	{
@@ -53,6 +64,10 @@ private:
 	int m_nWinWidth;
 	int m_nWinHeight;
 	float m_fLookDX, m_fLookDY; // accumulated, not yet consumed
+	// UI cursor state for the menu (normalized coords + click state)
+	bool m_bUiActive;
+	bool m_bUiDown;
+	float m_fUiX, m_fUiY;
 	ICVar *m_pTouchLookSens;
 	ICVar *m_pTouchInvertY;
 	ICVar *m_pTouchInvertX;

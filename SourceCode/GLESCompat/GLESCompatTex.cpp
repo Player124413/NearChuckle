@@ -798,6 +798,26 @@ void APIENTRY glTexSubImage2D(GLenum target, GLint level, GLint xo, GLint yo,
   int swiz = SW_NONE;
   GLenum fmt2 = format;
   const void *d2 = ConvertPixels(w, h, fmt2, type, data, swiz);
+  // The initial TexImage2D stored this texture with a swizzle (fonts /
+  // console are GL_ALPHA -> R8 + swizzle). Sub-updates must therefore use
+  // the REDUCED data format: ES3 does not accept GL_ALPHA/GL_LUMINANCE as
+  // an unpack format (INVALID_ENUM), which silently killed glyph updates.
+  if (g_nEsMajor >= 3 && swiz != SW_NONE)
+  {
+    switch (swiz)
+    {
+    case SW_LUM:
+    case SW_INT:
+    case SW_ALPHA:
+      fmt2 = 0x1903; /*GL_RED*/
+      break;
+    case SW_LA:
+      fmt2 = 0x8227; /*GL_RG*/
+      break;
+    default:
+      break;
+    }
+  }
   // resolve the REAL upload target: the engine interleave-binds (even 0)
   // through its own virtual stage cache, so the ES "current" texture is not
   // the one the desktop call refers to - dynamically updated textures (menu

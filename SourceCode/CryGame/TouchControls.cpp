@@ -1004,6 +1004,12 @@ void CTouchControls::OnTouchUpdate()
 }
 
 //////////////////////////////////////////////////////////////////////////
+bool CTouchControls::IsUiActive() const
+{
+	// menu / pause overlay owns the screen: unclaimed taps become UI cursor
+	return m_pGame ? m_pGame->IsInMenu() : false;
+}
+
 bool CTouchControls::IsTouchEnabled() const
 {
 	if (!m_pCVarTouchEnabled)

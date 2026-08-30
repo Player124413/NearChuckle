@@ -27,6 +27,9 @@ CSDLTouch::CSDLTouch()
 	m_nWinWidth = 1280;
 	m_nWinHeight = 720;
 	m_fLookDX = m_fLookDY = 0;
+	m_bUiActive = false;
+	m_bUiDown = false;
+	m_fUiX = m_fUiY = 0;
 	m_pTouchLookSens = 0;
 	m_pTouchInvertX = 0;
 	m_pTouchInvertY = 0;
@@ -149,6 +152,8 @@ void CSDLTouch::ClearKeyState()
 	for (int i = 0; i < TOUCH_MAX_FINGERS; i++)
 		m_fingers[i].m_bDown = false;
 	m_fLookDX = m_fLookDY = 0;
+	m_bUiActive = false;
+	m_bUiDown = false;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -261,6 +266,17 @@ void CSDLTouch::Update(bool bFocus)
 
 			if (!bConsumed)
 			{
+				if (pSink && pSink->IsUiActive())
+				{
+					// engine UI owns the screen: finger position drives the
+					// menu cursor absolutely, tap = left click. No look drag.
+					m_bUiActive = true;
+					m_fUiX = event.tfinger.x;
+					m_fUiY = event.tfinger.y;
+					m_bUiDown = (event.type == SDL_EVENT_FINGER_DOWN ||
+								 event.type == SDL_EVENT_FINGER_MOTION);
+					break;
+				}
 				// unclaimed finger drag == look
 				float sens = m_pTouchLookSens ? m_pTouchLookSens->GetFVal() : 1.0f;
 				if (sens <= 0.01f)

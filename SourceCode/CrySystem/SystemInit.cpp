@@ -1453,6 +1453,23 @@ bool CSystem::Init( const SSystemInitParams &params )
 				pR->UpdateTextureInVideoMemory(nTexID, upd, 0, 0, 128, 128, eTF_8888);
 				pR->Draw2dImage(620, 20, 200, 200, nTexID, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0);
 			}
+			// BGRA fidelity probe through the ENGINE texture path: bytes
+			// (255,0,0,255) uploaded as eTF_8888 are B,G,R,A for the engine
+			// (GL_BGRA on desktop) -> the quad must be BLUE on screen.
+			// RED on the screenshot == systematic red/blue swap.
+			{
+				static unsigned char bgr[32 * 32 * 4];
+				for (int i = 0; i < 32 * 32; i++)
+				{
+					bgr[i * 4 + 0] = 255;
+					bgr[i * 4 + 1] = 0;
+					bgr[i * 4 + 2] = 0;
+					bgr[i * 4 + 3] = 255;
+				}
+				int nBgrID = (int)pR->DownLoadToVideoMemory(bgr, 32, 32, eTF_8888, eTF_8888, 0, 0, FILTER_LINEAR, 0, nullptr, FT_DYNAMIC);
+				CryLogAlways("2D selftest: bgr probe id %d", nBgrID);
+				pR->Draw2dImage(20, 480, 120, 120, nBgrID, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0);
+			}
 			pR->ScreenShot("selftest_frame");
 			CryLogAlways("2D selftest: OK (%d quads) - exiting", nQuads);
 			exit(0);

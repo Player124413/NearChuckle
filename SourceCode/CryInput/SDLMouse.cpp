@@ -80,6 +80,19 @@ void CSDLMouse::Update(bool bPrevFocus)
 	memset(m_Deltas, 0, sizeof(m_Deltas));
 	memcpy(m_oldEvents, m_Events, sizeof(m_Events));
 
+	// menu cursor driven absolutely by unclaimed finger taps (touch device
+	// gathered them this frame); applied after the old/new copy so the
+	// press/release edge is generated properly
+	bool bUiDown = false;
+	float fUiX = 0.0f, fUiY = 0.0f;
+	if (m_pInput && m_pInput->GetTouch() &&
+		m_pInput->GetTouch()->ConsumeUiCursor(fUiX, fUiY, bUiDown))
+	{
+		m_fVScreenX = fUiX * 799.0f;
+		m_fVScreenY = fUiY * 599.0f;
+		m_Events[XKEY2IDX(XKEY_MOUSE1)] = bUiDown ? 0x80 : 0;
+	}
+
 	float mouseDelta[6];
 	memset(mouseDelta, 0, sizeof(mouseDelta));
 
