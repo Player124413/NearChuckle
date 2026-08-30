@@ -878,6 +878,32 @@ void CSystem::RenderEnd()
 	// Flush render data and swap buffers.
 	m_pRenderer->Update();
 	m_Time.MeasureTime("3RendFlush");
+
+#ifdef GLES_COMPAT_SELFTEST
+	// Headless visual verification: after NC_MENU_SHOT_FRAME rendered frames,
+	// dump the final framebuffer and exit. Lets CI/dev machines see what the
+	// REAL game actually renders (menu, console, ...) without a display.
+	{
+		static int s_nFrames = 0;
+		static int s_nShotFrame = -1;
+		if (s_nShotFrame < 0)
+		{
+			const char *e = getenv("NC_MENU_SHOT_FRAME");
+			s_nShotFrame = e ? atoi(e) : 0;
+		}
+		if (s_nShotFrame > 0 && ++s_nFrames >= s_nShotFrame)
+		{
+			static bool s_bShot = false;
+			if (!s_bShot && m_pRenderer)
+			{
+				s_bShot = true;
+				CryLogAlways("menu-shot: capturing frame %d", s_nFrames);
+				m_pRenderer->ScreenShot("menu_frame");
+				exit(0);
+			}
+		}
+	}
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////

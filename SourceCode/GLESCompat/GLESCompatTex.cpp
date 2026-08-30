@@ -466,7 +466,10 @@ void TexUploadLevel(GLenum target, GLint level, GLint internalFormat,
     }
   }
   if (t && t->es)
-    es_glBindTexture(esT, t->es);
+    // glBindTexture must use a BIND point (2D / CUBE_MAP); the cube FACE is
+    // only valid as a TexImage2D target - binding a face target fails and
+    // the subsequent face upload would hit "no cube bound" INVALID_OPERATION
+    es_glBindTexture(bCubeFace ? 0x8513 /*GL_TEXTURE_CUBE_MAP*/ : esT, t->es);
   es_glTexImage2D(esT, level, ifmt2, w, h, 0, fmt2, type, d2);
   {
     static int s_nUploadErr = 0;
@@ -546,7 +549,9 @@ void TexUploadCompressed(GLenum target, GLint level, GLint internalFormat,
                           : g_TexUnit[g_nActiveUnit].nLastBind);
   STexObj *t = TexGet(bound);
   if (t && t->es)
-    es_glBindTexture(GL_TEXTURE_2D, t->es); // pixels MUST land in the tracked object
+    // pixels MUST land in the tracked object; the bind target must match the
+    // upload target (a cube-face upload needs a CUBE_MAP bind, not 2D)
+    es_glBindTexture(bCubeFace2 ? 0x8513 /*GL_TEXTURE_CUBE_MAP*/ : GL_TEXTURE_2D, t->es);
   es_glTexImage2D(esT, level, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, &rgba[0]);
   if (t)
   {
@@ -806,7 +811,7 @@ void APIENTRY glTexSubImage2D(GLenum target, GLint level, GLint xo, GLint yo,
                           : g_TexUnit[g_nActiveUnit].nLastBind);
   STexObj *t = TexGet(bound);
   if (t && t->es)
-    es_glBindTexture(GL_TEXTURE_2D, t->es);
+    es_glBindTexture(bCubeFace3 ? 0x8513 /*GL_TEXTURE_CUBE_MAP*/ : GL_TEXTURE_2D, t->es);
   if (t && level < 16 && !(t->nAllocMask & (1u << level)))
   {
     // streamed sub-update for a level that was never allocated: ES3 has no

@@ -690,9 +690,11 @@ static bool CompileProgram(GLuint &progOut, const SProgCfg &cfg)
       char exprA[320];
       BuildCombine(exprA, u, 0, g_TexUnit[u].env.combineA,
                    g_TexUnit[u].env.srcA, g_TexUnit[u].env.opA);
-      fsrc += " af = (";
+      // BuildCombine yields a vec4 expression (or a plain float in some
+      // modes); vec4(...) accepts both, and .a reduces it to the float 'af'
+      fsrc += " af = vec4(";
       fsrc += exprA;
-      fsrc += ");\n";
+      fsrc += ").a;\n";
       WarnOnce(32, "combine alpha uses simplified chain");
     }
   }

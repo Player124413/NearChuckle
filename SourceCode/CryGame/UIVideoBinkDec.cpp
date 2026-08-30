@@ -223,12 +223,12 @@ void CUIVideoBinkDecoder::BinkDecReset()
 
 void CUIVideoBinkDecoder::DrawYUV(void)
 {
-	int i, j, k, si, sj;
+	int i, j, si, sj;
 	MoviePlayerData* player = m_player;
 	uint8_t Y, U, V;
 	float R, G, B;
 
-	for (i = k = 0; i < player->vidHeight; i++)
+	for (i = 0; i < player->vidHeight; i++)
 	{
 		for (j = 0; j < player->vidWidth; j++)
 		{
@@ -243,12 +243,15 @@ void CUIVideoBinkDecoder::DrawYUV(void)
 			G = (float)Y - 0.3455f * ((float)U - 128.0f) - 0.7169f * ((float)V - 128.0f);
 			B = (float)Y + 1.7790f * ((float)U - 128.0f);
 
-			m_frameBuffer[(i * player->yuvBuffer[0].pitch) + j + k] = (uint8_t)B;
-			m_frameBuffer[(i * player->yuvBuffer[0].pitch) + j + k + 1] = (uint8_t)G;
-			m_frameBuffer[(i * player->yuvBuffer[0].pitch) + j + k + 2] = (uint8_t)R;
-			m_frameBuffer[(i * player->yuvBuffer[0].pitch) + j + k + 3] = 255;
-
-			k += 3;
+			// m_frameBuffer is a tightly packed BGRA image of vidWidth x
+			// vidHeight: the row stride is vidWidth*4, NOT the Y plane's
+			// pitch. The old code mixed them up - rows overwrote each other
+			// and 3/4 of the buffer stayed zero (black/garbled menu videos).
+			uint32_t off = ((uint32_t)i * player->vidWidth + j) * 4;
+			m_frameBuffer[off + 0] = (uint8_t)B;
+			m_frameBuffer[off + 1] = (uint8_t)G;
+			m_frameBuffer[off + 2] = (uint8_t)R;
+			m_frameBuffer[off + 3] = 255;
 		}
 	}
 }

@@ -16,7 +16,8 @@ echo "==> Configuring host build"
 "$CMAKE_BIN" -S . -B build/host -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DDISABLE_CG=ON \
-  -DSDL_UNIX_CONSOLE_BUILD=ON
+  -DSDL_UNIX_CONSOLE_BUILD=ON \
+  -DGLES_COMPAT_SELFTEST=ON
 
 echo "==> Building"
 "$CMAKE_BIN" --build build/host --parallel "${JOBS:-$(nproc)}"

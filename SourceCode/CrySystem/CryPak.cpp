@@ -533,7 +533,6 @@ FILE *CCryPak::FOpen(const char *pName, const char *szMode,char *szFileGamePath,
 		nLen=g_nMaxPath;
 	strncpy(szFileGamePath,szFullPath,nLen);
 	fp = fopen (szFullPath, szMode);
-
 	if (fp)
 		RecordFile( pName );
 	else

@@ -1682,15 +1682,8 @@ void CGLRenderer::UpdateTextureInVideoMemory(uint tnum, unsigned char *newdata,i
   }
   else
   {
-    if (TargetTex[tnum] == GL_TEXTURE_2D)
-    {
-      int nw = ilog2(w);
-      if (w != nw)
-        return;
-      int nh = ilog2(h);
-      if (h != nh)
-        return;
-    }
+    // ES3 supports NPOT texture 2D fully - do not drop non-pow2 updates
+    // (menu/HUD videos are commonly 640x480 and friends)
     glTexSubImage2D(TargetTex[tnum],0,posx,posy,w,h,srcformat,GL_UNSIGNED_BYTE,newdata);
   }
 }
